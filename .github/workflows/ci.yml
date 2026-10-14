@@ -1,9 +1,9 @@
 name: ci
 
+# Runs on manual dispatch only (`gh workflow run ci.yml`): the maintainers run the same list locally with
+# `npm ci && npm run check` before every push. Restore `push: branches: [main]` and `pull_request:` here to
+# run it on every change.
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 permissions:

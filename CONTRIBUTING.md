@@ -10,7 +10,7 @@ has the same rules in a compact form.
 git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
 cd ultrarouter-sdk-typescript
 npm ci            # Node.js 20 or newer
-npm run check     # the full gate CI runs
+npm run check     # the full gate (the ci workflow runs the same list on manual dispatch)
 ```
 
 `npm run check` runs, in order: the spec header check, formatting, type-checking, the unit tests,
