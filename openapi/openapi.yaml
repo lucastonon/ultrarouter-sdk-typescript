@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: 48605e5695be77d06822a2e0513c8cc56bc2a11b3defdd81a8acca4bef98842b
+# spec-sha256: d91843de197346c0d2975e2e161038a14b4e95fa12148d98a34734d9297e1cb7
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -22945,8 +22945,8 @@ paths:
         - "Flywheel"
 servers:
   -
-    description: "Production."
-    url: "https://api.ultrarouter.dev"
+    description: "A self-hosted ultrarouter gateway (the local dev stack listens here); use your deployment's URL."
+    url: "http://localhost:8080"
 tags:
   -
     description: "API-key provisioning."
