@@ -100,7 +100,9 @@ Differences to keep in mind:
   `asOpenAI()` adds it for you.
 - Errors are `UltraRouterError` with a gateway `code` rather than OpenAI's error classes.
 - Model ids are provider-prefixed (`openai/gpt-5.2-mini`, `anthropic/claude-sonnet-4.6`).
-- The Assistants, Files, Images, Audio and Responses APIs are not part of this SDK.
+- The Assistants, Files, Images and Audio APIs are not part of this SDK. The OpenAI Responses API
+  (and the Anthropic Messages API) are reachable as [native passthrough](./passthrough.md) — point
+  the official `openai` / `@anthropic-ai/sdk` clients at the gateway.
 
 ## Related
 

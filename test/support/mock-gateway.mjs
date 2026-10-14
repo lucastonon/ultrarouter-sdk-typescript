@@ -157,6 +157,68 @@ function lastUserText(messages) {
   return '';
 }
 
+/** The number of whole 4-char tokens in a value, at least 1 (a deterministic stand-in for metering). */
+function tokenCount(value) {
+  return Math.max(1, Math.ceil(JSON.stringify(value ?? '').length / 4));
+}
+
+/**
+ * A realistic, non-streaming OpenAI Responses object (the `/v1/responses` passthrough), echoing the
+ * requested `model` so a round trip is observable. The gateway forwards the body verbatim and returns
+ * this shape untouched; metering rides the response headers, not the body.
+ */
+function responsesBody(body) {
+  const model = body?.model ?? 'openai/gpt-5.2-mini';
+  const prompt = body?.input ?? body?.instructions ?? '';
+  const text = `Mock response to: ${String(typeof prompt === 'string' ? prompt : JSON.stringify(prompt)).slice(0, 80)}`;
+  const inputTokens = tokenCount(body?.input ?? body?.instructions ?? '');
+  const outputTokens = tokenCount(text);
+  return {
+    id: `resp_mock_${sha(JSON.stringify(body ?? {})).slice(0, 12)}`,
+    object: 'response',
+    created_at: NOW_S,
+    status: 'completed',
+    model,
+    output: [
+      {
+        id: `msg_mock_${sha(text).slice(0, 12)}`,
+        type: 'message',
+        status: 'completed',
+        role: 'assistant',
+        content: [{ type: 'output_text', text, annotations: [] }],
+      },
+    ],
+    usage: {
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+      total_tokens: inputTokens + outputTokens,
+    },
+  };
+}
+
+/**
+ * A realistic, non-streaming Anthropic Message object (the `/v1/messages` passthrough), echoing the
+ * requested `model`. Same contract: the body is forwarded verbatim and the Message is returned
+ * untouched; metering rides the response headers.
+ */
+function messagesBody(body) {
+  const model = body?.model ?? 'anthropic/claude-sonnet-4.6';
+  const question = lastUserText(body?.messages);
+  const text = `Mock message reply to: ${question.slice(0, 80)}`;
+  const inputTokens = tokenCount(body?.messages ?? body?.system ?? '');
+  const outputTokens = tokenCount(text);
+  return {
+    id: `msg_mock_${sha(JSON.stringify(body ?? {})).slice(0, 12)}`,
+    type: 'message',
+    role: 'assistant',
+    model,
+    content: [{ type: 'text', text }],
+    stop_reason: 'end_turn',
+    stop_sequence: null,
+    usage: { input_tokens: inputTokens, output_tokens: outputTokens },
+  };
+}
+
 /** A JSON value shaped like a JSON Schema (for structured-output requests). */
 function sampleJson(schema, name = 'value', depth = 0) {
   if (schema === undefined || schema === null || depth > 8) return null;
@@ -435,6 +497,20 @@ export async function startMockGateway(options = {}) {
         model,
         usage: { prompt_tokens: tokens, total_tokens: tokens },
         ur: ur(model),
+      });
+    }
+
+    // ── native passthrough: OpenAI Responses (/v1/responses) + Anthropic Messages (/v1/messages) ──
+    // The body is forwarded verbatim; the gateway meters and returns the request id + booked cost on
+    // the X-UR-Request-Id / X-UR-Cost-Micro-USD response headers (micro-USD, integer).
+    if (method === 'POST' && (path === '/v1/responses' || path === '/v1/messages')) {
+      const model = r.body?.model;
+      if (model === 'example/unpriced-model')
+        return send(res, 403, errorBody('model_unpriced', `model '${model}' has no price`));
+      const payload = path === '/v1/responses' ? responsesBody(r.body) : messagesBody(r.body);
+      return send(res, 200, payload, {
+        'x-ur-request-id': `req_mock_${sha(r.raw).slice(0, 12)}`,
+        'x-ur-cost-micro-usd': String(42 + r.raw.length),
       });
     }
 

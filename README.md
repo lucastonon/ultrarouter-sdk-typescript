@@ -167,6 +167,27 @@ console.log(res.choices[0]?.message.content);
 
 [OpenAI compatibility](./docs/openai-compatibility.md)
 
+### Native passthrough: the official OpenAI and Anthropic SDKs
+
+The gateway forwards the OpenAI Responses API (`POST /v1/responses`) and the Anthropic Messages API
+(`POST /v1/messages`) to the provider unchanged, metering each call. Point the official client at
+your gateway with two environment variables (`OPENAI_BASE_URL=<gateway>/v1`,
+`ANTHROPIC_BASE_URL=<gateway>`) and your `ur_sk_…` key — nothing else changes.
+
+```ts
+import OpenAI from 'openai';
+
+// OPENAI_BASE_URL=<your gateway>/v1 and OPENAI_API_KEY=<your ur_sk_… key> point the official client here.
+const openai = new OpenAI();
+const res = await openai.responses.create({
+  model: 'openai/gpt-5.2-mini',
+  input: 'Give me one word for "fast".',
+});
+console.log(res.output_text);
+```
+
+[Native passthrough](./docs/passthrough.md)
+
 ### Errors and retries
 
 Errors carry a stable `code`, the HTTP `status`, the `requestId` and a `retryable` flag. Retryable

@@ -31,6 +31,13 @@ function bodyFor(method: string, template: string): unknown {
     return { model: 'openai/gpt-5.2-mini', messages: [{ role: 'user', content: 'hi' }] };
   if (template === '/v1/embeddings')
     return { model: 'openai/text-embedding-3-small', input: ['a', 'b'] };
+  if (template === '/v1/responses') return { model: 'openai/gpt-5.2-mini', input: 'hi' };
+  if (template === '/v1/messages')
+    return {
+      model: 'anthropic/claude-sonnet-4.6',
+      max_tokens: 64,
+      messages: [{ role: 'user', content: 'hi' }],
+    };
   if (template === '/v1/preflight') return { call_type: 'support', artifact_key: 'a-1' };
   if (template === '/v1/flywheel/reviewer/events') return { events: [] };
   if (template === '/v1/requests/{id}/feedback') return { rating: 1 };

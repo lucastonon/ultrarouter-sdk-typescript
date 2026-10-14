@@ -23,6 +23,7 @@ Install with `npm install @ultrarouter/sdk`. Configure with the `ULTRAROUTER_API
 - [Errors](docs/errors.md): Every method of the client rejects with an `UltraRouterError` (or its subclass `ModelUnpricedError`) when something goes wrong.
 - [Retries, timeouts and idempotency](docs/retries-timeouts-idempotency.md): The SDK's transport retries transient failures automatically, bounds every call with a total timeout, lets you cancel with an `AbortSignal`, and attaches an idempotency key to writes so a retried POST can never execute twice.
 - [OpenAI compatibility](docs/openai-compatibility.md): The gateway speaks the OpenAI HTTP API under `/v1`, and this SDK mirrors the `openai` client's shape.
+- [Native passthrough: the official OpenAI and Anthropic SDKs through your gateway](docs/passthrough.md): The gateway speaks two more vendor APIs natively: the OpenAI Responses API at `POST /v1/responses` and the Anthropic Messages API at `POST /v1/messages`.
 - [Testing your app](docs/testing.md): Unit tests should never call a real gateway or a real model provider.
 - [Troubleshooting and FAQ](docs/troubleshooting.md): Each entry names the symptom, the cause, and the fix.
 

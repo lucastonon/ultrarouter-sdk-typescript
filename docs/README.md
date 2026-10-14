@@ -16,15 +16,16 @@ New here? Read [installation](./installation.md), then [configuration](./configu
 
 ## Model calls
 
-| Guide                                             | What it covers                                                                                                                                      |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Chat completions](./chat-completions.md)         | Parameters, ultrarouter extensions (`call_type`, `router`, `compression`, `models`, `ur.*`), reasoning, cache breakpoints, the `ur` response block. |
-| [Streaming](./streaming.md)                       | `for await` streams, the final chunk, stopping early, mid-stream errors.                                                                            |
-| [Tools](./tools.md)                               | Function calling round trip, `tool_choice`, streamed tool calls.                                                                                    |
-| [Structured outputs](./structured-outputs.md)     | `json_schema` and `json_object`, capability errors.                                                                                                 |
-| [Embeddings](./embeddings.md)                     | Batches, base64 output, `dimensions`.                                                                                                               |
-| [Models](./models.md)                             | `models.list` filters, `models.retrieve` offers, pricing and provenance fields.                                                                     |
-| [OpenAI compatibility](./openai-compatibility.md) | `asOpenAI()`, using the `openai` client with the gateway, surface mapping.                                                                          |
+| Guide                                             | What it covers                                                                                                                                                          |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Chat completions](./chat-completions.md)         | Parameters, ultrarouter extensions (`call_type`, `router`, `compression`, `models`, `ur.*`), reasoning, cache breakpoints, the `ur` response block.                     |
+| [Streaming](./streaming.md)                       | `for await` streams, the final chunk, stopping early, mid-stream errors.                                                                                                |
+| [Tools](./tools.md)                               | Function calling round trip, `tool_choice`, streamed tool calls.                                                                                                        |
+| [Structured outputs](./structured-outputs.md)     | `json_schema` and `json_object`, capability errors.                                                                                                                     |
+| [Embeddings](./embeddings.md)                     | Batches, base64 output, `dimensions`.                                                                                                                                   |
+| [Models](./models.md)                             | `models.list` filters, `models.retrieve` offers, pricing and provenance fields.                                                                                         |
+| [OpenAI compatibility](./openai-compatibility.md) | `asOpenAI()`, using the `openai` client with the gateway, surface mapping.                                                                                              |
+| [Native passthrough](./passthrough.md)            | The official OpenAI (Responses) and Anthropic (Messages) SDKs through your gateway: base URLs, key placement, the ultrarouter request/response headers, `ur.request()`. |
 
 ## Reliability
 

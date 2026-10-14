@@ -41,6 +41,7 @@ export const GUIDES = [
   { file: 'docs/errors.md', section: 'Guides' },
   { file: 'docs/retries-timeouts-idempotency.md', section: 'Guides' },
   { file: 'docs/openai-compatibility.md', section: 'Guides' },
+  { file: 'docs/passthrough.md', section: 'Guides' },
   { file: 'docs/call-types.md', section: 'ultrarouter resources' },
   { file: 'docs/feedback-and-generation.md', section: 'ultrarouter resources' },
   { file: 'docs/outcomes.md', section: 'ultrarouter resources' },

@@ -34,6 +34,10 @@ export const COVERAGE = {
     tests: ['test/resources.test.ts', 'test/surface.test.ts'],
   },
   getKey: { methods: ['ur.key.get'], tests: ['test/resources.test.ts', 'test/surface.test.ts'] },
+  // Native passthrough: the official OpenAI / Anthropic SDKs through the gateway. Opaque passthrough
+  // bodies have no dedicated method; reach them with `ur.request()` (methods: [] means that).
+  createResponse: { methods: [], tests: ['test/passthrough.test.ts'] },
+  createMessage: { methods: [], tests: ['test/passthrough.test.ts'] },
   // Call types
   listCallTypes: {
     methods: ['ur.callTypes.list'],

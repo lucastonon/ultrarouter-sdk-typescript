@@ -7,6 +7,18 @@ contain breaking changes; they are always listed under **Changed** or **Removed*
 
 ## [Unreleased]
 
+### Added
+
+- Native passthrough coverage for the two operations the gateway added: `createResponse`
+  (`POST /v1/responses`, the OpenAI Responses API) and `createMessage` (`POST /v1/messages`, the
+  Anthropic Messages API). Both are opaque passthrough surfaces with no dedicated method; they are
+  mapped as raw-request operations in the coverage table and reached with `ur.request()`. The
+  intended client is the official `openai` / `@anthropic-ai/sdk` pointed at your gateway
+  (`OPENAI_BASE_URL=<gateway>/v1`, `ANTHROPIC_BASE_URL=<gateway>`, your `ur_sk_…` key): the body is
+  forwarded to the provider unchanged and metered, callers tag calls with the `X-UR-Call-Type`,
+  `X-UR-Trace` and `X-UR-Timeout-Ms` request headers, and every non-streaming response carries the
+  `X-UR-Request-Id` and `X-UR-Cost-Micro-USD` response headers. New guide: `docs/passthrough.md`.
+
 ### Changed
 
 - **Breaking:** the client now requires a gateway base URL — there is no hosted default. Pass

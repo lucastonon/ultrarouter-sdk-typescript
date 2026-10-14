@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: d91843de197346c0d2975e2e161038a14b4e95fa12148d98a34734d9297e1cb7
+# spec-sha256: a74243e15c26b55f712f4e248c215af9a8b693b066f1305389a8029debfdcc51
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -20771,6 +20771,44 @@ paths:
       summary: "Introspect the presented API key"
       tags:
         - "Keys"
+  "/v1/messages":
+    post:
+      description: "Native passthrough for the Anthropic Messages API: point the official `@anthropic-ai/sdk` at ultrarouter by changing only the base URL and the key. The ur key is accepted via `Authorization: Bearer` OR `x-api-key` (the Anthropic SDK style); the body is FORWARDED VERBATIM to Anthropic and the response is returned UNTOUCHED — the gateway only meters, caps and captures. `stream:true` forwards the upstream SSE bytes verbatim. The ur extensions ride request headers (`X-UR-Call-Type`, `X-UR-Timeout-Ms` clamped 1 s–600 s (default 300 s), `X-UR-Trace`); the response carries `X-UR-Request-Id` and (non-streaming) `X-UR-Cost-Micro-USD`. An allowlist of request headers (`anthropic-version`, `anthropic-beta`, `idempotency-key`) is forwarded upstream; the caller's own key headers are never forwarded. Upstream errors pass through with their status and body; gateway failures (auth, caps, timeout) use the normalized error envelope. Requires API-key scope: gateway:invoke."
+      operationId: "createMessage"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              description: "Anthropic Messages API request, forwarded verbatim to Anthropic. Every field beyond `model` (system, messages, tools, output_config, cache_control, continuation blocks, …) is passed through unchanged. Auth may be the ur key via `Authorization: Bearer` or `x-api-key`; the caller's key is never forwarded upstream (the platform/BYOK key is injected server-side)."
+              properties:
+                model:
+                  description: "The Anthropic model id to call (e.g. \"claude-opus-5-5\"). This exact model is the model called."
+                  type: "string"
+              required:
+                - "model"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "The Anthropic Message object, returned byte-for-byte. Usage is metered from `usage` (input_tokens + cache_read_input_tokens + cache_creation_input_tokens + output_tokens); the ur request id and booked cost ride the `X-UR-Request-Id` / `X-UR-Cost-Micro-USD` headers."
+                properties: {}
+                type: "object"
+          description: "The Anthropic Message object (or an SSE stream when `stream:true`), returned verbatim."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          bearerAuth: []
+      summary: "Create a message (Anthropic Messages API passthrough)"
+      tags:
+        - "Passthrough"
   "/v1/models":
     get:
       description: "The active model catalog with pricing + capabilities, filterable by provider/capability. Each item separates PROVENANCE from HOSTING: `origin_jurisdiction` + `weights` describe the LOGICAL model (the developing lab — an offer inherits them from the model it serves), while `hosting_jurisdiction` + `hosting_region` describe where THIS offer RUNS. A CN-origin open-weight model hosted in the US shows `origin_jurisdiction: CN`, `weights: open`, `hosting_jurisdiction: US`. Any unestablished fact is `unknown` (fail-closed). Requires API-key scope: gateway:invoke."
@@ -21047,6 +21085,44 @@ paths:
       summary: "Record an outcome via the request shortcut"
       tags:
         - "Flywheel"
+  "/v1/responses":
+    post:
+      description: "Native passthrough for the OpenAI Responses API: point the official `openai` SDK at ultrarouter by changing only the base URL and the key. The JSON body is FORWARDED VERBATIM to OpenAI (no routing, no compression, no model remapping, no field injection) and the response is returned UNTOUCHED — the gateway only meters, caps and captures. `stream:true` forwards the upstream SSE bytes verbatim. The ur extensions ride request headers (`X-UR-Call-Type`, `X-UR-Timeout-Ms` clamped 1 s–600 s (default 300 s), `X-UR-Trace`); the response carries `X-UR-Request-Id` and (non-streaming) `X-UR-Cost-Micro-USD`. An allowlist of request headers (`openai-beta`, `openai-organization`, `openai-project`, `idempotency-key`) is forwarded upstream; the caller's own `Authorization` is never forwarded. Upstream errors pass through with their status and body; gateway failures (auth, caps, timeout) use the normalized error envelope. Requires API-key scope: gateway:invoke."
+      operationId: "createResponse"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              description: "OpenAI Responses API request, forwarded verbatim to OpenAI. Every field beyond `model` (input, instructions, tools, text.format, reasoning, include, store, prompt_cache_key, metadata, …) is passed through unchanged — the gateway never injects or rewrites the body."
+              properties:
+                model:
+                  description: "The OpenAI model id to call (e.g. \"gpt-6-sol\"). This exact model is the model called."
+                  type: "string"
+              required:
+                - "model"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "The OpenAI Responses object, returned byte-for-byte (the gateway never re-serialises it). Usage is metered from `usage` + the `web_search_call` output items; the ur request id and booked cost ride the `X-UR-Request-Id` / `X-UR-Cost-Micro-USD` response headers."
+                properties: {}
+                type: "object"
+          description: "The OpenAI Responses object (or an SSE stream when `stream:true`), returned verbatim."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          bearerAuth: []
+      summary: "Create a response (OpenAI Responses API passthrough)"
+      tags:
+        - "Passthrough"
   "/v1/workspaces":
     post:
       operationId: "createWorkspace"
@@ -22993,6 +23069,8 @@ tags:
   -
     description: "Operational probes and smoke endpoints."
     name: "Ops"
+  -
+    name: "Passthrough"
   -
     description: "Ask what the gateway would decide before a non-proxied call — model, fallbacks, learned knowledge, placement."
     name: "Preflight"
