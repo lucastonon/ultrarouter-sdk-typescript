@@ -126,7 +126,12 @@ describe('through the client', () => {
 
   it('an invalid bound is a typed construction error', () => {
     expect(
-      () => new UltraRouter({ apiKey: 'ur_sk_test_x', preflightCache: { maxEntries: -5 } }),
+      () =>
+        new UltraRouter({
+          apiKey: 'ur_sk_test_x',
+          baseURL: 'https://gw.test',
+          preflightCache: { maxEntries: -5 },
+        }),
     ).toThrow(UltraRouterError);
   });
 });

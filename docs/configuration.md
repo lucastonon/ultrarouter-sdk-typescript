@@ -6,19 +6,21 @@ arguments at all.
 
 ## Environment variables
 
-| Variable                                     | Used for            | Notes                                                                                               |
-| -------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
-| `ULTRAROUTER_API_KEY` (or `UR_API_KEY`)      | The API key         | Required unless you pass `apiKey`. `ULTRAROUTER_API_KEY` wins when both are set.                    |
-| `ULTRAROUTER_BASE_URL` (or `UR_BASE_URL`)    | The gateway URL     | Optional. Defaults to `https://api.ultrarouter.dev`. `ULTRAROUTER_BASE_URL` wins when both are set. |
-| `UR_BENCH`, `UR_BENCH_RUN`, `UR_BENCH_TRACE` | A Bench capture tag | Optional; used when the `bench` option is not passed. See [Bench](./bench.md).                      |
+| Variable                                     | Used for            | Notes                                                                                                          |
+| -------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `ULTRAROUTER_API_KEY` (or `UR_API_KEY`)      | The API key         | Required unless you pass `apiKey`. `ULTRAROUTER_API_KEY` wins when both are set.                               |
+| `ULTRAROUTER_BASE_URL` (or `UR_BASE_URL`)    | The gateway URL     | Required unless you pass `baseURL`; there is no hosted default. `ULTRAROUTER_BASE_URL` wins when both are set. |
+| `UR_BENCH`, `UR_BENCH_RUN`, `UR_BENCH_TRACE` | A Bench capture tag | Optional; used when the `bench` option is not passed. See [Bench](./bench.md).                                 |
 
 Precedence for each setting is: the constructor option, then `ULTRAROUTER_*`, then `UR_*`, then the
-default. Empty environment variables count as unset. The `ur` CLI reads the same variables (and its
+built-in default where there is one. The API key and the base URL have no default — they are
+required, and construction throws when neither the option nor an environment variable supplies them.
+Empty environment variables count as unset. The `ur` CLI reads the same variables (and its
 `--api-key` / `--base-url` flags win over them).
 
 ```bash
 export ULTRAROUTER_API_KEY=ur_sk_test_...
-export ULTRAROUTER_BASE_URL=https://gateway.example.com   # optional: your own deployment
+export ULTRAROUTER_BASE_URL=https://gateway.example.com   # required: your own deployment (or http://localhost:8080 locally)
 ```
 
 ```ts
@@ -56,28 +58,28 @@ import UltraRouter from '@ultrarouter/sdk';
 
 const ur = new UltraRouter({
   apiKey: process.env.ULTRAROUTER_API_KEY,
-  baseURL: process.env.ULTRAROUTER_BASE_URL ?? 'https://api.ultrarouter.dev',
+  baseURL: process.env.ULTRAROUTER_BASE_URL, // e.g. https://gateway.example.com, or http://localhost:8080
 });
 console.log(ur.baseURL);
 ```
 
 ## All constructor options
 
-| Option           | Type                                | Default                                                                        | Meaning                                                               |
-| ---------------- | ----------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| `apiKey`         | `string`                            | `ULTRAROUTER_API_KEY`, then `UR_API_KEY`                                       | The API key. Construction throws `authentication` when none is found. |
-| `baseURL`        | `string`                            | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL`, then `https://api.ultrarouter.dev` | The gateway URL, without `/v1`.                                       |
-| `defaultModel`   | `string`                            | none                                                                           | Used when a chat or embeddings call omits `model`.                    |
-| `defaults`       | `UltraRouterDefaults`               | `{}`                                                                           | Request defaults, each overridable per call (below).                  |
-| `autopilot`      | `'audit' \| 'recommend' \| 'auto'`  | none                                                                           | The one-line routing intent (below).                                  |
-| `bench`          | `string \| { suite, run?, trace? }` | `UR_BENCH*` env                                                                | A Bench capture tag stamped on every request (below).                 |
-| `timeout`        | `number` (ms)                       | `600000`                                                                       | Total time per call: retries and reading the body (a whole stream).   |
-| `maxRetries`     | `number`                            | `2`                                                                            | Retries for retryable failures.                                       |
-| `fetch`          | `FetchLike`                         | `globalThis.fetch`                                                             | A custom `fetch` (tests, proxies, instrumentation).                   |
-| `defaultHeaders` | `Record<string, string>`            | `{}`                                                                           | Headers sent on every request (per-call `headers` win).               |
-| `outcomeStore`   | `OutcomeStore`                      | `MemoryOutcomeStore`                                                           | Where outcome events are persisted before they are sent.              |
-| `reviewerStore`  | `OutcomeStore<QueuedReviewerEvent>` | `MemoryOutcomeStore`                                                           | Where reviewer events are persisted before they are sent.             |
-| `preflightCache` | `{ maxEntries?: number }`           | `{ maxEntries: 1000 }`                                                         | The bound on the `preflight()` cache (LRU); `0` turns it off.         |
+| Option           | Type                                | Default                                                                  | Meaning                                                                                 |
+| ---------------- | ----------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `apiKey`         | `string`                            | `ULTRAROUTER_API_KEY`, then `UR_API_KEY`                                 | The API key. Construction throws `authentication` when none is found.                   |
+| `baseURL`        | `string`                            | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL` (required; no hosted default) | The gateway URL, without `/v1`. Construction throws `configuration` when none is found. |
+| `defaultModel`   | `string`                            | none                                                                     | Used when a chat or embeddings call omits `model`.                                      |
+| `defaults`       | `UltraRouterDefaults`               | `{}`                                                                     | Request defaults, each overridable per call (below).                                    |
+| `autopilot`      | `'audit' \| 'recommend' \| 'auto'`  | none                                                                     | The one-line routing intent (below).                                                    |
+| `bench`          | `string \| { suite, run?, trace? }` | `UR_BENCH*` env                                                          | A Bench capture tag stamped on every request (below).                                   |
+| `timeout`        | `number` (ms)                       | `600000`                                                                 | Total time per call: retries and reading the body (a whole stream).                     |
+| `maxRetries`     | `number`                            | `2`                                                                      | Retries for retryable failures.                                                         |
+| `fetch`          | `FetchLike`                         | `globalThis.fetch`                                                       | A custom `fetch` (tests, proxies, instrumentation).                                     |
+| `defaultHeaders` | `Record<string, string>`            | `{}`                                                                     | Headers sent on every request (per-call `headers` win).                                 |
+| `outcomeStore`   | `OutcomeStore`                      | `MemoryOutcomeStore`                                                     | Where outcome events are persisted before they are sent.                                |
+| `reviewerStore`  | `OutcomeStore<QueuedReviewerEvent>` | `MemoryOutcomeStore`                                                     | Where reviewer events are persisted before they are sent.                               |
+| `preflightCache` | `{ maxEntries?: number }`           | `{ maxEntries: 1000 }`                                                   | The bound on the `preflight()` cache (LRU); `0` turns it off.                           |
 
 ## Request defaults and per-call precedence
 

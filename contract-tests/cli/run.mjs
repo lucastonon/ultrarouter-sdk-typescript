@@ -196,6 +196,32 @@ try {
     `code=${unknown.code} ${unknown.err.slice(0, 120)}`,
   );
 
+  // ── a gateway command without a base URL fails closed (there is no hosted default) ──
+  process.stdout.write('\n=== ur without a base URL (configuration error) ===\n');
+  const scrubbed = { ...process.env };
+  delete scrubbed.ULTRAROUTER_BASE_URL;
+  delete scrubbed.UR_BASE_URL;
+  const noBaseUrl = await new Promise((res) => {
+    // No --base-url flag and no base-URL env: the client constructor throws the configuration error.
+    const child = spawn('node', [CLI, 'flywheel', 'status', '--api-key', 'ur_sk_test_cli'], {
+      env: scrubbed,
+    });
+    let out = '';
+    let err = '';
+    child.stdout.on('data', (d) => (out += d.toString()));
+    child.stderr.on('data', (d) => (err += d.toString()));
+    child.on('close', (code) => res({ code: code ?? 1, out, err }));
+  });
+  check(
+    'a gateway command without a base URL exits 2 and names baseURL, both env vars and the localhost example',
+    noBaseUrl.code === 2 &&
+      noBaseUrl.err.includes('baseURL') &&
+      noBaseUrl.err.includes('ULTRAROUTER_BASE_URL') &&
+      noBaseUrl.err.includes('UR_BASE_URL') &&
+      noBaseUrl.err.includes('http://localhost:8080'),
+    `code=${noBaseUrl.code} err=${noBaseUrl.err.slice(0, 200)}`,
+  );
+
   // ── ur bench run: every flag combination is validated BEFORE capture or network ─────
   process.stdout.write('\n=== ur bench run (argument validation) ===\n');
   const marker = join(tmp, 'capture-ran.txt');

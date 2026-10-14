@@ -93,6 +93,14 @@ describe('action.yml', () => {
     expect(action.inputs['sdk-version']?.default).toBe(pkg.version);
   });
 
+  it('requires base-url and gives it no default (there is no hosted gateway)', () => {
+    const baseUrl = action.inputs['base-url'] as
+      { default?: string; required?: boolean } | undefined;
+    expect(baseUrl).toBeDefined();
+    expect(baseUrl?.required).toBe(true);
+    expect(baseUrl?.default).toBeUndefined();
+  });
+
   it('passes the fork input to both app-ci and flywheel-pr', () => {
     const steps = action.runs.steps.filter((s) => (s.env ?? {})['UR_APPCI_CONFIG'] !== undefined);
     expect(steps.length).toBe(2);

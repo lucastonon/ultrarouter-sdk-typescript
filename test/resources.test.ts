@@ -378,12 +378,31 @@ describe('configuration from the environment', () => {
     );
   });
 
-  it('defaults to the hosted base URL and treats empty env values as unset', () => {
+  it('throws a typed configuration error when no base URL is set (there is no hosted default)', () => {
     vi.stubEnv('ULTRAROUTER_API_KEY', '');
     vi.stubEnv('UR_API_KEY', 'ur_sk_test_env');
     vi.stubEnv('ULTRAROUTER_BASE_URL', '');
     vi.stubEnv('UR_BASE_URL', '');
-    expect(new UltraRouter().baseURL).toBe('https://api.ultrarouter.dev');
+    let thrown: unknown;
+    try {
+      new UltraRouter();
+    } catch (err) {
+      thrown = err;
+    }
+    expect(thrown).toBeInstanceOf(UltraRouterError);
+    const e = thrown as UltraRouterError;
+    expect(e.code).toBe('configuration');
+    // The message names the option, both env vars, and the local-gateway example.
+    expect(e.message).toBe(
+      'missing gateway base URL: pass `baseURL` or set ULTRAROUTER_BASE_URL / UR_BASE_URL (for example http://localhost:8080 for a local gateway)',
+    );
+  });
+
+  it('treats an empty base-URL env value as unset and throws', () => {
+    vi.stubEnv('ULTRAROUTER_API_KEY', 'ur_sk_test_env');
+    vi.stubEnv('ULTRAROUTER_BASE_URL', '');
+    vi.stubEnv('UR_BASE_URL', '');
+    expect(() => new UltraRouter()).toThrow(UltraRouterError);
   });
 
   it('throws a typed authentication error when no key is configured', () => {

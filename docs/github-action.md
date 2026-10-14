@@ -61,13 +61,13 @@ pinned to full commit SHAs.
 
 ### Shared
 
-| Input                | Default                       | Description                                                                                                                                               |
-| -------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mode`               | `bench`                       | Which gate to run: `bench`, `app-ci` or `flywheel-pr`.                                                                                                    |
-| `api-key`            | `''`                          | Your ultrarouter API key. Store it as a secret. Use a test key (`ur_sk_test_…`) for Bench. Passed to the CLI as `UR_API_KEY`.                             |
-| `base-url`           | `https://api.ultrarouter.dev` | The gateway base URL; point it at your own deployment to self-host. Passed as `UR_BASE_URL`.                                                              |
-| `allow-inconclusive` | `false`                       | When `true`, an inconclusive gate (Bench verdict, or the app-ci offline gate) passes instead of failing the job.                                          |
-| `sdk-version`        | `0.0.1` (this release)        | The `@ultrarouter/sdk` version to install for the CLI. Defaults to the version of the action release you reference, so a pinned action runs a pinned CLI. |
+| Input                | Default                | Description                                                                                                                                               |
+| -------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mode`               | `bench`                | Which gate to run: `bench`, `app-ci` or `flywheel-pr`.                                                                                                    |
+| `api-key`            | `''`                   | Your ultrarouter API key. Store it as a secret. Use a test key (`ur_sk_test_…`) for Bench. Passed to the CLI as `UR_API_KEY`.                             |
+| `base-url`           | (required; no default) | The gateway base URL; point it at your own deployment to self-host (there is no hosted gateway). Passed as `UR_BASE_URL`.                                 |
+| `allow-inconclusive` | `false`                | When `true`, an inconclusive gate (Bench verdict, or the app-ci offline gate) passes instead of failing the job.                                          |
+| `sdk-version`        | `0.0.1` (this release) | The `@ultrarouter/sdk` version to install for the CLI. Defaults to the version of the action release you reference, so a pinned action runs a pinned CLI. |
 
 ### `mode: bench`
 
@@ -150,7 +150,7 @@ jobs:
           mode: bench
           suite: checkout
           api-key: ${{ secrets.ULTRAROUTER_TEST_KEY }}
-          base-url: https://api.ultrarouter.dev
+          base-url: https://gateway.example.com
           capture: npm ci && npm run test:e2e
           baseline: bench:main
           budget: '3'

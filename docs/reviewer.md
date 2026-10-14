@@ -224,7 +224,7 @@ BODY='{"reviewer_system":"my-review-queue","events":[{"event_id":"rv-1001","arti
 TS=$(date +%s)
 SIG="sha256=$(printf '%s.%s' "$TS" "$BODY" | openssl dgst -sha256 -hmac "$UR_API_KEY" -hex | sed 's/^.* //')"
 
-curl -sS https://api.ultrarouter.dev/v1/flywheel/reviewer/events \
+curl -sS https://gateway.example.com/v1/flywheel/reviewer/events \
   -H "Authorization: Bearer $UR_API_KEY" \
   -H 'Content-Type: application/json' \
   -H "X-UR-Reviewer-Timestamp: $TS" \

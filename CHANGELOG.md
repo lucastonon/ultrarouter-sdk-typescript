@@ -7,7 +7,19 @@ contain breaking changes; they are always listed under **Changed** or **Removed*
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+
+- **Breaking:** the client now requires a gateway base URL — there is no hosted default. Pass
+  `baseURL`, or set `ULTRAROUTER_BASE_URL` (or `UR_BASE_URL`). When none is configured the
+  `UltraRouter` constructor throws an `UltraRouterError` with code `configuration` whose message
+  names the option, both environment variables, and `http://localhost:8080` as the local-gateway
+  example. The `ur` CLI resolves `--base-url` the same way and fails closed (exit 2) with the same
+  message, and the GitHub Action's `base-url` input is now `required` with no default.
+
+### Removed
+
+- The `DEFAULT_BASE_URL` export and the built-in hosted default gateway URL. ultrarouter is
+  self-hosted; the SDK no longer presents a hosted gateway that does not exist.
 
 ## [0.0.1] - 2026-10-13
 

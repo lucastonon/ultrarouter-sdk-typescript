@@ -180,8 +180,6 @@ import type {
   UltraRouterOptions,
 } from './types.js';
 
-/** The hosted gateway base URL used when neither `baseURL` nor an env var is set. */
-export const DEFAULT_BASE_URL = 'https://api.ultrarouter.dev';
 /** The default total request timeout (ms). */
 export const DEFAULT_TIMEOUT_MS = 600_000;
 /** The default number of retries for a retryable failure. */
@@ -685,11 +683,12 @@ export class UltraRouter {
   readonly recordOutcome: OutcomesResource['record'];
 
   /**
-   * Create a client. Every option is optional: the API key falls back to `ULTRAROUTER_API_KEY`
-   * then `UR_API_KEY`, and the base URL to `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL`, then
-   * `https://api.ultrarouter.dev`.
+   * Create a client. The API key falls back to `ULTRAROUTER_API_KEY` then `UR_API_KEY`, and the
+   * gateway base URL to `ULTRAROUTER_BASE_URL` then `UR_BASE_URL`. There is no hosted default, so a
+   * base URL is required (for example `http://localhost:8080` for a local gateway).
    *
-   * @throws {UltraRouterError} `authentication` when no API key is configured.
+   * @throws {UltraRouterError} `authentication` when no API key is configured, or `configuration`
+   * when no gateway base URL is configured.
    */
   constructor(options: UltraRouterOptions = {}) {
     const apiKey = options.apiKey ?? readEnv('ULTRAROUTER_API_KEY') ?? readEnv('UR_API_KEY');
@@ -702,12 +701,17 @@ export class UltraRouter {
       });
     }
     this.apiKey = apiKey;
-    this.baseURL = (
-      options.baseURL ??
-      readEnv('ULTRAROUTER_BASE_URL') ??
-      readEnv('UR_BASE_URL') ??
-      DEFAULT_BASE_URL
-    ).replace(/\/+$/, '');
+    const baseURL = options.baseURL ?? readEnv('ULTRAROUTER_BASE_URL') ?? readEnv('UR_BASE_URL');
+    if (baseURL === undefined || baseURL === '') {
+      throw new UltraRouterError({
+        code: 'configuration',
+        message:
+          'missing gateway base URL: pass `baseURL` or set ULTRAROUTER_BASE_URL / UR_BASE_URL (for example http://localhost:8080 for a local gateway)',
+        status: 0,
+        retryable: false,
+      });
+    }
+    this.baseURL = baseURL.replace(/\/+$/, '');
     // The Autopilot intent maps onto the config `router` layer. It is the request-layer ceiling:
     // a per-request `router` can only lower autonomy below it.
     this.autopilotMode = options.autopilot;

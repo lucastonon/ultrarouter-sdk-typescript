@@ -6,7 +6,7 @@ Every guide of this package concatenated in reading order, for AI agents (the ge
 
 # @ultrarouter/sdk
 
-The official TypeScript SDK for [ultrarouter](https://ultrarouter.dev), an OpenAI-compatible LLM
+The official TypeScript SDK for ultrarouter, an OpenAI-compatible LLM
 gateway and router. Send chat, streaming, tool-calling, structured-output and embedding requests
 through the gateway with an `openai`-shaped client; read what every request cost and which model
 served it; and use the ultrarouter resources (call types, evals, outcomes, preflight, Bench) from
@@ -35,11 +35,11 @@ npm install @ultrarouter/sdk
 
 ## Quickstart
 
-Set your key (and, if you run your own gateway, its URL):
+Set your key and the URL of the gateway you run (there is no hosted default):
 
 ```bash
 export ULTRAROUTER_API_KEY=ur_sk_test_...
-export ULTRAROUTER_BASE_URL=https://api.ultrarouter.dev   # optional; this is the default
+export ULTRAROUTER_BASE_URL=https://gateway.example.com   # required; or http://localhost:8080 for a local gateway
 ```
 
 ```ts
@@ -62,13 +62,13 @@ these docs are illustrative, and `ur.models.list()` shows what your gateway serv
 
 ## Configuration
 
-| Setting     | Option         | Environment                                | Default                       |
-| ----------- | -------------- | ------------------------------------------ | ----------------------------- |
-| API key     | `apiKey`       | `ULTRAROUTER_API_KEY`, then `UR_API_KEY`   | required                      |
-| Gateway URL | `baseURL`      | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL` | `https://api.ultrarouter.dev` |
-| Model       | `defaultModel` |                                            | none                          |
-| Retries     | `maxRetries`   |                                            | `2`                           |
-| Timeout     | `timeout` (ms) |                                            | `600000`                      |
+| Setting     | Option         | Environment                                | Default                      |
+| ----------- | -------------- | ------------------------------------------ | ---------------------------- |
+| API key     | `apiKey`       | `ULTRAROUTER_API_KEY`, then `UR_API_KEY`   | required                     |
+| Gateway URL | `baseURL`      | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL` | required (no hosted default) |
+| Model       | `defaultModel` |                                            | none                         |
+| Retries     | `maxRetries`   |                                            | `2`                          |
+| Timeout     | `timeout` (ms) |                                            | `600000`                     |
 
 Also: request `defaults` (call type, compression, provider preferences, cost cap), the `autopilot`
 intent, a Bench capture tag, `defaultHeaders`, a custom `fetch`, and durable outcome stores. See
@@ -335,7 +335,7 @@ CommonJS; tested on Node.js 20+ and Deno 2, expected to work (untested) on Bun a
 ```bash
 npm install @ultrarouter/sdk
 export ULTRAROUTER_API_KEY=ur_sk_test_...         # or UR_API_KEY
-export ULTRAROUTER_BASE_URL=https://gateway.example.com  # optional; default https://api.ultrarouter.dev
+export ULTRAROUTER_BASE_URL=https://gateway.example.com  # required; your deployment (or http://localhost:8080 locally)
 ```
 
 ### Canonical patterns
@@ -504,7 +504,7 @@ npm run test:integration  # against a REAL gateway; skipped unless ULTRAROUTER_A
 
 # @ultrarouter/sdk documentation
 
-Guides for the TypeScript SDK of [ultrarouter](https://ultrarouter.dev), an OpenAI-compatible LLM
+Guides for the TypeScript SDK of ultrarouter, an OpenAI-compatible LLM
 gateway and router. Every TypeScript example in these guides is a complete program that is
 type-checked and executed in CI against a local mock gateway.
 
@@ -784,19 +784,21 @@ arguments at all.
 
 ## Environment variables
 
-| Variable                                     | Used for            | Notes                                                                                               |
-| -------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
-| `ULTRAROUTER_API_KEY` (or `UR_API_KEY`)      | The API key         | Required unless you pass `apiKey`. `ULTRAROUTER_API_KEY` wins when both are set.                    |
-| `ULTRAROUTER_BASE_URL` (or `UR_BASE_URL`)    | The gateway URL     | Optional. Defaults to `https://api.ultrarouter.dev`. `ULTRAROUTER_BASE_URL` wins when both are set. |
-| `UR_BENCH`, `UR_BENCH_RUN`, `UR_BENCH_TRACE` | A Bench capture tag | Optional; used when the `bench` option is not passed. See [Bench](./bench.md).                      |
+| Variable                                     | Used for            | Notes                                                                                                          |
+| -------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `ULTRAROUTER_API_KEY` (or `UR_API_KEY`)      | The API key         | Required unless you pass `apiKey`. `ULTRAROUTER_API_KEY` wins when both are set.                               |
+| `ULTRAROUTER_BASE_URL` (or `UR_BASE_URL`)    | The gateway URL     | Required unless you pass `baseURL`; there is no hosted default. `ULTRAROUTER_BASE_URL` wins when both are set. |
+| `UR_BENCH`, `UR_BENCH_RUN`, `UR_BENCH_TRACE` | A Bench capture tag | Optional; used when the `bench` option is not passed. See [Bench](./bench.md).                                 |
 
 Precedence for each setting is: the constructor option, then `ULTRAROUTER_*`, then `UR_*`, then the
-default. Empty environment variables count as unset. The `ur` CLI reads the same variables (and its
+built-in default where there is one. The API key and the base URL have no default — they are
+required, and construction throws when neither the option nor an environment variable supplies them.
+Empty environment variables count as unset. The `ur` CLI reads the same variables (and its
 `--api-key` / `--base-url` flags win over them).
 
 ```bash
 export ULTRAROUTER_API_KEY=ur_sk_test_...
-export ULTRAROUTER_BASE_URL=https://gateway.example.com   # optional: your own deployment
+export ULTRAROUTER_BASE_URL=https://gateway.example.com   # required: your own deployment (or http://localhost:8080 locally)
 ```
 
 ```ts
@@ -834,28 +836,28 @@ import UltraRouter from '@ultrarouter/sdk';
 
 const ur = new UltraRouter({
   apiKey: process.env.ULTRAROUTER_API_KEY,
-  baseURL: process.env.ULTRAROUTER_BASE_URL ?? 'https://api.ultrarouter.dev',
+  baseURL: process.env.ULTRAROUTER_BASE_URL, // e.g. https://gateway.example.com, or http://localhost:8080
 });
 console.log(ur.baseURL);
 ```
 
 ## All constructor options
 
-| Option           | Type                                | Default                                                                        | Meaning                                                               |
-| ---------------- | ----------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| `apiKey`         | `string`                            | `ULTRAROUTER_API_KEY`, then `UR_API_KEY`                                       | The API key. Construction throws `authentication` when none is found. |
-| `baseURL`        | `string`                            | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL`, then `https://api.ultrarouter.dev` | The gateway URL, without `/v1`.                                       |
-| `defaultModel`   | `string`                            | none                                                                           | Used when a chat or embeddings call omits `model`.                    |
-| `defaults`       | `UltraRouterDefaults`               | `{}`                                                                           | Request defaults, each overridable per call (below).                  |
-| `autopilot`      | `'audit' \| 'recommend' \| 'auto'`  | none                                                                           | The one-line routing intent (below).                                  |
-| `bench`          | `string \| { suite, run?, trace? }` | `UR_BENCH*` env                                                                | A Bench capture tag stamped on every request (below).                 |
-| `timeout`        | `number` (ms)                       | `600000`                                                                       | Total time per call: retries and reading the body (a whole stream).   |
-| `maxRetries`     | `number`                            | `2`                                                                            | Retries for retryable failures.                                       |
-| `fetch`          | `FetchLike`                         | `globalThis.fetch`                                                             | A custom `fetch` (tests, proxies, instrumentation).                   |
-| `defaultHeaders` | `Record<string, string>`            | `{}`                                                                           | Headers sent on every request (per-call `headers` win).               |
-| `outcomeStore`   | `OutcomeStore`                      | `MemoryOutcomeStore`                                                           | Where outcome events are persisted before they are sent.              |
-| `reviewerStore`  | `OutcomeStore<QueuedReviewerEvent>` | `MemoryOutcomeStore`                                                           | Where reviewer events are persisted before they are sent.             |
-| `preflightCache` | `{ maxEntries?: number }`           | `{ maxEntries: 1000 }`                                                         | The bound on the `preflight()` cache (LRU); `0` turns it off.         |
+| Option           | Type                                | Default                                                                  | Meaning                                                                                 |
+| ---------------- | ----------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `apiKey`         | `string`                            | `ULTRAROUTER_API_KEY`, then `UR_API_KEY`                                 | The API key. Construction throws `authentication` when none is found.                   |
+| `baseURL`        | `string`                            | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL` (required; no hosted default) | The gateway URL, without `/v1`. Construction throws `configuration` when none is found. |
+| `defaultModel`   | `string`                            | none                                                                     | Used when a chat or embeddings call omits `model`.                                      |
+| `defaults`       | `UltraRouterDefaults`               | `{}`                                                                     | Request defaults, each overridable per call (below).                                    |
+| `autopilot`      | `'audit' \| 'recommend' \| 'auto'`  | none                                                                     | The one-line routing intent (below).                                                    |
+| `bench`          | `string \| { suite, run?, trace? }` | `UR_BENCH*` env                                                          | A Bench capture tag stamped on every request (below).                                   |
+| `timeout`        | `number` (ms)                       | `600000`                                                                 | Total time per call: retries and reading the body (a whole stream).                     |
+| `maxRetries`     | `number`                            | `2`                                                                      | Retries for retryable failures.                                                         |
+| `fetch`          | `FetchLike`                         | `globalThis.fetch`                                                       | A custom `fetch` (tests, proxies, instrumentation).                                     |
+| `defaultHeaders` | `Record<string, string>`            | `{}`                                                                     | Headers sent on every request (per-call `headers` win).                                 |
+| `outcomeStore`   | `OutcomeStore`                      | `MemoryOutcomeStore`                                                     | Where outcome events are persisted before they are sent.                                |
+| `reviewerStore`  | `OutcomeStore<QueuedReviewerEvent>` | `MemoryOutcomeStore`                                                     | Where reviewer events are persisted before they are sent.                               |
+| `preflightCache` | `{ maxEntries?: number }`           | `{ maxEntries: 1000 }`                                                   | The bound on the `preflight()` cache (LRU); `0` turns it off.                           |
 
 ## Request defaults and per-call precedence
 
@@ -2151,7 +2153,7 @@ No SDK needed: use the gateway URL with `/v1` and your ultrarouter key.
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  baseURL: `${process.env.ULTRAROUTER_BASE_URL ?? 'https://api.ultrarouter.dev'}/v1`,
+  baseURL: `${process.env.ULTRAROUTER_BASE_URL}/v1`, // your gateway, e.g. http://localhost:8080
   apiKey: process.env.ULTRAROUTER_API_KEY,
 });
 const models = await openai.models.list();
@@ -3197,7 +3199,7 @@ BODY='{"reviewer_system":"my-review-queue","events":[{"event_id":"rv-1001","arti
 TS=$(date +%s)
 SIG="sha256=$(printf '%s.%s' "$TS" "$BODY" | openssl dgst -sha256 -hmac "$UR_API_KEY" -hex | sed 's/^.* //')"
 
-curl -sS https://api.ultrarouter.dev/v1/flywheel/reviewer/events \
+curl -sS https://gateway.example.com/v1/flywheel/reviewer/events \
   -H "Authorization: Bearer $UR_API_KEY" \
   -H 'Content-Type: application/json' \
   -H "X-UR-Reviewer-Timestamp: $TS" \
@@ -4815,9 +4817,12 @@ the environment.
 | Setting  | Flag               | Environment (first match wins)             | Default                                           |
 | -------- | ------------------ | ------------------------------------------ | ------------------------------------------------- |
 | API key  | `--api-key <key>`  | `ULTRAROUTER_API_KEY`, then `UR_API_KEY`   | none (required by commands that call the gateway) |
-| Base URL | `--base-url <url>` | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL` | `https://api.ultrarouter.dev`                     |
+| Base URL | `--base-url <url>` | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL` | none (required by commands that call the gateway) |
 
-Point `--base-url` at your own deployment to self-host. Commands that only read local files
+Point `--base-url` at your own deployment to self-host. There is no hosted default: a command that
+calls the gateway with no base URL (no `--base-url`, no `ULTRAROUTER_BASE_URL` / `UR_BASE_URL`)
+fails closed with exit 2 and a message naming the flag, both environment variables and
+`http://localhost:8080` as the local-gateway example. Commands that only read local files
 (`ur context lint`, `ur pack validate`) never call the gateway.
 
 `--base-url` and `--api-key` are accepted by every command that calls the gateway, and their value
@@ -5565,13 +5570,13 @@ pinned to full commit SHAs.
 
 ### Shared
 
-| Input                | Default                       | Description                                                                                                                                               |
-| -------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mode`               | `bench`                       | Which gate to run: `bench`, `app-ci` or `flywheel-pr`.                                                                                                    |
-| `api-key`            | `''`                          | Your ultrarouter API key. Store it as a secret. Use a test key (`ur_sk_test_…`) for Bench. Passed to the CLI as `UR_API_KEY`.                             |
-| `base-url`           | `https://api.ultrarouter.dev` | The gateway base URL; point it at your own deployment to self-host. Passed as `UR_BASE_URL`.                                                              |
-| `allow-inconclusive` | `false`                       | When `true`, an inconclusive gate (Bench verdict, or the app-ci offline gate) passes instead of failing the job.                                          |
-| `sdk-version`        | `0.0.1` (this release)        | The `@ultrarouter/sdk` version to install for the CLI. Defaults to the version of the action release you reference, so a pinned action runs a pinned CLI. |
+| Input                | Default                | Description                                                                                                                                               |
+| -------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mode`               | `bench`                | Which gate to run: `bench`, `app-ci` or `flywheel-pr`.                                                                                                    |
+| `api-key`            | `''`                   | Your ultrarouter API key. Store it as a secret. Use a test key (`ur_sk_test_…`) for Bench. Passed to the CLI as `UR_API_KEY`.                             |
+| `base-url`           | (required; no default) | The gateway base URL; point it at your own deployment to self-host (there is no hosted gateway). Passed as `UR_BASE_URL`.                                 |
+| `allow-inconclusive` | `false`                | When `true`, an inconclusive gate (Bench verdict, or the app-ci offline gate) passes instead of failing the job.                                          |
+| `sdk-version`        | `0.0.1` (this release) | The `@ultrarouter/sdk` version to install for the CLI. Defaults to the version of the action release you reference, so a pinned action runs a pinned CLI. |
 
 ### `mode: bench`
 
@@ -5654,7 +5659,7 @@ jobs:
           mode: bench
           suite: checkout
           api-key: ${{ secrets.ULTRAROUTER_TEST_KEY }}
-          base-url: https://api.ultrarouter.dev
+          base-url: https://gateway.example.com
           capture: npm ci && npm run test:e2e
           baseline: bench:main
           budget: '3'
@@ -6394,7 +6399,19 @@ contain breaking changes; they are always listed under **Changed** or **Removed*
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+
+- **Breaking:** the client now requires a gateway base URL — there is no hosted default. Pass
+  `baseURL`, or set `ULTRAROUTER_BASE_URL` (or `UR_BASE_URL`). When none is configured the
+  `UltraRouter` constructor throws an `UltraRouterError` with code `configuration` whose message
+  names the option, both environment variables, and `http://localhost:8080` as the local-gateway
+  example. The `ur` CLI resolves `--base-url` the same way and fails closed (exit 2) with the same
+  message, and the GitHub Action's `base-url` input is now `required` with no default.
+
+### Removed
+
+- The `DEFAULT_BASE_URL` export and the built-in hosted default gateway URL. ultrarouter is
+  self-hosted; the SDK no longer presents a hosted gateway that does not exist.
 
 ## [0.0.1] - 2026-10-13
 

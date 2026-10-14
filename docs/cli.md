@@ -54,9 +54,12 @@ the environment.
 | Setting  | Flag               | Environment (first match wins)             | Default                                           |
 | -------- | ------------------ | ------------------------------------------ | ------------------------------------------------- |
 | API key  | `--api-key <key>`  | `ULTRAROUTER_API_KEY`, then `UR_API_KEY`   | none (required by commands that call the gateway) |
-| Base URL | `--base-url <url>` | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL` | `https://api.ultrarouter.dev`                     |
+| Base URL | `--base-url <url>` | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL` | none (required by commands that call the gateway) |
 
-Point `--base-url` at your own deployment to self-host. Commands that only read local files
+Point `--base-url` at your own deployment to self-host. There is no hosted default: a command that
+calls the gateway with no base URL (no `--base-url`, no `ULTRAROUTER_BASE_URL` / `UR_BASE_URL`)
+fails closed with exit 2 and a message naming the flag, both environment variables and
+`http://localhost:8080` as the local-gateway example. Commands that only read local files
 (`ur context lint`, `ur pack validate`) never call the gateway.
 
 `--base-url` and `--api-key` are accepted by every command that calls the gateway, and their value

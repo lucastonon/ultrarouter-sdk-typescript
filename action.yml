@@ -63,9 +63,8 @@ inputs:
     required: false
     default: ''
   base-url:
-    description: 'The ultrarouter gateway base URL (point it at your own deployment to self-host).'
-    required: false
-    default: 'https://api.ultrarouter.dev'
+    description: 'The ultrarouter gateway base URL (point it at your own deployment to self-host). Required: there is no hosted gateway.'
+    required: true
   baseline:
     description: >-
       The baseline to compare against: a `br_*` run id, or a symbolic ref (for example

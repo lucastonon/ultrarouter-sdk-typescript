@@ -1,6 +1,6 @@
 # @ultrarouter/sdk
 
-The official TypeScript SDK for [ultrarouter](https://ultrarouter.dev), an OpenAI-compatible LLM
+The official TypeScript SDK for ultrarouter, an OpenAI-compatible LLM
 gateway and router. Send chat, streaming, tool-calling, structured-output and embedding requests
 through the gateway with an `openai`-shaped client; read what every request cost and which model
 served it; and use the ultrarouter resources (call types, evals, outcomes, preflight, Bench) from
@@ -29,11 +29,11 @@ npm install @ultrarouter/sdk
 
 ## Quickstart
 
-Set your key (and, if you run your own gateway, its URL):
+Set your key and the URL of the gateway you run (there is no hosted default):
 
 ```bash
 export ULTRAROUTER_API_KEY=ur_sk_test_...
-export ULTRAROUTER_BASE_URL=https://api.ultrarouter.dev   # optional; this is the default
+export ULTRAROUTER_BASE_URL=https://gateway.example.com   # required; or http://localhost:8080 for a local gateway
 ```
 
 ```ts
@@ -56,13 +56,13 @@ these docs are illustrative, and `ur.models.list()` shows what your gateway serv
 
 ## Configuration
 
-| Setting     | Option         | Environment                                | Default                       |
-| ----------- | -------------- | ------------------------------------------ | ----------------------------- |
-| API key     | `apiKey`       | `ULTRAROUTER_API_KEY`, then `UR_API_KEY`   | required                      |
-| Gateway URL | `baseURL`      | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL` | `https://api.ultrarouter.dev` |
-| Model       | `defaultModel` |                                            | none                          |
-| Retries     | `maxRetries`   |                                            | `2`                           |
-| Timeout     | `timeout` (ms) |                                            | `600000`                      |
+| Setting     | Option         | Environment                                | Default                      |
+| ----------- | -------------- | ------------------------------------------ | ---------------------------- |
+| API key     | `apiKey`       | `ULTRAROUTER_API_KEY`, then `UR_API_KEY`   | required                     |
+| Gateway URL | `baseURL`      | `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL` | required (no hosted default) |
+| Model       | `defaultModel` |                                            | none                         |
+| Retries     | `maxRetries`   |                                            | `2`                          |
+| Timeout     | `timeout` (ms) |                                            | `600000`                     |
 
 Also: request `defaults` (call type, compression, provider preferences, cost cap), the `autopilot`
 intent, a Bench capture tag, `defaultHeaders`, a custom `fetch`, and durable outcome stores. See

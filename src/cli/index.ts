@@ -23,7 +23,8 @@ import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from '
 import { tmpdir } from 'node:os';
 import { isAbsolute, join, relative as relativePath, resolve as resolvePath } from 'node:path';
 
-import { DEFAULT_BASE_URL, UltraRouter } from '../client.js';
+import { UltraRouter } from '../client.js';
+import { UltraRouterError } from '../errors.js';
 import { VERSION } from '../version.js';
 import type { BenchCompareGate } from '../types.js';
 
@@ -153,11 +154,20 @@ function resolveApiKey(argv: readonly string[]): string | undefined {
   return flagValue(argv, 'api-key') ?? env('ULTRAROUTER_API_KEY') ?? env('UR_API_KEY');
 }
 
-/** Build an UltraRouter client from flags + env. */
+/**
+ * Build an UltraRouter client from flags + env. There is no default base URL: when none is
+ * resolved the `UltraRouter` constructor throws a `configuration` {@link UltraRouterError} whose
+ * message names `baseURL`, both env vars and the `http://localhost:8080` example. The gateway
+ * commands let that surface as a fail-closed error (exit 2); `app-ci` / `flywheel-pr` catch it and
+ * run offline.
+ */
 function makeClient(argv: readonly string[]): UltraRouter {
-  const baseURL = resolveBaseUrl(argv) ?? DEFAULT_BASE_URL;
+  const baseURL = resolveBaseUrl(argv);
   const apiKey = resolveApiKey(argv);
-  return new UltraRouter({ baseURL, ...(apiKey !== undefined ? { apiKey } : {}) });
+  return new UltraRouter({
+    ...(baseURL !== undefined ? { baseURL } : {}),
+    ...(apiKey !== undefined ? { apiKey } : {}),
+  });
 }
 
 /** Spawn `<cmd>` in a shell with the bench env layered on top of the current process env. */
@@ -1898,6 +1908,10 @@ main(process.argv.slice(2))
     process.exitCode = code;
   })
   .catch((e: unknown) => {
-    process.stderr.write(`fatal: ${e instanceof Error ? e.message : String(e)}\n`);
+    // A structured UltraRouterError (today: a missing base URL / API key, surfaced from the client
+    // constructor) is an expected configuration failure — report it as a clean `error:` line, not a
+    // crash. Either way, fail closed (exit 2): the CLI never reports success on an error it hit.
+    const prefix = e instanceof UltraRouterError ? 'error' : 'fatal';
+    process.stderr.write(`${prefix}: ${e instanceof Error ? e.message : String(e)}\n`);
     process.exitCode = EXIT.GATE; // fail closed
   });

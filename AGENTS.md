@@ -17,7 +17,7 @@ CommonJS; tested on Node.js 20+ and Deno 2, expected to work (untested) on Bun a
 ```bash
 npm install @ultrarouter/sdk
 export ULTRAROUTER_API_KEY=ur_sk_test_...         # or UR_API_KEY
-export ULTRAROUTER_BASE_URL=https://gateway.example.com  # optional; default https://api.ultrarouter.dev
+export ULTRAROUTER_BASE_URL=https://gateway.example.com  # required; your deployment (or http://localhost:8080 locally)
 ```
 
 ### Canonical patterns

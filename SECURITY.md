@@ -12,9 +12,8 @@ Before 1.0.0 only the latest release receives fixes.
 
 Please report security issues privately. Do not open a public issue for a vulnerability.
 
-- Use GitHub's private vulnerability reporting on this repository
-  (**Security → Report a vulnerability**), or
-- email the maintainers through the contact listed at https://ultrarouter.dev.
+Use GitHub's private vulnerability reporting on this repository (**Security → Report a
+vulnerability**).
 
 Include the SDK version, your runtime (Node.js, Bun, Deno or an edge runtime and its version), a
 minimal reproduction, and the impact you observed. Never include real API keys, prompts or customer

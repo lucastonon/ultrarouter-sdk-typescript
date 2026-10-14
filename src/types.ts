@@ -876,8 +876,10 @@ export interface UltraRouterOptions {
   /** The API key (`ur_sk_live_…` / `ur_sk_test_…`). Falls back to `ULTRAROUTER_API_KEY`, then `UR_API_KEY`. */
   apiKey?: string | undefined;
   /**
-   * The gateway base URL, without `/v1`. Falls back to `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL`, then
-   * `https://api.ultrarouter.dev`. Point it at your own deployment to self-host.
+   * The gateway base URL, without `/v1`. Falls back to `ULTRAROUTER_BASE_URL`, then `UR_BASE_URL`.
+   * There is no hosted default, so one of these is required (for example `http://localhost:8080`
+   * for a local gateway); construction throws `configuration` when none is set. Point it at your own
+   * deployment to self-host.
    */
   baseURL?: string | undefined;
   /** The model used when a call omits `model`. */

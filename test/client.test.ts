@@ -69,10 +69,28 @@ describe('UltraRouter — construction', () => {
     expect(() => new UltraRouter()).toThrow(UltraRouterError);
   });
 
+  it('throws a configuration error naming baseURL and both env vars when no base URL is set', () => {
+    vi.stubEnv('ULTRAROUTER_BASE_URL', '');
+    vi.stubEnv('UR_BASE_URL', '');
+    let thrown: unknown;
+    try {
+      new UltraRouter({ apiKey: 'ur_sk_test_env' });
+    } catch (err) {
+      thrown = err;
+    }
+    expect(thrown).toBeInstanceOf(UltraRouterError);
+    const e = thrown as UltraRouterError;
+    expect(e.code).toBe('configuration');
+    expect(e.message).toContain('baseURL');
+    expect(e.message).toContain('ULTRAROUTER_BASE_URL');
+    expect(e.message).toContain('UR_BASE_URL');
+    expect(e.message).toContain('http://localhost:8080');
+  });
+
   it('reads the API key from ULTRAROUTER_API_KEY', async () => {
     vi.stubEnv('ULTRAROUTER_API_KEY', 'ur_sk_test_env');
     const { fetch, last } = recordingFetch(CHAT_RESPONSE);
-    const ur = new UltraRouter({ fetch });
+    const ur = new UltraRouter({ baseURL: 'http://gw', fetch });
     await ur.chat.completions.create({ model: 'm', messages: [{ role: 'user', content: 'hi' }] });
     expect(last().headers['authorization']).toBe('Bearer ur_sk_test_env');
   });
@@ -113,7 +131,7 @@ describe('UltraRouter — method surface mirrors openai v5', () => {
         }),
         { status: 200, headers: { 'content-type': 'text/event-stream' } },
       );
-    const ur = new UltraRouter({ apiKey: 'k', fetch });
+    const ur = new UltraRouter({ apiKey: 'k', baseURL: 'http://gw', fetch });
     const stream = await ur.chat.completions.create({
       model: 'm',
       messages: [{ role: 'user', content: 'hi' }],

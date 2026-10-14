@@ -60,7 +60,7 @@ No SDK needed: use the gateway URL with `/v1` and your ultrarouter key.
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  baseURL: `${process.env.ULTRAROUTER_BASE_URL ?? 'https://api.ultrarouter.dev'}/v1`,
+  baseURL: `${process.env.ULTRAROUTER_BASE_URL}/v1`, // your gateway, e.g. http://localhost:8080
   apiKey: process.env.ULTRAROUTER_API_KEY,
 });
 const models = await openai.models.list();

@@ -84,9 +84,11 @@ export function parseGatewayErrorEnvelope(body: unknown): GatewayErrorEnvelope |
 export class UltraRouterError extends Error {
   /**
    * The stable error code: one of {@link GATEWAY_ERROR_CODES}; `connection`, `timeout` or `aborted`
-   * for a transport failure, a deadline or a caller abort; `invalid_response` for an unparseable
-   * response; `invalid_request` for a request refused before sending; or `http_<status>` when a
-   * non-gateway component (a proxy, a load balancer) answered without the JSON envelope.
+   * for a transport failure, a deadline or a caller abort; `configuration` for a missing client
+   * setting the SDK needs before it can send anything (today, no gateway base URL);
+   * `invalid_response` for an unparseable response; `invalid_request` for a request refused before
+   * sending; or `http_<status>` when a non-gateway component (a proxy, a load balancer) answered
+   * without the JSON envelope.
    */
   readonly code: string;
   /** HTTP status of the failed response (`0` for a transport or timeout error). */

@@ -1,6 +1,6 @@
 # @ultrarouter/sdk documentation
 
-Guides for the TypeScript SDK of [ultrarouter](https://ultrarouter.dev), an OpenAI-compatible LLM
+Guides for the TypeScript SDK of ultrarouter, an OpenAI-compatible LLM
 gateway and router. Every TypeScript example in these guides is a complete program that is
 type-checked and executed in CI against a local mock gateway.
 
