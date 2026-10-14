@@ -1,0 +1,77 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ur bench run — versioned --json (snapshot) > builds a stable, versioned JSON object 1`] = `
+{
+  "allow_inconclusive": false,
+  "baseline_ref": "bench:main",
+  "baseline_run_id": "br_base1",
+  "bench_run_id": "br_run1",
+  "compare": true,
+  "error": null,
+  "exit_code": 0,
+  "gate": {
+    "baseline_run_id": "br_base1",
+    "bench_run_id": "br_run1",
+    "call_types": [
+      {
+        "baseline_eval_run_id": "er_base",
+        "call_type_id": "ct_checkout",
+        "cost": "pass",
+        "cost_ceiling": {
+          "breached": false,
+          "ceiling_micro_usd": null,
+          "enabled": false,
+          "observed_mean_micro_usd": null,
+        },
+        "cost_interval": {
+          "bar": 0.1,
+          "clusters": 40,
+          "high": 0.35,
+          "low": 0.25,
+          "n": 40,
+          "point": 0.3,
+        },
+        "cost_min_savings": 0.1,
+        "eval_run_id": "er_cand",
+        "mde_pp": 2.3,
+        "pairing": {
+          "candidate_items": 40,
+          "eligible_clusters": 40,
+          "eligible_pairs": 40,
+          "ineligible_missing_artifact": 0,
+          "unpaired": 0,
+        },
+        "quality": "pass",
+        "quality_interval": {
+          "bar": -0.05,
+          "clusters": 40,
+          "high": 0.03,
+          "low": 0.01,
+          "n": 40,
+          "point": 0.02,
+        },
+        "quality_margin_pp": 5,
+        "reasons": [],
+        "verdict": "pass",
+      },
+    ],
+    "cost_ceiling_micro_usd": null,
+    "entitlement": {
+      "gate_entitled": true,
+      "max_candidates": null,
+      "max_items_per_call_type": null,
+      "notice": null,
+      "plan": "team",
+      "run_count_limit": null,
+      "run_count_used": null,
+    },
+    "object": "bench_compare_gate",
+    "reasons": [],
+    "verdict": "pass",
+  },
+  "run_tag": "abc123",
+  "schema": "ur.bench.gate.v1",
+  "suite": "checkout",
+  "verdict": "pass",
+}
+`;

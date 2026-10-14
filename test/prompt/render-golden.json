@@ -1,0 +1,197 @@
+[
+  {
+    "case": {
+      "template": "no slots here",
+      "variables": [],
+      "vars": {}
+    },
+    "result": {
+      "ok": true,
+      "text": "no slots here"
+    }
+  },
+  {
+    "case": {
+      "template": "You are a {{role}} assistant.",
+      "variables": [
+        {
+          "name": "role",
+          "required": true
+        }
+      ],
+      "vars": {
+        "role": "support"
+      }
+    },
+    "result": {
+      "ok": true,
+      "text": "You are a support assistant."
+    }
+  },
+  {
+    "case": {
+      "template": "You are a {{role}} assistant.",
+      "variables": [
+        {
+          "name": "role",
+          "required": true
+        }
+      ],
+      "vars": {}
+    },
+    "result": {
+      "ok": false,
+      "missing": [
+        "role"
+      ]
+    }
+  },
+  {
+    "case": {
+      "template": "Tone: {{tone}}.",
+      "variables": [
+        {
+          "name": "tone",
+          "required": false
+        }
+      ],
+      "vars": {}
+    },
+    "result": {
+      "ok": true,
+      "text": "Tone: ."
+    }
+  },
+  {
+    "case": {
+      "template": "You are a {{role}} for {{brand}}. Be {{tone}}.",
+      "variables": [
+        {
+          "name": "role",
+          "required": true
+        },
+        {
+          "name": "brand",
+          "required": true
+        },
+        {
+          "name": "tone",
+          "required": false
+        }
+      ],
+      "vars": {
+        "tone": "concise"
+      }
+    },
+    "result": {
+      "ok": false,
+      "missing": [
+        "brand",
+        "role"
+      ]
+    }
+  },
+  {
+    "case": {
+      "template": "undeclared {{slot}} renders empty",
+      "variables": [],
+      "vars": {}
+    },
+    "result": {
+      "ok": true,
+      "text": "undeclared  renders empty"
+    }
+  },
+  {
+    "case": {
+      "template": "no reference to the required var",
+      "variables": [
+        {
+          "name": "must",
+          "required": true
+        }
+      ],
+      "vars": {}
+    },
+    "result": {
+      "ok": false,
+      "missing": [
+        "must"
+      ]
+    }
+  },
+  {
+    "case": {
+      "template": "count is {{count}}",
+      "variables": [
+        {
+          "name": "count",
+          "required": true
+        }
+      ],
+      "vars": {
+        "count": 42
+      }
+    },
+    "result": {
+      "ok": true,
+      "text": "count is 42"
+    }
+  },
+  {
+    "case": {
+      "template": "{{x}} and {{x}} again",
+      "variables": [
+        {
+          "name": "x",
+          "required": true
+        }
+      ],
+      "vars": {
+        "x": "A"
+      }
+    },
+    "result": {
+      "ok": true,
+      "text": "A and A again"
+    }
+  },
+  {
+    "case": {
+      "template": "padded {{ name }} slot",
+      "variables": [
+        {
+          "name": "name",
+          "required": true
+        }
+      ],
+      "vars": {
+        "name": "Acme"
+      }
+    },
+    "result": {
+      "ok": true,
+      "text": "padded Acme slot"
+    }
+  },
+  {
+    "case": {
+      "template": "null is treated as missing: {{a}}",
+      "variables": [
+        {
+          "name": "a",
+          "required": true
+        }
+      ],
+      "vars": {
+        "a": null
+      }
+    },
+    "result": {
+      "ok": false,
+      "missing": [
+        "a"
+      ]
+    }
+  }
+]

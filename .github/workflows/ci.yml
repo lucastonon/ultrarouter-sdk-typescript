@@ -1,0 +1,95 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: check (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # the leak scan reads every commit, not just the tip
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: v2.x
+      - name: Install
+        run: npm ci
+      - name: Spec header (openapi/openapi.yaml is an untouched synced artifact)
+        run: npm run spec:check
+      - name: Format
+        run: npm run format:check
+      - name: Typecheck (src, tests, context entry, examples)
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Contract batteries (built package and CLI, hermetic)
+        run: npm run contract
+      - name: Doctest (TS/JS programs and CLI shell blocks in README, AGENTS.md and docs/; skips listed)
+        run: npm run doctest
+      - name: Examples
+        run: npm run examples
+      - name: Generated docs are current + forbidden-claim lint
+        run: npm run docs:check
+      - name: Size budgets
+        run: npm run size
+      - name: Pack smoke (tarball → consumer → ESM, CJS, tsc, CLI, npx, OpenAI, Deno)
+        env:
+          UR_SMOKE_REQUIRE_DENO: '1'
+        run: npm run smoke
+      - name: Leak scan (tree + full history + npm tarball)
+        # The maintainers' extra patterns are optional here (a fork has none); when the secret is
+        # set they are written to a temp file and their hits are redacted from the public log.
+        env:
+          LEAK_PATTERNS_JSON: ${{ secrets.LEAK_PATTERNS_JSON }}
+        run: |
+          set -euo pipefail
+          if [ -n "${LEAK_PATTERNS_JSON:-}" ]; then
+            patterns="$(mktemp)"
+            trap 'rm -f "$patterns"' EXIT
+            printf '%s' "$LEAK_PATTERNS_JSON" > "$patterns"
+            export ULTRAROUTER_LEAK_PATTERNS_FILE="$patterns"
+          fi
+          node scripts/leak-scan.mjs --redact-external
+
+  integration:
+    name: integration (real gateway, opt-in)
+    # Runs only when a maintainer configures a gateway for it; skipped cleanly otherwise.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Integration suite (skips when the secrets are not set)
+        env:
+          ULTRAROUTER_API_KEY: ${{ secrets.ULTRAROUTER_INTEGRATION_API_KEY }}
+          ULTRAROUTER_BASE_URL: ${{ secrets.ULTRAROUTER_INTEGRATION_BASE_URL }}
+          ULTRAROUTER_INTEGRATION_MODEL: ${{ vars.ULTRAROUTER_INTEGRATION_MODEL }}
+        run: npm run test:integration

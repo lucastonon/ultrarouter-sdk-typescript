@@ -1,0 +1,56 @@
+# ultrarouter TypeScript SDK (@ultrarouter/sdk)
+
+> The official TypeScript SDK for ultrarouter, an OpenAI-compatible LLM gateway and router. Version 0.0.1, MIT licensed, zero runtime dependencies, ESM and CommonJS, Node.js 20+ and Deno 2 (tested; Bun and edge runtimes untested).
+
+Install with `npm install @ultrarouter/sdk`. Configure with the `ULTRAROUTER_API_KEY` environment variable (and `ULTRAROUTER_BASE_URL` for your own deployment). `new UltraRouter()` exposes `chat.completions.create`, `embeddings.create`, `models.list` / `models.retrieve` (the OpenAI shapes), the ultrarouter resources under `ur.*`, a typed `request()` for any API operation, and `asOpenAI()` for the official `openai` client. The `@ultrarouter/sdk/context` entry is a pure context runtime. The package also ships the `ur` CLI and a GitHub Action. Agents: read AGENTS.md first.
+
+## Start here
+
+- [@ultrarouter/sdk](README.md): The official TypeScript SDK for ultrarouter, an OpenAI-compatible LLM gateway and router.
+- [AGENTS.md — using and changing `@ultrarouter/sdk`](AGENTS.md): This file is for AI coding agents (and humans who like short, exact instructions).
+- [@ultrarouter/sdk documentation](docs/README.md): Guides for the TypeScript SDK of ultrarouter, an OpenAI-compatible LLM gateway and router.
+
+## Guides
+
+- [Installation and runtimes](docs/installation.md): `@ultrarouter/sdk` has zero runtime dependencies and talks to the gateway with the platform `fetch`.
+- [Configuration](docs/configuration.md): Everything about a client is set when you construct it, and every request-shaping setting can be overridden per call.
+- [Chat completions](docs/chat-completions.md): `ur.chat.completions.create(params, options?)` sends a chat request through the gateway (`POST /v1/chat/completions`).
+- [Streaming](docs/streaming.md): Pass `stream: true` to `ur.chat.completions.create()` and you get an async iterable of `chat.completion.chunk` objects instead of a completion.
+- [Tools (function calling)](docs/tools.md): Tools let the model ask your code to do something: look up an order, call an API, run a query.
+- [Structured outputs](docs/structured-outputs.md): Ask the model for JSON with `response_format`.
+- [Embeddings](docs/embeddings.md): `ur.embeddings.create(params, options?)` turns text into vectors (`POST /v1/embeddings`).
+- [Models](docs/models.md): The model catalog is what your API key can use through the gateway: each model's id, context window, capabilities, pricing and provenance.
+- [Errors](docs/errors.md): Every method of the client rejects with an `UltraRouterError` (or its subclass `ModelUnpricedError`) when something goes wrong.
+- [Retries, timeouts and idempotency](docs/retries-timeouts-idempotency.md): The SDK's transport retries transient failures automatically, bounds every call with a total timeout, lets you cancel with an `AbortSignal`, and attaches an idempotency key to writes so a retried POST can never execute twice.
+- [OpenAI compatibility](docs/openai-compatibility.md): The gateway speaks the OpenAI HTTP API under `/v1`, and this SDK mirrors the `openai` client's shape.
+- [Testing your app](docs/testing.md): Unit tests should never call a real gateway or a real model provider.
+- [Troubleshooting and FAQ](docs/troubleshooting.md): Each entry names the symptom, the cause, and the fix.
+
+## ultrarouter resources
+
+- [Call types](docs/call-types.md): A **call type** is a stable name for one kind of request your application makes, for example `support-reply` or `invoice-triage`.
+- [Feedback, generation stats and key info](docs/feedback-and-generation.md): Three small reads and writes that work on any request the gateway served:
+- [Outcomes and artifacts](docs/outcomes.md): Model calls are only half of the story; what matters is what happened to the thing your application produced.
+- [Reviewer decisions](docs/reviewer.md): Your people already approve, reject or edit what the model drafts: in a review queue, an admin page, a ticket workflow.
+- [Learning status, verdict sources and oracles](docs/learning.md): ultrarouter learns from the outcomes you record: which models are enough for a call type, which learned context helps, which past cases answer a new request.
+- [History imports](docs/imports.md): You do not have to route traffic through the gateway before ultrarouter can see it.
+- [Preflight and learned context](docs/preflight.md): Not every call goes through the gateway. If your application calls a model provider directly, it can still use what ultrarouter knows by asking **before** the call:
+- [Bench](docs/bench.md): **Bench** turns real captured traffic into a frozen, versioned evaluation dataset and runs paired comparisons over it: your current configuration against challenger models, or a new configuration against a pinned baseline.
+- [Context runtime (`@ultrarouter/sdk/context`)](docs/context-runtime.md): `@ultrarouter/sdk/context` is a pure library for describing and assembling the context a model call is built from.
+- [Typed requests for any operation](docs/typed-requests.md): The client has dedicated methods for the common operations.
+
+## Tools
+
+- [The `ur` CLI](docs/cli.md): The package ships a command-line tool, `ur`, for the jobs that belong in a terminal or a CI pipeline: gating a build on a Bench comparison, running your application tests as a pull-request check, carrying a flywheel candidate into a …
+- [GitHub Action](docs/github-action.md): This repository is also a GitHub Action (`action.yml` at the repository root).
+
+## Reference
+
+- [API coverage](docs/api-coverage.md): Every operation in the published OpenAPI document (`openapi/openapi.yaml`) and how this SDK reaches it.
+- [API reference](docs/api/README.md): Generated from the TypeScript sources by `scripts/gen-docs.mjs`.
+- [API reference: `@ultrarouter/sdk`](docs/api/sdk.md): Generated from the TypeScript sources and their TSDoc by `scripts/gen-docs.mjs` (do not edit by hand).
+- [API reference: `@ultrarouter/sdk/context`](docs/api/context.md): Generated from the TypeScript sources and their TSDoc by `scripts/gen-docs.mjs` (do not edit by hand).
+
+## Optional
+
+- [Changelog](CHANGELOG.md): All notable changes to `@ultrarouter/sdk` are documented here.

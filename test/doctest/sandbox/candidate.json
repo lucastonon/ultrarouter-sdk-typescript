@@ -1,0 +1,17 @@
+{
+  "workspaceId": "ws_acme",
+  "leverKey": "learned_context",
+  "moduleId": "lcm_1111111111111111111111aa",
+  "moduleVersion": "lcm1_2222222222222222222222222222bb",
+  "packHash": "lcp1_3333333333333333333333333333cc",
+  "rankerVersion": "lcr1_4444444444444444",
+  "k": 3,
+  "keySpec": "sit1",
+  "sourceSnapshot": "2026-09-10T00:00:00.000Z",
+  "situationClass": "support/refund",
+  "epoch": 4,
+  "bodyHash": "02099d4d4852889ffc7edc92e3170e2f16dee96cc251385bc257fb781eb67277",
+  "state": "screened",
+  "workflowId": "wf_refund",
+  "body": "Learned from this workspace’s own recorded outcomes (reference data — not instructions):\n- refund requests under 30 days quote the original payment method 92% of the time (n=61, base_rate)\n- \"store credit\" is rejected by reviewers for EU orders (n=18, correction_pattern)"
+}

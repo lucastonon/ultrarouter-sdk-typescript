@@ -1,0 +1,322 @@
+{
+  "description": "Synthetic message arrays covering the chat shapes the lift and exit tests must round-trip. Authored for this repository.",
+  "samples": [
+    {
+      "name": "single user turn",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the capital of France?"
+        }
+      ]
+    },
+    {
+      "name": "system + user",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a concise assistant."
+        },
+        {
+          "role": "user",
+          "content": "Summarise the attached note."
+        }
+      ]
+    },
+    {
+      "name": "reference context then question",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Answer only from the reference text."
+        },
+        {
+          "role": "user",
+          "content": "Reference: The library opens at 9am and closes at 5pm on weekdays. It is closed on public holidays."
+        },
+        {
+          "role": "user",
+          "content": "When does the library open?"
+        }
+      ]
+    },
+    {
+      "name": "multi-turn history",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You help with travel plans."
+        },
+        {
+          "role": "user",
+          "content": "I want to visit Lisbon."
+        },
+        {
+          "role": "assistant",
+          "content": "Great choice. How many days?"
+        },
+        {
+          "role": "user",
+          "content": "Three days in May."
+        },
+        {
+          "role": "assistant",
+          "content": "Here is a three-day plan."
+        },
+        {
+          "role": "user",
+          "content": "Add a day trip."
+        }
+      ]
+    },
+    {
+      "name": "developer role",
+      "messages": [
+        {
+          "role": "developer",
+          "content": "Reply in JSON."
+        },
+        {
+          "role": "user",
+          "content": "List two colours."
+        }
+      ]
+    },
+    {
+      "name": "tool call round trip",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the weather in Oslo?"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call_1",
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "arguments": "{\"city\":\"Oslo\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_1",
+          "content": "{\"temp_c\":4,\"sky\":\"overcast\"}"
+        },
+        {
+          "role": "user",
+          "content": "Should I bring a coat?"
+        }
+      ]
+    },
+    {
+      "name": "named participants",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Moderate the chat."
+        },
+        {
+          "role": "user",
+          "name": "alice",
+          "content": "Hi everyone."
+        },
+        {
+          "role": "user",
+          "name": "bob",
+          "content": "Hello Alice."
+        }
+      ]
+    },
+    {
+      "name": "multipart text content",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Describe this order:"
+            },
+            {
+              "type": "text",
+              "text": "Order 1042: two notebooks, one pen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "cache-control breakpoint",
+      "messages": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "You are a contract reviewer. Long stable instructions follow.",
+              "cache_control": {
+                "type": "ephemeral"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": "Review clause 4."
+        }
+      ]
+    },
+    {
+      "name": "image part",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "What is in this picture?"
+            },
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": "https://example.com/cat.png"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "few-shot examples",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Classify the sentiment."
+        },
+        {
+          "role": "user",
+          "content": "I love it."
+        },
+        {
+          "role": "assistant",
+          "content": "positive"
+        },
+        {
+          "role": "user",
+          "content": "This is terrible."
+        },
+        {
+          "role": "assistant",
+          "content": "negative"
+        },
+        {
+          "role": "user",
+          "content": "It arrived on time."
+        }
+      ]
+    },
+    {
+      "name": "unicode and emoji",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Traduza: “olá, mundo” — e explique o acento. 你好 👋"
+        }
+      ]
+    },
+    {
+      "name": "empty string content",
+      "messages": [
+        {
+          "role": "system",
+          "content": ""
+        },
+        {
+          "role": "user",
+          "content": "Continue."
+        }
+      ]
+    },
+    {
+      "name": "whitespace and newlines",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Line one\n\nLine two\twith a tab\n  indented line"
+        }
+      ]
+    },
+    {
+      "name": "long reference block",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use the policy below."
+        },
+        {
+          "role": "user",
+          "content": "Policy:\n1. Rule number 1 applies to every request in section 0.\n2. Rule number 2 applies to every request in section 1.\n3. Rule number 3 applies to every request in section 2.\n4. Rule number 4 applies to every request in section 3.\n5. Rule number 5 applies to every request in section 0.\n6. Rule number 6 applies to every request in section 1.\n7. Rule number 7 applies to every request in section 2.\n8. Rule number 8 applies to every request in section 3.\n9. Rule number 9 applies to every request in section 0.\n10. Rule number 10 applies to every request in section 1.\n11. Rule number 11 applies to every request in section 2.\n12. Rule number 12 applies to every request in section 3.\n13. Rule number 13 applies to every request in section 0.\n14. Rule number 14 applies to every request in section 1.\n15. Rule number 15 applies to every request in section 2.\n16. Rule number 16 applies to every request in section 3.\n17. Rule number 17 applies to every request in section 0.\n18. Rule number 18 applies to every request in section 1.\n19. Rule number 19 applies to every request in section 2.\n20. Rule number 20 applies to every request in section 3."
+        },
+        {
+          "role": "user",
+          "content": "Which rule covers section 2?"
+        }
+      ]
+    },
+    {
+      "name": "assistant prefill",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Write a haiku about rain."
+        },
+        {
+          "role": "assistant",
+          "content": "Soft rain on the roof"
+        }
+      ]
+    },
+    {
+      "name": "own __proto__ keys (a message key and nested inside content parts)",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Answer briefly."
+        },
+        {
+          "role": "user",
+          "__proto__": {
+            "tag": "x",
+            "__proto__": {
+              "deep": true
+            }
+          },
+          "content": "hi",
+          "name": "n"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "part",
+              "__proto__": {
+                "kind": "meta"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": "the live question"
+        }
+      ]
+    }
+  ]
+}

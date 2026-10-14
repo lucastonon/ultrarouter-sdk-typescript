@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "typeRoots": ["../node_modules/@types"],
+    "baseUrl": ".",
+    "paths": {
+      "@ultrarouter/sdk": ["../src/index.ts"],
+      "@ultrarouter/sdk/context": ["../src/context.ts"],
+      "openai": ["../node_modules/openai"]
+    }
+  },
+  "include": ["**/*.ts"]
+}

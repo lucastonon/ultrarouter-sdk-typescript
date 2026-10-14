@@ -1,0 +1,190 @@
+# Installation and runtimes
+
+`@ultrarouter/sdk` has zero runtime dependencies and talks to the gateway with the platform
+`fetch`. It ships ESM and CommonJS builds with TypeScript declarations.
+
+| Runtime                                         | Support                                                                                                                                                                                          |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Node.js 20, 22, 24                              | Supported and tested in CI (every check, on each version).                                                                                                                                       |
+| Deno 2                                          | Supported and tested in CI: the pack smoke runs the installed package under Deno (chat, streaming, embeddings, typed errors, the context entry).                                                 |
+| Bun                                             | Expected to work (the client uses only `fetch`, `AbortController`, `TextDecoder` and `crypto`, and Bun runs Node.js packages), but no automated test runs on Bun.                                |
+| Edge runtimes (Cloudflare Workers, Vercel Edge) | Expected to work for the client (Web APIs only), but no automated test runs on an edge runtime. The context entry and `FileOutcomeStore` need Node.js APIs; see [edge runtimes](#edge-runtimes). |
+
+## Install
+
+<!-- doctest: skip — installs from the npm registry -->
+
+```bash
+npm install @ultrarouter/sdk
+# or
+pnpm add @ultrarouter/sdk
+yarn add @ultrarouter/sdk
+bun add @ultrarouter/sdk
+```
+
+Then set your key:
+
+```bash
+export ULTRAROUTER_API_KEY=ur_sk_test_...
+```
+
+## ES modules
+
+```ts
+import UltraRouter from '@ultrarouter/sdk';
+
+const ur = new UltraRouter();
+const res = await ur.chat.completions.create({
+  model: 'openai/gpt-5.2-mini',
+  messages: [{ role: 'user', content: 'Hello from ESM' }],
+});
+console.log(res.choices[0]?.message.content);
+```
+
+Named imports work too: `import { UltraRouter, UltraRouterError } from '@ultrarouter/sdk'`.
+
+## CommonJS
+
+`require()` returns the module namespace. Use the named `UltraRouter` export (the default export is
+also available as `.default`):
+
+```js
+const { UltraRouter, UltraRouterError } = require('@ultrarouter/sdk');
+
+const ur = new UltraRouter();
+ur.chat.completions
+  .create({ model: 'openai/gpt-5.2-mini', messages: [{ role: 'user', content: 'Hello from CJS' }] })
+  .then((res) => console.log(res.choices[0].message.content))
+  .catch((err) => {
+    if (err instanceof UltraRouterError) console.error(err.code);
+    process.exitCode = 1;
+  });
+```
+
+## Entry points
+
+| Import                     | Contents                                                                                                                                                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@ultrarouter/sdk`         | The `UltraRouter` client, every request/response type, errors, and the pure helpers.                                                                                                                                                 |
+| `@ultrarouter/sdk/context` | The pure context runtime (modules, contracts, `compile`, `fromMessages` / `toMessages`), knowledge packs, the learned-module placement rule and the hosted-prompt renderer. No network. See [context runtime](./context-runtime.md). |
+| `ur` (binary)              | The command-line tool for CI gates and outcome imports. Node.js only. See [CLI](./cli.md).                                                                                                                                           |
+
+Importing the client never loads the context runtime, and the reverse.
+
+## Node.js
+
+Node.js 20 or later. Everything works, including `FileOutcomeStore` (durable outcome queue on disk)
+and the `ur` CLI:
+
+```bash
+npx ur --version
+```
+
+## Bun
+
+Bun runs the same code as Node.js, ESM or CommonJS. Bun is not covered by the automated tests; report
+anything that behaves differently there.
+
+<!-- doctest: skip — needs Bun and installs from the npm registry -->
+
+```bash
+bun add @ultrarouter/sdk
+ULTRAROUTER_API_KEY=ur_sk_test_... bun run app.ts
+```
+
+## Deno
+
+Import through the `npm:` specifier and grant network and environment access:
+
+<!-- doctest: skip — Deno-only `npm:` import specifier; the same code runs under Node.js in the ES modules section above -->
+
+```ts
+import UltraRouter from 'npm:@ultrarouter/sdk';
+
+const ur = new UltraRouter();
+const res = await ur.chat.completions.create({
+  model: 'openai/gpt-5.2-mini',
+  messages: [{ role: 'user', content: 'Hello from Deno' }],
+});
+console.log(res.choices[0]?.message.content);
+```
+
+<!-- doctest: skip — needs Deno; the pack smoke runs the built package under Deno when it is installed -->
+
+```bash
+deno run --allow-net --allow-env main.ts
+```
+
+## Edge runtimes
+
+The client needs only `fetch`, `AbortController`, `TextDecoder` and `crypto`, so it is designed to
+run on edge runtimes such as Cloudflare Workers or Vercel Edge Functions; no automated test runs on
+one yet. Edge runtimes usually have no `process.env`, so pass the key and base URL explicitly:
+
+```ts
+import UltraRouter from '@ultrarouter/sdk';
+
+interface Env {
+  ULTRAROUTER_API_KEY: string;
+  ULTRAROUTER_BASE_URL?: string;
+}
+
+// A Cloudflare Workers-style module: the platform calls `fetch(request, env)`.
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const ur = new UltraRouter({
+      apiKey: env.ULTRAROUTER_API_KEY,
+      ...(env.ULTRAROUTER_BASE_URL !== undefined ? { baseURL: env.ULTRAROUTER_BASE_URL } : {}),
+    });
+    const { question } = (await request.json()) as { question: string };
+    const res = await ur.chat.completions.create({
+      model: 'openai/gpt-5.2-mini',
+      messages: [{ role: 'user', content: question }],
+    });
+    return Response.json({ answer: res.choices[0]?.message.content ?? '' });
+  },
+};
+```
+
+Not available on edge runtimes: `FileOutcomeStore` (it needs `node:fs`; use the default
+`MemoryOutcomeStore` or your own `OutcomeStore`) and the `ur` CLI. The `@ultrarouter/sdk/context`
+entry uses `node:crypto` for sha256; it runs where `node:crypto` is available (Node.js, Bun, Deno,
+and edge runtimes with Node.js compatibility enabled).
+
+## Browsers
+
+The SDK works in a browser bundle, but do not ship an API key to browsers: anyone who loads the
+page can read it. Call the gateway from your server and expose your own endpoint instead.
+
+## TypeScript
+
+Types are bundled; no `@types` package is needed. TypeScript 5 or later is recommended. To resolve
+the `@ultrarouter/sdk/context` subpath, use `"moduleResolution": "bundler"`, `"node16"` or
+`"nodenext"` (the older `"node"` resolution cannot read package `exports`). The types are written
+for `strict` mode.
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true
+  }
+}
+```
+
+## Verify the install
+
+```ts
+import UltraRouter, { VERSION } from '@ultrarouter/sdk';
+
+const ur = new UltraRouter();
+const key = await ur.ur.key.get();
+console.log(`@ultrarouter/sdk ${VERSION} → ${ur.baseURL} (key mode: ${key.mode})`);
+```
+
+## Related
+
+- [Configuration](./configuration.md) · [Troubleshooting](./troubleshooting.md)
+- [Context runtime](./context-runtime.md) · [CLI](./cli.md)

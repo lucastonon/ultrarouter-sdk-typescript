@@ -1,0 +1,335 @@
+name: 'ultrarouter CI gate'
+description: >-
+  Gate pull requests on ultrarouter evidence. `mode: bench` runs a Bench suite and gates the build
+  on the baseline-compare verdict. `mode: app-ci` runs your own application test or replay command
+  on the baseline and candidate revisions of each workflow a change touches, pins the evidence, and
+  publishes one idempotent PR comment and Check Run per workflow. `mode: flywheel-pr` turns a
+  screened flywheel candidate into a reviewable change (an existing PR, a new draft PR, or a
+  downloadable patch), runs the same application check with the candidate bound, and reports
+  whether a controlled rollout is unlocked. Every mode fails closed: a broken gate or missing
+  evidence is never green, nothing is merged, and nothing is adopted from CI.
+author: 'ultrarouter'
+branding:
+  icon: 'bar-chart-2'
+  color: 'purple'
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────────
+# LEAST PRIVILEGE + FORK ISOLATION. A composite action cannot declare `permissions:`; set them on
+# the workflow or job. The minimum for `mode: app-ci` is:
+#
+#   permissions:
+#     contents: read          # checkout + a git worktree for the baseline revision
+#     checks: write           # publish the Check Run
+#     pull-requests: write    # create or update the one PR comment
+#
+# `contents: write` is a SEPARATE opt-in for repository writes by `mode: flywheel-pr`; the `app-ci`
+# gate never needs it.
+#
+# `mode: flywheel-pr` additionally needs, and ONLY when you opt in with `apply-changes: true`
+# (which defaults to false: the default run plans and checks, it does not write):
+#
+#   permissions:
+#     contents: write       # create the candidate branch and commit the change (opt-in)
+#
+# Without that grant the action does NOT fail: it produces a downloadable patch and runs the
+# identical check. That is a first-class path, not a degraded one. The action never merges a pull
+# request (the CLI has no merge capability at all), and it never starts a rollout or adopts a
+# candidate; live confirmation and adoption happen in the ultrarouter dashboard, not in CI.
+#
+# Fork PRs: never run untrusted PR code with secrets. Do NOT use `pull_request_target` to check out
+# and run PR code. Either (a) pass `fork: true` (the default auto-detects
+# github.event.pull_request.head.repo.fork) so the harness is NOT executed and the action posts a
+# detection + "Needs evidence" comment only, or (b) split into two jobs: an untrusted
+# `pull_request` job runs the harness with NO secrets, and a trusted job publishes the check. In
+# fork mode the `app-ci` step never executes the harness; publication uses only the GitHub token,
+# which is never handed to the harness.
+# ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+inputs:
+  mode:
+    description: >-
+      Which gate to run: 'bench' (the Bench baseline-compare gate), 'app-ci' (the application CI
+      gate) or 'flywheel-pr' (a flywheel candidate as a reviewable change with bound evidence).
+    required: false
+    default: 'bench'
+
+  # ── Bench gate (mode: bench) ──
+  suite:
+    description: 'The Bench suite slug to run and gate (mode: bench).'
+    required: false
+    default: ''
+  api-key:
+    description: 'An ultrarouter API key; use a test key (ur_sk_test_…) for Bench. Store it as a repository secret.'
+    required: false
+    default: ''
+  base-url:
+    description: 'The ultrarouter gateway base URL (point it at your own deployment to self-host).'
+    required: false
+    default: 'https://api.ultrarouter.dev'
+  baseline:
+    description: >-
+      The baseline to compare against: a `br_*` run id, or a symbolic ref (for example
+      `bench:main`) that resolves to the suite's pinned baseline. Required for the gate.
+    required: false
+    default: 'bench:main'
+  budget:
+    description: 'The per-run cost cap in USD (bounds the reservation for the run).'
+    required: false
+    default: '3'
+  capture:
+    description: >-
+      A shell command that drives your app or tests through the gateway with Bench capture on
+      (UR_BENCH and UR_BENCH_RUN are exported for it). It is EXECUTED (once, by `ur bench run
+      --capture`), so pass only a command you control, never text from a pull request. Omit it if
+      you capture traffic another way. Every other input is treated as data.
+    required: false
+    default: ''
+  cost-ceiling:
+    description: 'An absolute per-unit cost ceiling in USD. A breach fails the gate.'
+    required: false
+    default: ''
+  paired-mode:
+    description: "The Bench paired-run mode: 'request' (default) or 'task' (whole traces)."
+    required: false
+    default: 'request'
+  allow-inconclusive:
+    description: 'When true, an inconclusive gate exits 0 instead of failing the job.'
+    required: false
+    default: 'false'
+  pin-baseline:
+    description: 'On a pass, advance the suite baseline to this run (mode: bench).'
+    required: false
+    default: 'false'
+  run-tag:
+    description: 'A fresh run tag (default: the commit SHA).'
+    required: false
+    default: ''
+
+  # ── Application CI gate (mode: app-ci) ──
+  config:
+    description: 'Path to the `ur app-ci` config JSON (workflow bindings and surfaces). Required for app-ci and flywheel-pr.'
+    required: false
+    default: 'ur-app-ci.config.json'
+  base-sha:
+    description: 'The baseline commit SHA (mode: app-ci). Default: the pull request base.'
+    required: false
+    default: ''
+  head-sha:
+    description: 'The candidate commit SHA (mode: app-ci). Default: github.sha. It must be the checked-out commit: the run fails closed (candidate_revision_mismatch) otherwise.'
+    required: false
+    default: ''
+  pr-number:
+    description: 'The pull request number to publish the comment on (mode: app-ci). Default: the event pull request.'
+    required: false
+    default: ''
+  changed-from:
+    description: 'A file with a newline-delimited list of changed paths (mode: app-ci). Default: git diff base..head.'
+    required: false
+    default: ''
+  fork:
+    description: >-
+      Fork mode (mode: app-ci): detection and comment only; the harness is never executed with
+      secrets. Default: auto-detects a fork pull request.
+    required: false
+    default: ''
+  asserted-evidence-hash:
+    description: 'A previously sealed evidence hash to check staleness against ([workflow=]<hash>), optional (mode: app-ci).'
+    required: false
+    default: ''
+  github-token:
+    description: 'A token with checks:write and pull-requests:write to publish the check and the comment.'
+    required: false
+    default: ${{ github.token }}
+
+  # ── Flywheel candidate (mode: flywheel-pr) ──
+  candidate:
+    description: >-
+      Path to the screened flywheel-candidate export JSON (mode: flywheel-pr; required for that
+      mode). Only a `screened` candidate is carried into CI; an adopted one is refused by name.
+    required: false
+    default: ''
+  change-shape:
+    description: >-
+      'gateway_owned' (an immutable candidate reference in the harness config plus a linked
+      payload diff) or 'code_owned' (a file diff on a configured context or prompt surface).
+    required: false
+    default: 'gateway_owned'
+  module-path:
+    description: "Where a 'code_owned' candidate writes the module (must be on a configured surface)."
+    required: false
+    default: ''
+  delivery-mode:
+    description: >-
+      'auto' (attach to the event pull request if there is one, else open a draft improvement PR),
+      'attach', 'open_pr' or 'patch'. Without repository write access, every value resolves to
+      'patch'.
+    required: false
+    default: 'auto'
+  apply-changes:
+    description: >-
+      Opt in to writing (a commit, a branch and a PR, or the patch file). Default false: the action
+      shows the diff and the destination branch and runs the check without touching the repository.
+    required: false
+    default: 'false'
+  base-branch:
+    description: 'The branch a newly opened improvement PR targets (mode: flywheel-pr).'
+    required: false
+    default: 'main'
+  patch-out:
+    description: 'Directory the downloadable patch is written to when there is no repository write access.'
+    required: false
+    default: ''
+
+  # ── Shared ──
+  sdk-version:
+    description: 'The @ultrarouter/sdk version to install for the `ur` CLI. Defaults to the version of this action release, so a pinned action runs a pinned CLI.'
+    required: false
+    default: '0.0.1'
+
+runs:
+  using: 'composite'
+  steps:
+    # FAIL-CLOSED DISPATCH GUARD. This step has no `if:`, so it always runs before the gate steps and
+    # the action can never complete having run no gate: a mode that is not exactly `bench`, `app-ci`
+    # or `flywheel-pr` exits non-zero here and fails the job (a required check can never go green
+    # with zero evidence). The legacy paired-run values (`request`/`task`, now the `paired-mode`
+    # input) get an explicit migration message instead of a bare "unknown mode".
+    - name: Validate mode (fail closed on an unknown/legacy selector)
+      shell: bash
+      env:
+        UR_MODE: ${{ inputs.mode }}
+        UR_SUITE: ${{ inputs.suite }}
+        UR_CONFIG: ${{ inputs.config }}
+        UR_CANDIDATE: ${{ inputs.candidate }}
+      run: |
+        set -euo pipefail
+        mode="${UR_MODE:-}"
+        case "$mode" in
+          bench)
+            if [ -z "${UR_SUITE:-}" ]; then
+              echo "::error::ur action (mode: bench) requires a non-empty 'suite' input." >&2
+              exit 1
+            fi
+            ;;
+          app-ci)
+            if [ -z "${UR_CONFIG:-}" ]; then
+              echo "::error::ur action (mode: app-ci) requires a 'config' input (path to the app-ci config JSON)." >&2
+              exit 1
+            fi
+            ;;
+          flywheel-pr)
+            if [ -z "${UR_CONFIG:-}" ]; then
+              echo "::error::ur action (mode: flywheel-pr) requires a 'config' input (path to the app-ci config JSON)." >&2
+              exit 1
+            fi
+            if [ -z "${UR_CANDIDATE:-}" ]; then
+              echo "::error::ur action (mode: flywheel-pr) requires a 'candidate' input (path to the screened candidate export JSON)." >&2
+              exit 1
+            fi
+            ;;
+          request|task)
+            echo "::error::ur action: 'mode: $mode' is no longer valid. The action's 'mode' input now selects the GATE (bench|app-ci|flywheel-pr); the Bench paired-run value moved to the 'paired-mode' input. Fix your workflow: set 'mode: bench' and 'paired-mode: $mode'." >&2
+            exit 1
+            ;;
+          *)
+            echo "::error::ur action: unknown 'mode: $mode'. It must be exactly 'bench', 'app-ci' or 'flywheel-pr'." >&2
+            exit 1
+            ;;
+        esac
+        echo "ur action: mode '$mode' validated."
+    - name: Set up Node
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: '22'
+    # INPUTS ARE DATA. No step interpolates `${{ … }}` into its `run:` script: every input reaches
+    # the shell or the entrypoint as an environment variable, is validated, and is passed on as one
+    # argv element. `test/action.test.ts` enforces this for every step.
+    - name: Install the ur CLI
+      shell: bash
+      env:
+        UR_SDK_VERSION: ${{ inputs.sdk-version }}
+      run: |
+        set -euo pipefail
+        if ! printf '%s' "${UR_SDK_VERSION:-}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+          echo "::error::ur action: 'sdk-version' must be an exact version such as 0.0.1." >&2
+          exit 1
+        fi
+        npm install -g "@ultrarouter/sdk@${UR_SDK_VERSION}"
+
+    - name: Run the ultrarouter Bench gate (bench mode)
+      if: ${{ inputs.mode == 'bench' }}
+      shell: bash
+      # Validated in the entrypoint and passed to `ur` as argv (no shell). Only `capture` is executed,
+      # on purpose, by `ur bench run --capture`.
+      env:
+        UR_API_KEY: ${{ inputs.api-key }}
+        UR_BASE_URL: ${{ inputs.base-url }}
+        GITHUB_SHA: ${{ github.sha }}
+        UR_SUITE: ${{ inputs.suite }}
+        UR_BASELINE: ${{ inputs.baseline }}
+        UR_BUDGET: ${{ inputs.budget }}
+        UR_PAIRED_MODE: ${{ inputs.paired-mode }}
+        UR_CAPTURE: ${{ inputs.capture }}
+        UR_COST_CEILING: ${{ inputs.cost-ceiling }}
+        UR_RUN_TAG: ${{ inputs.run-tag }}
+        UR_ALLOW_INCONCLUSIVE: ${{ inputs.allow-inconclusive }}
+        UR_PIN_BASELINE: ${{ inputs.pin-baseline }}
+      run: node "$GITHUB_ACTION_PATH/scripts/action-bench.mjs"
+
+    - name: Run the ultrarouter application-CI gate (app-ci mode)
+      if: ${{ inputs.mode == 'app-ci' }}
+      shell: bash
+      # The harness runs with a scrubbed env inside the CLI; publication uses only GITHUB_TOKEN, which
+      # the harness never sees. Fork PRs never execute their code with secrets (the CLI honours --fork).
+      env:
+        UR_API_KEY: ${{ inputs.api-key }}
+        UR_BASE_URL: ${{ inputs.base-url }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        GITHUB_API_URL: ${{ github.api_url }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_SHA: ${{ github.sha }}
+        UR_APPCI_CONFIG: ${{ inputs.config }}
+        UR_APPCI_BASE: ${{ inputs.base-sha }}
+        UR_APPCI_HEAD: ${{ inputs.head-sha }}
+        UR_APPCI_PR: ${{ inputs.pr-number }}
+        UR_APPCI_CHANGED_FROM: ${{ inputs.changed-from }}
+        UR_APPCI_FORK: ${{ inputs.fork }}
+        UR_APPCI_FORK_EVENT: ${{ github.event.pull_request.head.repo.fork }}
+        UR_APPCI_PR_EVENT: ${{ github.event.pull_request.number }}
+        UR_APPCI_BASE_EVENT: ${{ github.event.pull_request.base.sha }}
+        UR_APPCI_ALLOW_INCONCLUSIVE: ${{ inputs.allow-inconclusive }}
+        UR_APPCI_ASSERTED: ${{ inputs.asserted-evidence-hash }}
+      run: node "$GITHUB_ACTION_PATH/scripts/action-app-ci.mjs"
+
+    - name: Run the ultrarouter flywheel-candidate gate (flywheel-pr mode)
+      if: ${{ inputs.mode == 'flywheel-pr' }}
+      shell: bash
+      # The candidate is planned and shown first; a write happens only with `apply-changes: true`
+      # AND a granted `contents: write`. Without the grant this emits a downloadable patch and runs
+      # the identical check. Nothing merges, nothing adopts, nothing in production is changed.
+      env:
+        UR_API_KEY: ${{ inputs.api-key }}
+        UR_BASE_URL: ${{ inputs.base-url }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        GITHUB_API_URL: ${{ github.api_url }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_SHA: ${{ github.sha }}
+        UR_APPCI_CONFIG: ${{ inputs.config }}
+        UR_APPCI_BASE: ${{ inputs.base-sha }}
+        UR_APPCI_HEAD: ${{ inputs.head-sha }}
+        UR_APPCI_PR: ${{ inputs.pr-number }}
+        UR_APPCI_CHANGED_FROM: ${{ inputs.changed-from }}
+        UR_APPCI_PR_EVENT: ${{ github.event.pull_request.number }}
+        UR_APPCI_BASE_EVENT: ${{ github.event.pull_request.base.sha }}
+        UR_APPCI_ALLOW_INCONCLUSIVE: ${{ inputs.allow-inconclusive }}
+        UR_APPCI_ASSERTED: ${{ inputs.asserted-evidence-hash }}
+        UR_FLW_CANDIDATE: ${{ inputs.candidate }}
+        UR_FLW_SHAPE: ${{ inputs.change-shape }}
+        UR_FLW_MODULE_PATH: ${{ inputs.module-path }}
+        UR_FLW_DELIVERY: ${{ inputs.delivery-mode }}
+        UR_FLW_APPLY: ${{ inputs.apply-changes }}
+        UR_FLW_BASE_BRANCH: ${{ inputs.base-branch }}
+        UR_FLW_PATCH_OUT: ${{ inputs.patch-out }}
+        UR_APPCI_FORK: ${{ inputs.fork }}
+        UR_APPCI_FORK_EVENT: ${{ github.event.pull_request.head.repo.fork }}
+      run: node "$GITHUB_ACTION_PATH/scripts/action-flywheel.mjs"

@@ -1,0 +1,9 @@
+{
+  "name": "doctest-sandbox",
+  "private": true,
+  "description": "The working directory the doctest runs each documented shell block in. Its test scripts stand in for an application's test suite during a Bench capture.",
+  "scripts": {
+    "test": "node -e \"console.log('app tests: ok')\"",
+    "test:e2e": "node -e \"console.log('app e2e tests: ok')\""
+  }
+}

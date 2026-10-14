@@ -1,0 +1,37 @@
+{
+  "description": "Canonical JSON inputs carrying an own __proto__ key (as JSON.parse produces one). Each value is stored as JSON text so every implementation parses it itself; expected outputs are asserted by test/context/canonical-json.test.ts.",
+  "cases": [
+    {
+      "name": "top-level __proto__ object",
+      "value_json": "{\"__proto__\":{\"review\":\"different\"}}"
+    },
+    {
+      "name": "top-level __proto__ sorts among siblings",
+      "value_json": "{\"z\":1,\"__proto__\":2,\"a\":3}"
+    },
+    {
+      "name": "nested __proto__ with unsorted keys",
+      "value_json": "{\"a\":{\"__proto__\":{\"b\":2,\"a\":1}}}"
+    },
+    {
+      "name": "__proto__ inside an array",
+      "value_json": "[{\"__proto__\":null},{\"__proto__\":\"s\"}]"
+    },
+    {
+      "name": "__proto__ nested twice",
+      "value_json": "{\"__proto__\":{\"__proto__\":{\"x\":[1,{\"__proto__\":true}]}}}"
+    },
+    {
+      "name": "__proto__ beside lookalike keys",
+      "value_json": "{\"proto\":1,\"__proto\":2,\"__proto__x\":3,\"__proto__\":4,\"constructor\":5}"
+    },
+    {
+      "name": "values differing only under __proto__ (1)",
+      "value_json": "{\"x\":{\"__proto__\":{\"v\":1}}}"
+    },
+    {
+      "name": "values differing only under __proto__ (2)",
+      "value_json": "{\"x\":{\"__proto__\":{\"v\":2}}}"
+    }
+  ]
+}

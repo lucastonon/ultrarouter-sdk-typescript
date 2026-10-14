@@ -1,0 +1,91 @@
+[
+  {
+    "roles": [],
+    "index": 0
+  },
+  {
+    "roles": [
+      "user"
+    ],
+    "index": 0
+  },
+  {
+    "roles": [
+      "system"
+    ],
+    "index": 1
+  },
+  {
+    "roles": [
+      "system",
+      "user"
+    ],
+    "index": 1
+  },
+  {
+    "roles": [
+      "system",
+      "system",
+      "user",
+      "assistant"
+    ],
+    "index": 2
+  },
+  {
+    "roles": [
+      "system",
+      "user",
+      "system"
+    ],
+    "index": 1
+  },
+  {
+    "roles": [
+      "system",
+      "system",
+      "system"
+    ],
+    "index": 3
+  },
+  {
+    "roles": [
+      "assistant",
+      "system"
+    ],
+    "index": 0
+  },
+  {
+    "roles": [
+      "system",
+      "developer",
+      "user"
+    ],
+    "index": 1
+  },
+  {
+    "roles": [
+      "user",
+      "user"
+    ],
+    "index": 0
+  },
+  {
+    "roles": [
+      "system",
+      "tool",
+      "system",
+      "user"
+    ],
+    "index": 1
+  },
+  {
+    "roles": [
+      "system",
+      "system",
+      "assistant",
+      "system",
+      "user"
+    ],
+    "index": 2
+  }
+]

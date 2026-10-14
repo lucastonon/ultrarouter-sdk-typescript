@@ -1,0 +1,3 @@
+ticket_id,status_kind,channel,observed_at
+ticket-4821,resolved_true,resolution,2026-01-10T09:00:00Z
+ticket-4822,resolved_false,resolution,2026-01-10T10:30:00Z

@@ -1,0 +1,10 @@
+{
+  "//": "Type-checks the generated context runtime (src/context-runtime), the @ultrarouter/sdk/context entry and its tests. The only difference from tsconfig.json is exactOptionalPropertyTypes: false, the setting the generated runtime is written for, so it stays byte-identical to its source. Every other strictness flag is inherited.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "exactOptionalPropertyTypes": false,
+    "noEmit": true
+  },
+  "include": ["src/context.ts", "src/context-runtime", "test/context"],
+  "exclude": ["dist", "node_modules"]
+}

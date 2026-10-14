@@ -1,0 +1,2737 @@
+{
+  "schema": "ultrarouter.queue-retention-cases.v1",
+  "description": "The durable-queue retention rules shared by the TypeScript and Python SDKs. Each case is one HTTP answer to one delivery attempt of ONE queued event; a runner records/enqueues the event, answers the attempt with exactly this response, and checks whether the event is still in the store. Both SDKs run every case; the file is copied byte-for-byte between them.",
+  "fields": {
+    "id": "Unique case id.",
+    "kind": "'outcome': ur.outcomes.record on a request target (POST /v1/requests/{id}/outcomes; a 2xx body is one bare OutcomeResult). 'artifact-outcome': ur.outcomes.record on an artifact target (POST /v1/artifacts/{id}/outcomes; a 2xx body is { data: [OutcomeResult] }). 'reviewer': ur.reviewer.record of one event whose event_id is reviewer_event_id, then flush() (POST /v1/flywheel/reviewer/events; a 2xx body is { data: [ReviewerEventResult] }).",
+    "status": "The HTTP status of the answer.",
+    "content_type": "The Content-Type header of the answer.",
+    "body": "The response body, exactly as sent (a UTF-8 string; may be empty).",
+    "unreadable": "When true, reading the body fails (the stream errors after the headers) instead of yielding body.",
+    "expect": "'retain': the event is still in the store afterwards (queued or dead-lettered). 'drop': it was removed (delivered, or definitively refused).",
+    "outcome": "The finer result. Outcome kinds: the receipt status, 'delivered' | 'rejected' | 'queued'. Reviewer: 'accepted' | 'duplicate' | 'dropped' (flush report counters), 'dead_lettered' (kept as a dead letter), or 'pending' (still queued; a non-2xx answer may also raise).",
+    "rule": "Why, in a few words."
+  },
+  "rules": {
+    "outcome_drop": "An outcome event is dropped only on (a) a 2xx answer whose result (the bare body, or data[0] for an artifact target) is an object with status in accepted | duplicate | conflict | rejected (delivered), or (b) a definitive refusal: a 4xx other than 401/403/408/429, whose body is {\"error\": {code, message, request_id, retryable[, provider_code]}} with code a non-empty string, message and request_id strings, retryable the boolean false and provider_code (when present) a string, and whose code is invalid_request at 400, not_found at 404 or conflict at 409. Everything else retains.",
+    "reviewer_drop": "A reviewer event is removed only by a 2xx answer {\"data\": [...]} holding a verdict object with its event_id and either status accepted | duplicate, or status rejected | unsupported with a string reason and repairable false. rejected | unsupported with a string reason and repairable true keeps it as a dead letter. A failed delivery never removes an event."
+  },
+  "reviewer_event_id": "evt_fixture_1",
+  "cases": [
+    {
+      "id": "outcome.drop.invalid_request.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "drop",
+      "outcome": "rejected",
+      "rule": "complete envelope, event code at its status, retryable false"
+    },
+    {
+      "id": "outcome.drop.not_found.404",
+      "kind": "outcome",
+      "status": 404,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "drop",
+      "outcome": "rejected",
+      "rule": "complete envelope, event code at its status, retryable false"
+    },
+    {
+      "id": "outcome.drop.conflict.409",
+      "kind": "outcome",
+      "status": 409,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "drop",
+      "outcome": "rejected",
+      "rule": "complete envelope, event code at its status, retryable false"
+    },
+    {
+      "id": "outcome.drop.invalid_request.400.provider_code",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false,\"provider_code\":\"upstream_x\"}}",
+      "expect": "drop",
+      "outcome": "rejected",
+      "rule": "a string provider_code keeps the envelope complete"
+    },
+    {
+      "id": "outcome.retain.envelope.missing_code",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "incomplete envelope: no code"
+    },
+    {
+      "id": "outcome.retain.envelope.missing_message",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "incomplete envelope: no message"
+    },
+    {
+      "id": "outcome.retain.envelope.missing_request_id",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "incomplete envelope: no request_id"
+    },
+    {
+      "id": "outcome.retain.envelope.missing_retryable",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\"}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "incomplete envelope: no retryable"
+    },
+    {
+      "id": "outcome.retain.envelope.code_only",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\"}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "incomplete envelope: code only"
+    },
+    {
+      "id": "outcome.retain.envelope.retryable_null",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":null}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "retryable must be the boolean false"
+    },
+    {
+      "id": "outcome.retain.envelope.retryable_string_false",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":\"false\"}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "retryable must be the boolean false"
+    },
+    {
+      "id": "outcome.retain.envelope.retryable_zero",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":0}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "retryable must be the boolean false"
+    },
+    {
+      "id": "outcome.retain.envelope.retryable_true",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the gateway says the request may be retried"
+    },
+    {
+      "id": "outcome.retain.envelope.code_empty",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "code must be a non-empty string"
+    },
+    {
+      "id": "outcome.retain.envelope.code_number",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":400,\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "code must be a string"
+    },
+    {
+      "id": "outcome.retain.envelope.code_null",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":null,\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "code must be a string"
+    },
+    {
+      "id": "outcome.retain.envelope.message_null",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":null,\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "message must be a string"
+    },
+    {
+      "id": "outcome.retain.envelope.request_id_number",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":7,\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "request_id must be a string"
+    },
+    {
+      "id": "outcome.retain.envelope.request_id_null",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":null,\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "request_id must be a string"
+    },
+    {
+      "id": "outcome.retain.envelope.provider_code_number",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false,\"provider_code\":1}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "provider_code, when present, must be a string"
+    },
+    {
+      "id": "outcome.retain.envelope.error_string",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":\"invalid_request\"}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "error must be an object"
+    },
+    {
+      "id": "outcome.retain.envelope.error_array",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":[{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}]}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "error must be an object"
+    },
+    {
+      "id": "outcome.retain.envelope.top_level_array",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "[{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}]",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the body must be an object"
+    },
+    {
+      "id": "outcome.retain.envelope.json_null",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "null",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the body must be an object"
+    },
+    {
+      "id": "outcome.retain.envelope.json_string",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "\"invalid_request\"",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the body must be an object"
+    },
+    {
+      "id": "outcome.retain.envelope.unwrapped",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the fields must sit under \"error\""
+    },
+    {
+      "id": "outcome.retain.body.empty_object",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "no envelope"
+    },
+    {
+      "id": "outcome.retain.body.other_json",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"message\":\"bad request\",\"statusCode\":400}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "no envelope (another JSON shape)"
+    },
+    {
+      "id": "outcome.retain.html.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "text/html",
+      "body": "<html><head><title>400 Bad Request</title></head><body><h1>400 Bad Request</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "an HTML error page from a proxy"
+    },
+    {
+      "id": "outcome.retain.text.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "text/plain",
+      "body": "Bad Request",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a plain-text answer"
+    },
+    {
+      "id": "outcome.retain.empty.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "an empty body"
+    },
+    {
+      "id": "outcome.retain.unreadable.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "",
+      "unreadable": true,
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the body cannot be read (the stream fails)"
+    },
+    {
+      "id": "outcome.retain.truncated_json.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"mess",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a truncated (invalid) JSON body"
+    },
+    {
+      "id": "outcome.retain.html.404",
+      "kind": "outcome",
+      "status": 404,
+      "content_type": "text/html",
+      "body": "<html><body><h1>404 Not Found</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "an HTML 404 from a proxy or a wrong base URL"
+    },
+    {
+      "id": "outcome.retain.html.409",
+      "kind": "outcome",
+      "status": 409,
+      "content_type": "text/html",
+      "body": "<html><body><h1>409 Conflict</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "an HTML 409"
+    },
+    {
+      "id": "outcome.retain.html.413",
+      "kind": "outcome",
+      "status": 413,
+      "content_type": "text/html",
+      "body": "<html><body><h1>413 Request Entity Too Large</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "an HTML 413 from a proxy"
+    },
+    {
+      "id": "outcome.retain.401.empty_object",
+      "kind": "outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains"
+    },
+    {
+      "id": "outcome.retain.401.empty",
+      "kind": "outcome",
+      "status": 401,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains"
+    },
+    {
+      "id": "outcome.retain.401.html",
+      "kind": "outcome",
+      "status": 401,
+      "content_type": "text/html",
+      "body": "<html><body><h1>401 Error</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains"
+    },
+    {
+      "id": "outcome.retain.401.own_code",
+      "kind": "outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"authentication\",\"message\":\"authentication (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains"
+    },
+    {
+      "id": "outcome.retain.401.own_code_retryable_true",
+      "kind": "outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"authentication\",\"message\":\"authentication (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains"
+    },
+    {
+      "id": "outcome.retain.401.invalid_request",
+      "kind": "outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.401.not_found",
+      "kind": "outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.401.conflict",
+      "kind": "outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.403.empty_object",
+      "kind": "outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "outcome.retain.403.empty",
+      "kind": "outcome",
+      "status": 403,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "outcome.retain.403.html",
+      "kind": "outcome",
+      "status": 403,
+      "content_type": "text/html",
+      "body": "<html><body><h1>403 Error</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "outcome.retain.403.own_code",
+      "kind": "outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"permission\",\"message\":\"permission (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "outcome.retain.403.own_code_retryable_true",
+      "kind": "outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"permission\",\"message\":\"permission (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "outcome.retain.403.invalid_request",
+      "kind": "outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.403.not_found",
+      "kind": "outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.403.conflict",
+      "kind": "outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.408.empty_object",
+      "kind": "outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains"
+    },
+    {
+      "id": "outcome.retain.408.empty",
+      "kind": "outcome",
+      "status": 408,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains"
+    },
+    {
+      "id": "outcome.retain.408.html",
+      "kind": "outcome",
+      "status": 408,
+      "content_type": "text/html",
+      "body": "<html><body><h1>408 Error</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains"
+    },
+    {
+      "id": "outcome.retain.408.own_code",
+      "kind": "outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"request_timeout\",\"message\":\"request_timeout (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains"
+    },
+    {
+      "id": "outcome.retain.408.own_code_retryable_true",
+      "kind": "outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"request_timeout\",\"message\":\"request_timeout (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains"
+    },
+    {
+      "id": "outcome.retain.408.invalid_request",
+      "kind": "outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.408.not_found",
+      "kind": "outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.408.conflict",
+      "kind": "outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.429.empty_object",
+      "kind": "outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains"
+    },
+    {
+      "id": "outcome.retain.429.empty",
+      "kind": "outcome",
+      "status": 429,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains"
+    },
+    {
+      "id": "outcome.retain.429.html",
+      "kind": "outcome",
+      "status": 429,
+      "content_type": "text/html",
+      "body": "<html><body><h1>429 Error</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains"
+    },
+    {
+      "id": "outcome.retain.429.own_code",
+      "kind": "outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"rate_limited\",\"message\":\"rate_limited (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains"
+    },
+    {
+      "id": "outcome.retain.429.own_code_retryable_true",
+      "kind": "outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"rate_limited\",\"message\":\"rate_limited (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains"
+    },
+    {
+      "id": "outcome.retain.429.invalid_request",
+      "kind": "outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.429.not_found",
+      "kind": "outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.429.conflict",
+      "kind": "outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains, even with an event code"
+    },
+    {
+      "id": "outcome.retain.403.unfamiliar_code",
+      "kind": "outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"denied_by_edge_proxy\",\"message\":\"denied_by_edge_proxy (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "outcome.retain.403.model_denied_by_policy",
+      "kind": "outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"model_denied_by_policy\",\"message\":\"model_denied_by_policy (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "outcome.retain.403.model_unpriced",
+      "kind": "outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"model_unpriced\",\"message\":\"model_unpriced (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "outcome.retain.mismatch.not_found.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "not_found is a 404"
+    },
+    {
+      "id": "outcome.retain.mismatch.conflict.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "conflict is a 409"
+    },
+    {
+      "id": "outcome.retain.mismatch.invalid_request.404",
+      "kind": "outcome",
+      "status": 404,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "invalid_request is a 400"
+    },
+    {
+      "id": "outcome.retain.mismatch.invalid_request.409",
+      "kind": "outcome",
+      "status": 409,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "invalid_request is a 400"
+    },
+    {
+      "id": "outcome.retain.mismatch.invalid_request.422",
+      "kind": "outcome",
+      "status": 422,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "invalid_request is a 400"
+    },
+    {
+      "id": "outcome.retain.mismatch.not_found.410",
+      "kind": "outcome",
+      "status": 410,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "not_found is a 404"
+    },
+    {
+      "id": "outcome.retain.unknown_code.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"validation_failed\",\"message\":\"validation_failed (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a code outside the taxonomy"
+    },
+    {
+      "id": "outcome.retain.unknown_code.422",
+      "kind": "outcome",
+      "status": 422,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"validation_failed\",\"message\":\"validation_failed (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a code outside the taxonomy"
+    },
+    {
+      "id": "outcome.retain.unknown_code.404",
+      "kind": "outcome",
+      "status": 404,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"route_not_found\",\"message\":\"route_not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a code outside the taxonomy"
+    },
+    {
+      "id": "outcome.retain.not_event_code.spend_cap_exceeded.402",
+      "kind": "outcome",
+      "status": 402,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"spend_cap_exceeded\",\"message\":\"spend_cap_exceeded (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "outcome.retain.not_event_code.max_cost_exceeded.402",
+      "kind": "outcome",
+      "status": 402,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"max_cost_exceeded\",\"message\":\"max_cost_exceeded (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "outcome.retain.not_event_code.capability_unsupported.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"capability_unsupported\",\"message\":\"capability_unsupported (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "outcome.retain.not_event_code.content_filtered.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"content_filtered\",\"message\":\"content_filtered (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "outcome.retain.not_event_code.context_length.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"context_length\",\"message\":\"context_length (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "outcome.retain.not_event_code.manifest_invalid.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"manifest_invalid\",\"message\":\"manifest_invalid (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "outcome.retain.not_event_code.manifest_mismatch.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"manifest_mismatch\",\"message\":\"manifest_mismatch (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "outcome.retain.not_event_code.prompt_variables_missing.400",
+      "kind": "outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"prompt_variables_missing\",\"message\":\"prompt_variables_missing (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "outcome.retain.not_event_code.cancelled.499",
+      "kind": "outcome",
+      "status": 499,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"cancelled\",\"message\":\"cancelled (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "outcome.retain.5xx.internal.500",
+      "kind": "outcome",
+      "status": 500,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"internal\",\"message\":\"internal (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "5xx always retains"
+    },
+    {
+      "id": "outcome.retain.5xx.provider_unavailable.502",
+      "kind": "outcome",
+      "status": 502,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"provider_unavailable\",\"message\":\"provider_unavailable (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "5xx always retains"
+    },
+    {
+      "id": "outcome.retain.5xx.atomic_spend_guard_unavailable.503",
+      "kind": "outcome",
+      "status": 503,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"atomic_spend_guard_unavailable\",\"message\":\"atomic_spend_guard_unavailable (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "5xx always retains"
+    },
+    {
+      "id": "outcome.retain.5xx.html.503",
+      "kind": "outcome",
+      "status": 503,
+      "content_type": "text/html",
+      "body": "<html><body><h1>503 Service Unavailable</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "5xx always retains"
+    },
+    {
+      "id": "outcome.retain.5xx.invalid_request.500",
+      "kind": "outcome",
+      "status": 500,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "5xx always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.drop.invalid_request.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "drop",
+      "outcome": "rejected",
+      "rule": "complete envelope, event code at its status, retryable false"
+    },
+    {
+      "id": "artifact-outcome.drop.not_found.404",
+      "kind": "artifact-outcome",
+      "status": 404,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "drop",
+      "outcome": "rejected",
+      "rule": "complete envelope, event code at its status, retryable false"
+    },
+    {
+      "id": "artifact-outcome.drop.conflict.409",
+      "kind": "artifact-outcome",
+      "status": 409,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "drop",
+      "outcome": "rejected",
+      "rule": "complete envelope, event code at its status, retryable false"
+    },
+    {
+      "id": "artifact-outcome.drop.invalid_request.400.provider_code",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false,\"provider_code\":\"upstream_x\"}}",
+      "expect": "drop",
+      "outcome": "rejected",
+      "rule": "a string provider_code keeps the envelope complete"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.missing_code",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "incomplete envelope: no code"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.missing_message",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "incomplete envelope: no message"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.missing_request_id",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "incomplete envelope: no request_id"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.missing_retryable",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\"}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "incomplete envelope: no retryable"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.code_only",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\"}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "incomplete envelope: code only"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.retryable_null",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":null}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "retryable must be the boolean false"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.retryable_string_false",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":\"false\"}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "retryable must be the boolean false"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.retryable_zero",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":0}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "retryable must be the boolean false"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.retryable_true",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the gateway says the request may be retried"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.code_empty",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "code must be a non-empty string"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.code_number",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":400,\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "code must be a string"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.code_null",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":null,\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "code must be a string"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.message_null",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":null,\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "message must be a string"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.request_id_number",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":7,\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "request_id must be a string"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.request_id_null",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":null,\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "request_id must be a string"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.provider_code_number",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false,\"provider_code\":1}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "provider_code, when present, must be a string"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.error_string",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":\"invalid_request\"}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "error must be an object"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.error_array",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":[{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}]}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "error must be an object"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.top_level_array",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "[{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}]",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the body must be an object"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.json_null",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "null",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the body must be an object"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.json_string",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "\"invalid_request\"",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the body must be an object"
+    },
+    {
+      "id": "artifact-outcome.retain.envelope.unwrapped",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the fields must sit under \"error\""
+    },
+    {
+      "id": "artifact-outcome.retain.body.empty_object",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "no envelope"
+    },
+    {
+      "id": "artifact-outcome.retain.body.other_json",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"message\":\"bad request\",\"statusCode\":400}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "no envelope (another JSON shape)"
+    },
+    {
+      "id": "artifact-outcome.retain.html.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "text/html",
+      "body": "<html><head><title>400 Bad Request</title></head><body><h1>400 Bad Request</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "an HTML error page from a proxy"
+    },
+    {
+      "id": "artifact-outcome.retain.text.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "text/plain",
+      "body": "Bad Request",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a plain-text answer"
+    },
+    {
+      "id": "artifact-outcome.retain.empty.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "an empty body"
+    },
+    {
+      "id": "artifact-outcome.retain.unreadable.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "",
+      "unreadable": true,
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "the body cannot be read (the stream fails)"
+    },
+    {
+      "id": "artifact-outcome.retain.truncated_json.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"mess",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a truncated (invalid) JSON body"
+    },
+    {
+      "id": "artifact-outcome.retain.html.404",
+      "kind": "artifact-outcome",
+      "status": 404,
+      "content_type": "text/html",
+      "body": "<html><body><h1>404 Not Found</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "an HTML 404 from a proxy or a wrong base URL"
+    },
+    {
+      "id": "artifact-outcome.retain.html.409",
+      "kind": "artifact-outcome",
+      "status": 409,
+      "content_type": "text/html",
+      "body": "<html><body><h1>409 Conflict</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "an HTML 409"
+    },
+    {
+      "id": "artifact-outcome.retain.html.413",
+      "kind": "artifact-outcome",
+      "status": 413,
+      "content_type": "text/html",
+      "body": "<html><body><h1>413 Request Entity Too Large</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "an HTML 413 from a proxy"
+    },
+    {
+      "id": "artifact-outcome.retain.401.empty_object",
+      "kind": "artifact-outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.401.empty",
+      "kind": "artifact-outcome",
+      "status": 401,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.401.html",
+      "kind": "artifact-outcome",
+      "status": 401,
+      "content_type": "text/html",
+      "body": "<html><body><h1>401 Error</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.401.own_code",
+      "kind": "artifact-outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"authentication\",\"message\":\"authentication (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.401.own_code_retryable_true",
+      "kind": "artifact-outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"authentication\",\"message\":\"authentication (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.401.invalid_request",
+      "kind": "artifact-outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.401.not_found",
+      "kind": "artifact-outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.401.conflict",
+      "kind": "artifact-outcome",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "401 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.403.empty_object",
+      "kind": "artifact-outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.403.empty",
+      "kind": "artifact-outcome",
+      "status": 403,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.403.html",
+      "kind": "artifact-outcome",
+      "status": 403,
+      "content_type": "text/html",
+      "body": "<html><body><h1>403 Error</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.403.own_code",
+      "kind": "artifact-outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"permission\",\"message\":\"permission (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.403.own_code_retryable_true",
+      "kind": "artifact-outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"permission\",\"message\":\"permission (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.403.invalid_request",
+      "kind": "artifact-outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.403.not_found",
+      "kind": "artifact-outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.403.conflict",
+      "kind": "artifact-outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.408.empty_object",
+      "kind": "artifact-outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.408.empty",
+      "kind": "artifact-outcome",
+      "status": 408,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.408.html",
+      "kind": "artifact-outcome",
+      "status": 408,
+      "content_type": "text/html",
+      "body": "<html><body><h1>408 Error</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.408.own_code",
+      "kind": "artifact-outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"request_timeout\",\"message\":\"request_timeout (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.408.own_code_retryable_true",
+      "kind": "artifact-outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"request_timeout\",\"message\":\"request_timeout (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.408.invalid_request",
+      "kind": "artifact-outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.408.not_found",
+      "kind": "artifact-outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.408.conflict",
+      "kind": "artifact-outcome",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "408 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.429.empty_object",
+      "kind": "artifact-outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.429.empty",
+      "kind": "artifact-outcome",
+      "status": 429,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.429.html",
+      "kind": "artifact-outcome",
+      "status": 429,
+      "content_type": "text/html",
+      "body": "<html><body><h1>429 Error</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.429.own_code",
+      "kind": "artifact-outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"rate_limited\",\"message\":\"rate_limited (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.429.own_code_retryable_true",
+      "kind": "artifact-outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"rate_limited\",\"message\":\"rate_limited (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.429.invalid_request",
+      "kind": "artifact-outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.429.not_found",
+      "kind": "artifact-outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.429.conflict",
+      "kind": "artifact-outcome",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "429 always retains, even with an event code"
+    },
+    {
+      "id": "artifact-outcome.retain.403.unfamiliar_code",
+      "kind": "artifact-outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"denied_by_edge_proxy\",\"message\":\"denied_by_edge_proxy (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.403.model_denied_by_policy",
+      "kind": "artifact-outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"model_denied_by_policy\",\"message\":\"model_denied_by_policy (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.403.model_unpriced",
+      "kind": "artifact-outcome",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"model_unpriced\",\"message\":\"model_unpriced (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "403 always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.mismatch.not_found.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "not_found is a 404"
+    },
+    {
+      "id": "artifact-outcome.retain.mismatch.conflict.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"conflict\",\"message\":\"conflict (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "conflict is a 409"
+    },
+    {
+      "id": "artifact-outcome.retain.mismatch.invalid_request.404",
+      "kind": "artifact-outcome",
+      "status": 404,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "invalid_request is a 400"
+    },
+    {
+      "id": "artifact-outcome.retain.mismatch.invalid_request.409",
+      "kind": "artifact-outcome",
+      "status": 409,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "invalid_request is a 400"
+    },
+    {
+      "id": "artifact-outcome.retain.mismatch.invalid_request.422",
+      "kind": "artifact-outcome",
+      "status": 422,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "invalid_request is a 400"
+    },
+    {
+      "id": "artifact-outcome.retain.mismatch.not_found.410",
+      "kind": "artifact-outcome",
+      "status": 410,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "not_found is a 404"
+    },
+    {
+      "id": "artifact-outcome.retain.unknown_code.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"validation_failed\",\"message\":\"validation_failed (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a code outside the taxonomy"
+    },
+    {
+      "id": "artifact-outcome.retain.unknown_code.422",
+      "kind": "artifact-outcome",
+      "status": 422,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"validation_failed\",\"message\":\"validation_failed (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a code outside the taxonomy"
+    },
+    {
+      "id": "artifact-outcome.retain.unknown_code.404",
+      "kind": "artifact-outcome",
+      "status": 404,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"route_not_found\",\"message\":\"route_not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a code outside the taxonomy"
+    },
+    {
+      "id": "artifact-outcome.retain.not_event_code.spend_cap_exceeded.402",
+      "kind": "artifact-outcome",
+      "status": 402,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"spend_cap_exceeded\",\"message\":\"spend_cap_exceeded (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "artifact-outcome.retain.not_event_code.max_cost_exceeded.402",
+      "kind": "artifact-outcome",
+      "status": 402,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"max_cost_exceeded\",\"message\":\"max_cost_exceeded (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "artifact-outcome.retain.not_event_code.capability_unsupported.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"capability_unsupported\",\"message\":\"capability_unsupported (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "artifact-outcome.retain.not_event_code.content_filtered.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"content_filtered\",\"message\":\"content_filtered (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "artifact-outcome.retain.not_event_code.context_length.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"context_length\",\"message\":\"context_length (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "artifact-outcome.retain.not_event_code.manifest_invalid.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"manifest_invalid\",\"message\":\"manifest_invalid (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "artifact-outcome.retain.not_event_code.manifest_mismatch.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"manifest_mismatch\",\"message\":\"manifest_mismatch (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "artifact-outcome.retain.not_event_code.prompt_variables_missing.400",
+      "kind": "artifact-outcome",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"prompt_variables_missing\",\"message\":\"prompt_variables_missing (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "artifact-outcome.retain.not_event_code.cancelled.499",
+      "kind": "artifact-outcome",
+      "status": 499,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"cancelled\",\"message\":\"cancelled (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a taxonomy code that does not refuse the event"
+    },
+    {
+      "id": "artifact-outcome.retain.5xx.internal.500",
+      "kind": "artifact-outcome",
+      "status": 500,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"internal\",\"message\":\"internal (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "5xx always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.5xx.provider_unavailable.502",
+      "kind": "artifact-outcome",
+      "status": 502,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"provider_unavailable\",\"message\":\"provider_unavailable (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "5xx always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.5xx.atomic_spend_guard_unavailable.503",
+      "kind": "artifact-outcome",
+      "status": 503,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"atomic_spend_guard_unavailable\",\"message\":\"atomic_spend_guard_unavailable (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "5xx always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.5xx.html.503",
+      "kind": "artifact-outcome",
+      "status": 503,
+      "content_type": "text/html",
+      "body": "<html><body><h1>503 Service Unavailable</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "5xx always retains"
+    },
+    {
+      "id": "artifact-outcome.retain.5xx.invalid_request.500",
+      "kind": "artifact-outcome",
+      "status": 500,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "5xx always retains, even with an event code"
+    },
+    {
+      "id": "outcome.drop.2xx.result_accepted",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"id\":\"oe_fixture\",\"status\":\"accepted\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "a result with status \"accepted\": the gateway processed the event"
+    },
+    {
+      "id": "artifact-outcome.drop.2xx.result_accepted",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"id\":\"oe_fixture\",\"status\":\"accepted\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}]}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "a result with status \"accepted\": the gateway processed the event"
+    },
+    {
+      "id": "outcome.drop.2xx.result_duplicate",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"id\":\"oe_fixture\",\"status\":\"duplicate\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "a result with status \"duplicate\": the gateway processed the event"
+    },
+    {
+      "id": "artifact-outcome.drop.2xx.result_duplicate",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"id\":\"oe_fixture\",\"status\":\"duplicate\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}]}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "a result with status \"duplicate\": the gateway processed the event"
+    },
+    {
+      "id": "outcome.drop.2xx.result_conflict",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"id\":\"oe_fixture\",\"status\":\"conflict\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "a result with status \"conflict\": the gateway processed the event"
+    },
+    {
+      "id": "artifact-outcome.drop.2xx.result_conflict",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"id\":\"oe_fixture\",\"status\":\"conflict\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}]}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "a result with status \"conflict\": the gateway processed the event"
+    },
+    {
+      "id": "outcome.drop.2xx.result_rejected",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"id\":\"oe_fixture\",\"status\":\"rejected\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "a result with status \"rejected\": the gateway processed the event"
+    },
+    {
+      "id": "artifact-outcome.drop.2xx.result_rejected",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"id\":\"oe_fixture\",\"status\":\"rejected\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}]}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "a result with status \"rejected\": the gateway processed the event"
+    },
+    {
+      "id": "outcome.drop.2xx.200_minimal",
+      "kind": "outcome",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"id\":null,\"status\":\"accepted\"}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "status is the only field the verdict needs"
+    },
+    {
+      "id": "artifact-outcome.drop.2xx.200_minimal",
+      "kind": "artifact-outcome",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"id\":null,\"status\":\"accepted\"}]}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "status is the only field the verdict needs"
+    },
+    {
+      "id": "outcome.retain.2xx.empty_object",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: no result"
+    },
+    {
+      "id": "outcome.retain.2xx.empty",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: an empty body"
+    },
+    {
+      "id": "outcome.retain.2xx.html",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "text/html",
+      "body": "<html><body><h1>200 OK</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: not JSON"
+    },
+    {
+      "id": "outcome.retain.2xx.json_null",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "null",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: not an object"
+    },
+    {
+      "id": "outcome.retain.2xx.json_array",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "[]",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: not an object"
+    },
+    {
+      "id": "outcome.retain.2xx.unreadable",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "",
+      "unreadable": true,
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: the body cannot be read"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.empty_object",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: no result"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.empty",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: an empty body"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.html",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "text/html",
+      "body": "<html><body><h1>200 OK</h1></body></html>",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: not JSON"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.json_null",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "null",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: not an object"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.json_array",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "[]",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: not an object"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.unreadable",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "",
+      "unreadable": true,
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: the body cannot be read"
+    },
+    {
+      "id": "outcome.retain.2xx.status_unknown",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"id\":\"oe_fixture\",\"status\":\"weird\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: an unknown status"
+    },
+    {
+      "id": "outcome.retain.2xx.status_missing",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"id\":\"oe_fixture\"}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: no status"
+    },
+    {
+      "id": "outcome.retain.2xx.status_null",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"id\":\"oe_fixture\",\"status\":null,\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: a null status"
+    },
+    {
+      "id": "outcome.retain.2xx.status_number",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"id\":\"oe_fixture\",\"status\":1,\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: a non-string status"
+    },
+    {
+      "id": "outcome.retain.2xx.data_wrapped",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"id\":\"oe_fixture\",\"status\":\"accepted\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}]}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: the request shortcut answers a bare result, not a list"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.data_item_empty",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":[{}]}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: a result without status"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.data_empty_list",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":[]}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: no result row"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.data_object",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":{\"id\":\"oe_fixture\",\"status\":\"accepted\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: data is not a list"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.data_null",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":null}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: data is not a list"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.data_item_null",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":[null]}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: a null result row"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.data_item_status_unknown",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"id\":\"oe_fixture\",\"status\":\"weird\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}]}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: an unknown status"
+    },
+    {
+      "id": "artifact-outcome.retain.2xx.bare_result",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"id\":\"oe_fixture\",\"status\":\"accepted\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":\"art_fixture\",\"artifact_version\":1,\"reason\":null}",
+      "expect": "retain",
+      "outcome": "queued",
+      "rule": "a malformed success: the artifact route answers { data: [...] }, not a bare result"
+    },
+    {
+      "id": "reviewer.drop.accepted",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}]}",
+      "expect": "drop",
+      "outcome": "accepted",
+      "rule": "accepted removes the event"
+    },
+    {
+      "id": "reviewer.drop.accepted_minimal",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"accepted\"}]}",
+      "expect": "drop",
+      "outcome": "accepted",
+      "rule": "accepted needs only event_id and status"
+    },
+    {
+      "id": "reviewer.drop.duplicate",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"duplicate\",\"reason\":\"replay\",\"repairable\":false}]}",
+      "expect": "drop",
+      "outcome": "duplicate",
+      "rule": "a duplicate removes the event"
+    },
+    {
+      "id": "reviewer.drop.rejected_terminal",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"rejected\",\"reason\":\"unknown_artifact\",\"repairable\":false}]}",
+      "expect": "drop",
+      "outcome": "dropped",
+      "rule": "a terminal refusal: reason string, repairable false"
+    },
+    {
+      "id": "reviewer.drop.unsupported_terminal",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"unsupported\",\"reason\":\"decision_unsupported\",\"repairable\":false}]}",
+      "expect": "drop",
+      "outcome": "dropped",
+      "rule": "a terminal refusal: reason string, repairable false"
+    },
+    {
+      "id": "reviewer.retain.rejected_repairable",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"rejected\",\"reason\":\"artifact_not_yet_joined\",\"repairable\":true}]}",
+      "expect": "retain",
+      "outcome": "dead_lettered",
+      "rule": "a repairable refusal becomes a dead letter (kept)"
+    },
+    {
+      "id": "reviewer.retain.unsupported_repairable",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"unsupported\",\"reason\":\"x\",\"repairable\":true}]}",
+      "expect": "retain",
+      "outcome": "dead_lettered",
+      "rule": "a repairable refusal becomes a dead letter (kept)"
+    },
+    {
+      "id": "reviewer.retain.rejected_missing_reason",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"rejected\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a refusal needs a string reason"
+    },
+    {
+      "id": "reviewer.retain.rejected_missing_repairable",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"rejected\",\"reason\":\"unknown_artifact\"}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a refusal needs a boolean repairable"
+    },
+    {
+      "id": "reviewer.retain.rejected_reason_null",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"rejected\",\"reason\":null,\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a refusal needs a string reason"
+    },
+    {
+      "id": "reviewer.retain.rejected_reason_number",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"rejected\",\"reason\":3,\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a refusal needs a string reason"
+    },
+    {
+      "id": "reviewer.retain.rejected_repairable_null",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"rejected\",\"reason\":\"unknown_artifact\",\"repairable\":null}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "repairable must be a boolean"
+    },
+    {
+      "id": "reviewer.retain.rejected_repairable_string",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"rejected\",\"reason\":\"unknown_artifact\",\"repairable\":\"false\"}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "repairable must be a boolean"
+    },
+    {
+      "id": "reviewer.retain.rejected_repairable_zero",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"rejected\",\"reason\":\"unknown_artifact\",\"repairable\":0}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "repairable must be a boolean"
+    },
+    {
+      "id": "reviewer.retain.unsupported_missing_repairable",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"unsupported\",\"reason\":\"unknown_artifact\"}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a refusal needs a boolean repairable"
+    },
+    {
+      "id": "reviewer.retain.status_unknown",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"weird\",\"reason\":\"unknown_artifact\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "an unknown status"
+    },
+    {
+      "id": "reviewer.retain.status_missing",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"reason\":\"unknown_artifact\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "no status"
+    },
+    {
+      "id": "reviewer.retain.status_null",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":null,\"reason\":\"unknown_artifact\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a null status"
+    },
+    {
+      "id": "reviewer.retain.accepted_status_uppercase",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_fixture_1\",\"status\":\"ACCEPTED\",\"reason\":\"recorded\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "status values are exact"
+    },
+    {
+      "id": "reviewer.retain.event_id_other",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":\"evt_someone_else\",\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "no verdict for this event"
+    },
+    {
+      "id": "reviewer.retain.event_id_missing",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a verdict must name its event"
+    },
+    {
+      "id": "reviewer.retain.event_id_number",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":1,\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a verdict must name its event"
+    },
+    {
+      "id": "reviewer.retain.event_id_array",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":[\"evt_fixture_1\"],\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "event_id must be a string, not a list holding it"
+    },
+    {
+      "id": "reviewer.retain.event_id_object",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":{\"event_id\":\"evt_fixture_1\"},\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "event_id must be a string, not an object holding it"
+    },
+    {
+      "id": "reviewer.retain.event_id_float",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":1.5,\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "event_id must be a string"
+    },
+    {
+      "id": "reviewer.retain.event_id_null",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":null,\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "event_id must be a string"
+    },
+    {
+      "id": "reviewer.retain.event_id_true",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":true,\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "event_id must be a string"
+    },
+    {
+      "id": "reviewer.retain.event_id_false",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"event_id\":false,\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "event_id must be a string"
+    },
+    {
+      "id": "reviewer.retain.2xx.data_empty_list",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a malformed success: no verdict for this event"
+    },
+    {
+      "id": "reviewer.retain.2xx.data_item_null",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[null]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a malformed success: a null verdict"
+    },
+    {
+      "id": "reviewer.retain.2xx.data_item_string",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":[\"accepted\"]}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a malformed success: a verdict must be an object"
+    },
+    {
+      "id": "reviewer.retain.2xx.data_object",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":{\"evt_fixture_1\":{\"event_id\":\"evt_fixture_1\",\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}}}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a malformed success: data is not a list"
+    },
+    {
+      "id": "reviewer.retain.2xx.data_null",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":null}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a malformed success: data is not a list"
+    },
+    {
+      "id": "reviewer.retain.2xx.data_string",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{\"data\":\"accepted\"}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a malformed success: data is not a list"
+    },
+    {
+      "id": "reviewer.retain.2xx.empty_object",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a malformed success: no data"
+    },
+    {
+      "id": "reviewer.retain.2xx.bare_list",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "[{\"event_id\":\"evt_fixture_1\",\"status\":\"accepted\",\"reason\":\"recorded\",\"repairable\":false}]",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a malformed success: the answer must be { data: [...] }"
+    },
+    {
+      "id": "reviewer.retain.2xx.empty",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "text/plain",
+      "body": "",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a malformed success: an empty body"
+    },
+    {
+      "id": "reviewer.retain.2xx.html",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "text/html",
+      "body": "<html><body><h1>200 OK</h1></body></html>",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a malformed success: not JSON"
+    },
+    {
+      "id": "reviewer.retain.2xx.unreadable",
+      "kind": "reviewer",
+      "status": 200,
+      "content_type": "application/json",
+      "body": "",
+      "unreadable": true,
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a malformed success: the body cannot be read"
+    },
+    {
+      "id": "reviewer.retain.error.400_html",
+      "kind": "reviewer",
+      "status": 400,
+      "content_type": "text/html",
+      "body": "<html><head><title>400 Bad Request</title></head><body><h1>400 Bad Request</h1></body></html>",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a failed delivery never removes an event: an HTML 400"
+    },
+    {
+      "id": "reviewer.retain.error.400_invalid_request",
+      "kind": "reviewer",
+      "status": 400,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"invalid_request (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a failed delivery never removes an event: a complete event-code envelope on the whole request"
+    },
+    {
+      "id": "reviewer.retain.error.404_not_found",
+      "kind": "reviewer",
+      "status": 404,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"not_found (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a failed delivery never removes an event: a complete event-code envelope on the whole request"
+    },
+    {
+      "id": "reviewer.retain.error.401",
+      "kind": "reviewer",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"authentication\",\"message\":\"authentication (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a failed delivery never removes an event: credentials refused"
+    },
+    {
+      "id": "reviewer.retain.error.401_empty_object",
+      "kind": "reviewer",
+      "status": 401,
+      "content_type": "application/json",
+      "body": "{}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a failed delivery never removes an event: credentials refused"
+    },
+    {
+      "id": "reviewer.retain.error.403",
+      "kind": "reviewer",
+      "status": 403,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"permission\",\"message\":\"permission (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a failed delivery never removes an event: permission refused"
+    },
+    {
+      "id": "reviewer.retain.error.408",
+      "kind": "reviewer",
+      "status": 408,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"request_timeout\",\"message\":\"request_timeout (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a failed delivery never removes an event: a timeout"
+    },
+    {
+      "id": "reviewer.retain.error.429",
+      "kind": "reviewer",
+      "status": 429,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"rate_limited\",\"message\":\"rate_limited (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":true}}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a failed delivery never removes an event: rate limited"
+    },
+    {
+      "id": "reviewer.retain.error.500",
+      "kind": "reviewer",
+      "status": 500,
+      "content_type": "application/json",
+      "body": "{\"error\":{\"code\":\"internal\",\"message\":\"internal (fixture)\",\"request_id\":\"req_fixture\",\"retryable\":false}}",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a failed delivery never removes an event: a server error"
+    },
+    {
+      "id": "reviewer.retain.error.503_html",
+      "kind": "reviewer",
+      "status": 503,
+      "content_type": "text/html",
+      "body": "<html><body><h1>503 Service Unavailable</h1></body></html>",
+      "expect": "retain",
+      "outcome": "pending",
+      "rule": "a failed delivery never removes an event: a server error"
+    }
+  ]
+}

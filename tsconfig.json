@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": [],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true
+  },
+  "include": ["src", "test"],
+  "comment:context": "The context runtime, its entry point and its tests are type-checked by tsconfig.context.json (with exactOptionalPropertyTypes off, the setting the generated runtime is written for). Nothing in the client program imports them.",
+  "exclude": ["dist", "node_modules", "src/context.ts", "src/context-runtime", "test/context"]
+}

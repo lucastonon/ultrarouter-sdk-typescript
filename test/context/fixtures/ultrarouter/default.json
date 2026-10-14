@@ -1,0 +1,164 @@
+{
+  "_provenance": {
+    "profile": "ULTRAROUTER_PROFILE",
+    "generatedBy": "test/context/gen-ultrarouter-golden.mjs — compile + ULTRAROUTER_PROFILE.manifestEncoder over the built @ultrarouter/sdk/context",
+    "description": "the ultrarouter default profile: two admitted modules (volatility-reordered) with a nested ext, one token-shed and one non-optional refusal — key order and nesting bite at every depth"
+  },
+  "input": {
+    "envelope": {
+      "id": "env-ur-1",
+      "tenant": "tenant-ur",
+      "stage": "assistant",
+      "mode": "live",
+      "asOf": "2026-04-01T00:00:00.000Z",
+      "cutoffs": {
+        "policy": "2026-01-01T00:00:00.000Z"
+      },
+      "budgets": {
+        "tokens": 40
+      },
+      "seed": "seed-ur",
+      "pins": [],
+      "releases": {},
+      "permissionEpoch": "epoch-ur-1",
+      "ext": {
+        "worldSnapshotId": "snap-9",
+        "lineage": {
+          "release": "r-42",
+          "locale": "en-US"
+        }
+      }
+    },
+    "contract": {
+      "stage": "assistant",
+      "requiredKinds": [],
+      "optionalKinds": [
+        "procedure",
+        "fact",
+        "history"
+      ],
+      "forbiddenKinds": [],
+      "budgets": {
+        "tokens": 25
+      },
+      "limits": [],
+      "pinPolicy": "none",
+      "slots": [
+        "instruction",
+        "reference",
+        "exemplar"
+      ]
+    },
+    "candidates": [
+      {
+        "module": {
+          "id": "procedures",
+          "version": "1",
+          "kind": "procedure",
+          "memoryClass": "procedural",
+          "trustClass": "approved_derived",
+          "privacyClass": "workspace_private",
+          "availability": {
+            "from": null,
+            "to": null
+          },
+          "contentHash": "hash:procedures",
+          "tokenEstimate": 10,
+          "facets": {},
+          "ext": {
+            "ref": "proc://runbook",
+            "meta": {
+              "source": "procedure-lib",
+              "revision": 3
+            }
+          }
+        }
+      },
+      {
+        "module": {
+          "id": "facts",
+          "version": "1",
+          "kind": "fact",
+          "memoryClass": "semantic",
+          "trustClass": "authoritative",
+          "privacyClass": "workspace_private",
+          "availability": {
+            "from": null,
+            "to": null
+          },
+          "contentHash": "hash:facts",
+          "tokenEstimate": 10,
+          "facets": {},
+          "ext": {
+            "ref": "fact://pricing",
+            "meta": {
+              "source": "fact-lib",
+              "revision": 7
+            }
+          }
+        }
+      },
+      {
+        "module": {
+          "id": "history",
+          "version": "1",
+          "kind": "history",
+          "memoryClass": "episodic",
+          "trustClass": "approved_derived",
+          "privacyClass": "workspace_private",
+          "availability": {
+            "from": null,
+            "to": null
+          },
+          "contentHash": "hash:history",
+          "tokenEstimate": 10,
+          "facets": {},
+          "ext": {
+            "ref": "hist://thread-1",
+            "meta": {
+              "source": "history-lib",
+              "revision": 1
+            }
+          }
+        }
+      },
+      {
+        "module": {
+          "id": "scratch",
+          "version": "1",
+          "kind": "scratchpad",
+          "memoryClass": "working",
+          "trustClass": "approved_derived",
+          "privacyClass": "workspace_private",
+          "availability": {
+            "from": null,
+            "to": null
+          },
+          "contentHash": "hash:scratch",
+          "tokenEstimate": 10,
+          "facets": {},
+          "ext": {
+            "ref": "scratch://x",
+            "meta": {
+              "source": "scratchpad-lib",
+              "revision": 0
+            }
+          }
+        }
+      }
+    ]
+  },
+  "golden": {
+    "ok": true,
+    "hash": "0920584abcba27e81990a6e9345463440518ef04ac42e169448149af3ed1a297",
+    "bytes": "{\"budgets\":{\"admitted\":2,\"refused\":2,\"tokenLimit\":25,\"tokensAdmitted\":20},\"entries\":[{\"contentHash\":\"hash:procedures\",\"ext\":{\"meta\":{\"revision\":3,\"source\":\"procedure-lib\"},\"ref\":\"proc://runbook\"},\"kind\":\"procedure\",\"mandatory\":false,\"memoryClass\":\"procedural\",\"moduleId\":\"procedures\",\"order\":0,\"privacyClass\":\"workspace_private\",\"range\":null,\"slot\":\"instruction\",\"tokenEstimate\":10,\"trustClass\":\"approved_derived\",\"version\":\"1\"},{\"contentHash\":\"hash:facts\",\"ext\":{\"meta\":{\"revision\":7,\"source\":\"fact-lib\"},\"ref\":\"fact://pricing\"},\"kind\":\"fact\",\"mandatory\":false,\"memoryClass\":\"semantic\",\"moduleId\":\"facts\",\"order\":1,\"privacyClass\":\"workspace_private\",\"range\":null,\"slot\":\"instruction\",\"tokenEstimate\":10,\"trustClass\":\"authoritative\",\"version\":\"1\"}],\"envelopeHash\":\"5f600776388325b552692e45f267c891a5215a288d0572b16cfad549997e9185\",\"envelopeId\":\"env-ur-1\",\"ext\":null,\"refused\":[{\"code\":\"FORBIDDEN_KIND\",\"detail\":\"not_optional\",\"fatal\":false,\"kind\":\"scratchpad\",\"moduleId\":\"scratch\",\"path\":null,\"reason\":\"FORBIDDEN_KIND\"},{\"code\":\"BUDGET_EXCEEDED\",\"detail\":\"tokens\",\"fatal\":false,\"kind\":\"history\",\"moduleId\":\"history\",\"path\":null,\"reason\":\"BUDGET_EXCEEDED\"}],\"scaffoldHash\":\"ae2db3c919f075cd4cd12ffbefeb1861e1ae161809b785e696eaf6cbe94a4aaa\",\"stage\":\"assistant\"}",
+    "itemRefs": [
+      "proc://runbook",
+      "fact://pricing"
+    ],
+    "refusalCodes": [
+      "FORBIDDEN_KIND",
+      "BUDGET_EXCEEDED"
+    ]
+  }
+}
