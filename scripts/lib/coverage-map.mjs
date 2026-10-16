@@ -338,6 +338,8 @@ export const COVERAGE = {
   getModelPolicy: { methods: [], tests: [] },
   putModelPolicy: { methods: [], tests: [] },
   previewModelPolicy: { methods: [], tests: [] },
+  getPassthroughPolicy: { methods: [], tests: [] },
+  putPassthroughPolicy: { methods: [], tests: [] },
   listProviderKeys: { methods: [], tests: [] },
   createProviderKey: { methods: [], tests: [] },
   updateProviderKey: { methods: [], tests: [] },

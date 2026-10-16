@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: f98c67024854d7218f4b42ba4f12d8f7d5647097170abed9037256526ade8637
+# spec-sha256: 157e8c570267fe0a072d2027d5e886b18f83d0fec166eaa4028d34649199961d
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -22263,6 +22263,286 @@ paths:
         -
           sessionCookie: []
       summary: "Preview a proposed model policy against the live catalog"
+      tags:
+        - "Workspaces"
+  "/v1/workspaces/{id}/passthrough-policy":
+    get:
+      description: "The per-workspace NATIVE-PASSTHROUGH routing policy: stage-keyed rules that let the gateway swap a `POST /v1/responses` / `POST /v1/messages` request’s model from its call tags (`X-UR-Call-Type` / `X-UR-Trace.stage` / body model), optionally injecting Anthropic prefix caching — the product form of moving a cheap stage off the frontier model with no code change. Default disabled when unset. RBAC `passthrough_policy.read`."
+      operationId: "getPassthroughPolicy"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "The workspace passthrough routing policy."
+                properties:
+                  config_version:
+                    nullable: true
+                    type: "integer"
+                  enabled:
+                    type: "boolean"
+                  object:
+                    enum:
+                      - "passthrough_policy"
+                    type: "string"
+                  rules:
+                    items:
+                      additionalProperties: false
+                      description: "A native-passthrough stage-keyed routing rule."
+                      properties:
+                        cache:
+                          default: "off"
+                          description: "Prompt-cache strategy: `anthropic_prefix` injects `cache_control: ephemeral` on the Anthropic system block + the first user message’s largest text block (ignored for OpenAI)."
+                          enum:
+                            - "off"
+                            - "anthropic_prefix"
+                          type: "string"
+                        id:
+                          description: "A stable, workspace-unique rule id (echoed into routing_decision.passthrough_rule)."
+                          maxLength: 128
+                          minLength: 1
+                          type: "string"
+                        match:
+                          additionalProperties: false
+                          default: {}
+                          description: "A passthrough rule match predicate (an empty object is a catch-all)."
+                          properties:
+                            call_type:
+                              description: "Match the `X-UR-Call-Type` slug the request is tagged with."
+                              minLength: 1
+                              type: "string"
+                            model:
+                              description: "Match the model the request body names (the caller’s requested model)."
+                              minLength: 1
+                              type: "string"
+                            trace_stage:
+                              description: "Match the `stage` field inside the request’s `X-UR-Trace` JSON object."
+                              minLength: 1
+                              type: "string"
+                          type: "object"
+                        serve:
+                          additionalProperties: false
+                          description: "What the matched request is served with."
+                          properties:
+                            model:
+                              description: "The model the gateway serves instead (SAME provider family only)."
+                              minLength: 1
+                              type: "string"
+                          required:
+                            - "model"
+                          type: "object"
+                      required:
+                        - "id"
+                        - "serve"
+                      type: "object"
+                    type: "array"
+                  updated_at:
+                    nullable: true
+                    type: "string"
+                  updated_by:
+                    nullable: true
+                    type: "string"
+                required:
+                  - "object"
+                  - "enabled"
+                  - "rules"
+                  - "updated_at"
+                  - "updated_by"
+                  - "config_version"
+                type: "object"
+          description: "The workspace passthrough routing policy."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Read the workspace native-passthrough routing policy"
+      tags:
+        - "Workspaces"
+    put:
+      description: "REPLACE the per-workspace native-passthrough routing policy. Applied on `POST /v1/responses` and `POST /v1/messages`: the FIRST matching rule rewrites the body’s model to its served model (SAME provider family only — a cross-family rule is refused here by name), which must be priced and active in the catalog; everything else in the body is left verbatim. owner|admin, audited, bumps `config_version` (visible within one 5 s cache window)."
+      operationId: "putPassthroughPolicy"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              additionalProperties: false
+              description: "Replace the workspace passthrough routing policy (owner|admin, audited, bumps config_version)."
+              properties:
+                enabled:
+                  default: false
+                  description: "Master switch — when false no rule fires (the kill switch)."
+                  type: "boolean"
+                rules:
+                  default: []
+                  description: "The stage-keyed rules, evaluated in order (first match wins)."
+                  items:
+                    additionalProperties: false
+                    description: "A native-passthrough stage-keyed routing rule."
+                    properties:
+                      cache:
+                        default: "off"
+                        description: "Prompt-cache strategy: `anthropic_prefix` injects `cache_control: ephemeral` on the Anthropic system block + the first user message’s largest text block (ignored for OpenAI)."
+                        enum:
+                          - "off"
+                          - "anthropic_prefix"
+                        type: "string"
+                      id:
+                        description: "A stable, workspace-unique rule id (echoed into routing_decision.passthrough_rule)."
+                        maxLength: 128
+                        minLength: 1
+                        type: "string"
+                      match:
+                        additionalProperties: false
+                        default: {}
+                        description: "A passthrough rule match predicate (an empty object is a catch-all)."
+                        properties:
+                          call_type:
+                            description: "Match the `X-UR-Call-Type` slug the request is tagged with."
+                            minLength: 1
+                            type: "string"
+                          model:
+                            description: "Match the model the request body names (the caller’s requested model)."
+                            minLength: 1
+                            type: "string"
+                          trace_stage:
+                            description: "Match the `stage` field inside the request’s `X-UR-Trace` JSON object."
+                            minLength: 1
+                            type: "string"
+                        type: "object"
+                      serve:
+                        additionalProperties: false
+                        description: "What the matched request is served with."
+                        properties:
+                          model:
+                            description: "The model the gateway serves instead (SAME provider family only)."
+                            minLength: 1
+                            type: "string"
+                        required:
+                          - "model"
+                        type: "object"
+                    required:
+                      - "id"
+                      - "serve"
+                    type: "object"
+                  maxItems: 100
+                  type: "array"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "The workspace passthrough routing policy."
+                properties:
+                  config_version:
+                    nullable: true
+                    type: "integer"
+                  enabled:
+                    type: "boolean"
+                  object:
+                    enum:
+                      - "passthrough_policy"
+                    type: "string"
+                  rules:
+                    items:
+                      additionalProperties: false
+                      description: "A native-passthrough stage-keyed routing rule."
+                      properties:
+                        cache:
+                          default: "off"
+                          description: "Prompt-cache strategy: `anthropic_prefix` injects `cache_control: ephemeral` on the Anthropic system block + the first user message’s largest text block (ignored for OpenAI)."
+                          enum:
+                            - "off"
+                            - "anthropic_prefix"
+                          type: "string"
+                        id:
+                          description: "A stable, workspace-unique rule id (echoed into routing_decision.passthrough_rule)."
+                          maxLength: 128
+                          minLength: 1
+                          type: "string"
+                        match:
+                          additionalProperties: false
+                          default: {}
+                          description: "A passthrough rule match predicate (an empty object is a catch-all)."
+                          properties:
+                            call_type:
+                              description: "Match the `X-UR-Call-Type` slug the request is tagged with."
+                              minLength: 1
+                              type: "string"
+                            model:
+                              description: "Match the model the request body names (the caller’s requested model)."
+                              minLength: 1
+                              type: "string"
+                            trace_stage:
+                              description: "Match the `stage` field inside the request’s `X-UR-Trace` JSON object."
+                              minLength: 1
+                              type: "string"
+                          type: "object"
+                        serve:
+                          additionalProperties: false
+                          description: "What the matched request is served with."
+                          properties:
+                            model:
+                              description: "The model the gateway serves instead (SAME provider family only)."
+                              minLength: 1
+                              type: "string"
+                          required:
+                            - "model"
+                          type: "object"
+                      required:
+                        - "id"
+                        - "serve"
+                      type: "object"
+                    type: "array"
+                  updated_at:
+                    nullable: true
+                    type: "string"
+                  updated_by:
+                    nullable: true
+                    type: "string"
+                required:
+                  - "object"
+                  - "enabled"
+                  - "rules"
+                  - "updated_at"
+                  - "updated_by"
+                  - "config_version"
+                type: "object"
+          description: "The stored workspace passthrough routing policy."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Replace the workspace native-passthrough routing policy"
       tags:
         - "Workspaces"
   "/v1/workspaces/{id}/provider-keys":
