@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: a74243e15c26b55f712f4e248c215af9a8b693b066f1305389a8029debfdcc51
+# spec-sha256: f98c67024854d7218f4b42ba4f12d8f7d5647097170abed9037256526ade8637
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -7755,6 +7755,15 @@ components:
         cost:
           description: "Cost accounting (money is integer micro-USD)."
           properties:
+            cost_basis:
+              description: "Provenance of the cost: `priced` (the offer’s own catalog price), `derived` (a price derived from the logical model it serves), `verified_memory` (answered from verified memory at $0), or `unpriced` (served with no usable price — metered at $0 only where the unpriced-model override is enabled; null on a non-ok row)."
+              enum:
+                - "priced"
+                - "derived"
+                - "unpriced"
+                - "verified_memory"
+              nullable: true
+              type: "string"
             total_micro_usd:
               description: "Total cost in integer micro-USD."
               minimum: 0
@@ -7766,6 +7775,7 @@ components:
           required:
             - "total_micro_usd"
             - "total_usd"
+            - "cost_basis"
           type: "object"
         created_at:
           description: "ISO-8601 timestamp the request was recorded."

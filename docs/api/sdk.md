@@ -1911,6 +1911,7 @@ interface GenerationStats {
     cost: {
         total_micro_usd: number;
         total_usd: number;
+        cost_basis: 'priced' | 'derived' | 'unpriced' | 'verified_memory' | null;
     };
     timing: {
         ttfb_ms: number | null;
@@ -1946,7 +1947,7 @@ interface GenerationStats {
 | `error_class: string \| null` | The error class of a failed request, or `null`. |
 | `contract_digest: string \| null` | A digest of the declared contract (schema, tools, tool choice, response format), or `null`. |
 | `tokens: { input: number; output: number; cached: number; total: number }` | Token counts. |
-| `cost: { total_micro_usd: number; total_usd: number }` | Cost in integer micro-USD and USD. |
+| `cost: { total_micro_usd: number; total_usd: number; cost_basis: 'priced' \| 'derived' \| 'unpriced' \| 'verified_memory' \| null; }` | Cost in integer micro-USD and USD, with the basis the gateway priced it on: `priced` (the model's catalog price), `derived` (a dated snapshot priced from its curated base), `unpriced` (no catalog price — metered at 0 and only ever served when the gateway is explicitly configured to allow unpriced models), `verified_memory` (served from a verified memory, no provider call), or `null` when nothing was served. |
 | `timing: { ttfb_ms: number \| null; latency_ms: number \| null }` | Time to first byte and total latency (ms). |
 | `routing_decision: Record<string, unknown>` | The routing decision trail. |
 | `compression: Record<string, unknown>` | The compression record. |

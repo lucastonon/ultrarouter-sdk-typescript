@@ -615,7 +615,7 @@ export async function startMockGateway(options = {}) {
         error_class: null,
         contract_digest: null,
         tokens: { input: 12, output: 8, cached: 0, total: 20 },
-        cost: { total_micro_usd: 42, total_usd: 0.000042 },
+        cost: { total_micro_usd: 42, total_usd: 0.000042, cost_basis: 'priced' },
         timing: { ttfb_ms: 120, latency_ms: 340 },
         routing_decision: { mode: 'off' },
         compression: { applied: 'off' },

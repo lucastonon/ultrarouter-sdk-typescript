@@ -741,8 +741,18 @@ export interface GenerationStats {
   contract_digest: string | null;
   /** Token counts. */
   tokens: { input: number; output: number; cached: number; total: number };
-  /** Cost in integer micro-USD and USD. */
-  cost: { total_micro_usd: number; total_usd: number };
+  /**
+   * Cost in integer micro-USD and USD, with the basis the gateway priced it on: `priced` (the
+   * model's catalog price), `derived` (a dated snapshot priced from its curated base),
+   * `unpriced` (no catalog price — metered at 0 and only ever served when the gateway is
+   * explicitly configured to allow unpriced models), `verified_memory` (served from a verified
+   * memory, no provider call), or `null` when nothing was served.
+   */
+  cost: {
+    total_micro_usd: number;
+    total_usd: number;
+    cost_basis: 'priced' | 'derived' | 'unpriced' | 'verified_memory' | null;
+  };
   /** Time to first byte and total latency (ms). */
   timing: { ttfb_ms: number | null; latency_ms: number | null };
   /** The routing decision trail. */
