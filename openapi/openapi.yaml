@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: 157e8c570267fe0a072d2027d5e886b18f83d0fec166eaa4028d34649199961d
+# spec-sha256: c8601952e85c5d1b51a8f7c970d90396b04bfcc9652c591f917b41d3782c5d9d
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -8060,6 +8060,49 @@ components:
               - "cost_micro_usd"
             type: "object"
           type: "array"
+        workflow:
+          description: "Workflow (workflow_execution_jsonl) only: the execution counts (delivered / held), the orphan/interrupted calls kept apart, and the per-execution cost reconciliation."
+          properties:
+            cost_reconciliation:
+              items:
+                description: "One execution’s cost reconciliation (gateway summed vs the client figure vs the difference)."
+                properties:
+                  client_cost_micro_usd:
+                    nullable: true
+                    type: "integer"
+                  cost_diff_micro_usd:
+                    nullable: true
+                    type: "integer"
+                  execution_key:
+                    type: "string"
+                  gateway_cost_micro_usd:
+                    type: "integer"
+                  pending_charges:
+                    type: "integer"
+                required:
+                  - "execution_key"
+                  - "gateway_cost_micro_usd"
+                  - "client_cost_micro_usd"
+                  - "cost_diff_micro_usd"
+                  - "pending_charges"
+                type: "object"
+              type: "array"
+            delivered:
+              type: "integer"
+            executions:
+              type: "integer"
+            held:
+              type: "integer"
+            orphan_calls:
+              description: "Calls not members of a terminal execution (orphan/interrupted) — kept apart, never dropped."
+              type: "integer"
+          required:
+            - "executions"
+            - "delivered"
+            - "held"
+            - "orphan_calls"
+            - "cost_reconciliation"
+          type: "object"
       required:
         - "format"
         - "format_version"
@@ -8213,6 +8256,49 @@ components:
                       - "cost_micro_usd"
                     type: "object"
                   type: "array"
+                workflow:
+                  description: "Workflow (workflow_execution_jsonl) only: the execution counts (delivered / held), the orphan/interrupted calls kept apart, and the per-execution cost reconciliation."
+                  properties:
+                    cost_reconciliation:
+                      items:
+                        description: "One execution’s cost reconciliation (gateway summed vs the client figure vs the difference)."
+                        properties:
+                          client_cost_micro_usd:
+                            nullable: true
+                            type: "integer"
+                          cost_diff_micro_usd:
+                            nullable: true
+                            type: "integer"
+                          execution_key:
+                            type: "string"
+                          gateway_cost_micro_usd:
+                            type: "integer"
+                          pending_charges:
+                            type: "integer"
+                        required:
+                          - "execution_key"
+                          - "gateway_cost_micro_usd"
+                          - "client_cost_micro_usd"
+                          - "cost_diff_micro_usd"
+                          - "pending_charges"
+                        type: "object"
+                      type: "array"
+                    delivered:
+                      type: "integer"
+                    executions:
+                      type: "integer"
+                    held:
+                      type: "integer"
+                    orphan_calls:
+                      description: "Calls not members of a terminal execution (orphan/interrupted) — kept apart, never dropped."
+                      type: "integer"
+                  required:
+                    - "executions"
+                    - "delivered"
+                    - "held"
+                    - "orphan_calls"
+                    - "cost_reconciliation"
+                  type: "object"
               type: "object"
             status:
               enum:
@@ -8385,6 +8471,49 @@ components:
                         - "cost_micro_usd"
                       type: "object"
                     type: "array"
+                  workflow:
+                    description: "Workflow (workflow_execution_jsonl) only: the execution counts (delivered / held), the orphan/interrupted calls kept apart, and the per-execution cost reconciliation."
+                    properties:
+                      cost_reconciliation:
+                        items:
+                          description: "One execution’s cost reconciliation (gateway summed vs the client figure vs the difference)."
+                          properties:
+                            client_cost_micro_usd:
+                              nullable: true
+                              type: "integer"
+                            cost_diff_micro_usd:
+                              nullable: true
+                              type: "integer"
+                            execution_key:
+                              type: "string"
+                            gateway_cost_micro_usd:
+                              type: "integer"
+                            pending_charges:
+                              type: "integer"
+                          required:
+                            - "execution_key"
+                            - "gateway_cost_micro_usd"
+                            - "client_cost_micro_usd"
+                            - "cost_diff_micro_usd"
+                            - "pending_charges"
+                          type: "object"
+                        type: "array"
+                      delivered:
+                        type: "integer"
+                      executions:
+                        type: "integer"
+                      held:
+                        type: "integer"
+                      orphan_calls:
+                        description: "Calls not members of a terminal execution (orphan/interrupted) — kept apart, never dropped."
+                        type: "integer"
+                    required:
+                      - "executions"
+                      - "delivered"
+                      - "held"
+                      - "orphan_calls"
+                      - "cost_reconciliation"
+                    type: "object"
                 type: "object"
               status:
                 enum:
@@ -8473,8 +8602,26 @@ components:
             - "preview"
             - "commit"
           type: "string"
+        reason_vocabulary:
+          description: "workflow_execution_jsonl only: the typed hold-reason codes this batch’s executions may use (`{ id, codes[] }`). Registered ONCE at the batch creation (insert-only; a resume inherits it). An execution whose terminal names an unregistered code is refused `reason_code_unregistered`. Required for a workflow import (409 `workflow_requires_reason_vocabulary` otherwise)."
+          properties:
+            codes:
+              items:
+                maxLength: 256
+                minLength: 1
+                type: "string"
+              maxItems: 256
+              type: "array"
+            id:
+              maxLength: 128
+              minLength: 1
+              type: "string"
+          required:
+            - "id"
+            - "codes"
+          type: "object"
         records:
-          description: "The uploaded records (array form). Intact-trace records may carry request/response bodies — the ONLY import field that does; stored ONLY under corrections_consent, redacted on ingest."
+          description: "The uploaded records (array form). Intact-trace records may carry request/response bodies — the ONLY import field that does; stored ONLY under corrections_consent, redacted on ingest. A workflow_execution_jsonl record groups the EXISTING gateway request rows its `calls` name into one artifact with one terminal outcome."
           items:
             nullable: true
           maxItems: 5000
@@ -8614,6 +8761,49 @@ components:
                   - "cost_micro_usd"
                 type: "object"
               type: "array"
+            workflow:
+              description: "Workflow (workflow_execution_jsonl) only: the execution counts (delivered / held), the orphan/interrupted calls kept apart, and the per-execution cost reconciliation."
+              properties:
+                cost_reconciliation:
+                  items:
+                    description: "One execution’s cost reconciliation (gateway summed vs the client figure vs the difference)."
+                    properties:
+                      client_cost_micro_usd:
+                        nullable: true
+                        type: "integer"
+                      cost_diff_micro_usd:
+                        nullable: true
+                        type: "integer"
+                      execution_key:
+                        type: "string"
+                      gateway_cost_micro_usd:
+                        type: "integer"
+                      pending_charges:
+                        type: "integer"
+                    required:
+                      - "execution_key"
+                      - "gateway_cost_micro_usd"
+                      - "client_cost_micro_usd"
+                      - "cost_diff_micro_usd"
+                      - "pending_charges"
+                    type: "object"
+                  type: "array"
+                delivered:
+                  type: "integer"
+                executions:
+                  type: "integer"
+                held:
+                  type: "integer"
+                orphan_calls:
+                  description: "Calls not members of a terminal execution (orphan/interrupted) — kept apart, never dropped."
+                  type: "integer"
+              required:
+                - "executions"
+                - "delivered"
+                - "held"
+                - "orphan_calls"
+                - "cost_reconciliation"
+              type: "object"
           type: "object"
         status:
           enum:
