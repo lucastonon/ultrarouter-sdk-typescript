@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: b72475c5d9019680a45503a1e51de9ebb657134cd69cbc535e1d3d7d7e5672b1
+# spec-sha256: c5fdd0db4b7f2135c479581d74e11f02da4581ea4536c0e3ac0d531f9a698f90
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -7518,6 +7518,68 @@ components:
               type: "string"
             prereg_hash:
               type: "string"
+            reservations:
+              default: null
+              description: "The atomic per-call reservation ledger: the experiment total + each phase (micro-USD)."
+              nullable: true
+              properties:
+                ambiguous_micro_usd:
+                  minimum: 0
+                  type: "integer"
+                phases:
+                  items:
+                    description: "One phase of the atomic reservation ledger (micro-USD)."
+                    properties:
+                      ambiguous_micro_usd:
+                        description: "Reserve held for an interrupted/unknown-outcome call, still counted against the cap."
+                        minimum: 0
+                        type: "integer"
+                      cap_micro_usd:
+                        minimum: 0
+                        type: "integer"
+                      funded:
+                        description: "Whether the phase has a funded cap (the prospective-test phase starts unfunded)."
+                        type: "boolean"
+                      phase:
+                        enum:
+                          - "screen"
+                          - "test"
+                        type: "string"
+                      remaining_micro_usd:
+                        minimum: 0
+                        type: "integer"
+                      reserved_micro_usd:
+                        minimum: 0
+                        type: "integer"
+                      spent_micro_usd:
+                        minimum: 0
+                        type: "integer"
+                    required:
+                      - "phase"
+                      - "funded"
+                      - "cap_micro_usd"
+                      - "reserved_micro_usd"
+                      - "spent_micro_usd"
+                      - "ambiguous_micro_usd"
+                      - "remaining_micro_usd"
+                    type: "object"
+                  type: "array"
+                remaining_micro_usd:
+                  minimum: 0
+                  type: "integer"
+                reserved_micro_usd:
+                  minimum: 0
+                  type: "integer"
+                spent_micro_usd:
+                  minimum: 0
+                  type: "integer"
+              required:
+                - "reserved_micro_usd"
+                - "spent_micro_usd"
+                - "ambiguous_micro_usd"
+                - "remaining_micro_usd"
+                - "phases"
+              type: "object"
             state:
               enum:
                 - "admitted"
@@ -9960,6 +10022,68 @@ components:
               type: "string"
             prereg_hash:
               type: "string"
+            reservations:
+              default: null
+              description: "The atomic per-call reservation ledger: the experiment total + each phase (micro-USD)."
+              nullable: true
+              properties:
+                ambiguous_micro_usd:
+                  minimum: 0
+                  type: "integer"
+                phases:
+                  items:
+                    description: "One phase of the atomic reservation ledger (micro-USD)."
+                    properties:
+                      ambiguous_micro_usd:
+                        description: "Reserve held for an interrupted/unknown-outcome call, still counted against the cap."
+                        minimum: 0
+                        type: "integer"
+                      cap_micro_usd:
+                        minimum: 0
+                        type: "integer"
+                      funded:
+                        description: "Whether the phase has a funded cap (the prospective-test phase starts unfunded)."
+                        type: "boolean"
+                      phase:
+                        enum:
+                          - "screen"
+                          - "test"
+                        type: "string"
+                      remaining_micro_usd:
+                        minimum: 0
+                        type: "integer"
+                      reserved_micro_usd:
+                        minimum: 0
+                        type: "integer"
+                      spent_micro_usd:
+                        minimum: 0
+                        type: "integer"
+                    required:
+                      - "phase"
+                      - "funded"
+                      - "cap_micro_usd"
+                      - "reserved_micro_usd"
+                      - "spent_micro_usd"
+                      - "ambiguous_micro_usd"
+                      - "remaining_micro_usd"
+                    type: "object"
+                  type: "array"
+                remaining_micro_usd:
+                  minimum: 0
+                  type: "integer"
+                reserved_micro_usd:
+                  minimum: 0
+                  type: "integer"
+                spent_micro_usd:
+                  minimum: 0
+                  type: "integer"
+              required:
+                - "reserved_micro_usd"
+                - "spent_micro_usd"
+                - "ambiguous_micro_usd"
+                - "remaining_micro_usd"
+                - "phases"
+              type: "object"
             state:
               enum:
                 - "admitted"
@@ -17618,6 +17742,68 @@ paths:
                           type: "string"
                         prereg_hash:
                           type: "string"
+                        reservations:
+                          default: null
+                          description: "The atomic per-call reservation ledger: the experiment total + each phase (micro-USD)."
+                          nullable: true
+                          properties:
+                            ambiguous_micro_usd:
+                              minimum: 0
+                              type: "integer"
+                            phases:
+                              items:
+                                description: "One phase of the atomic reservation ledger (micro-USD)."
+                                properties:
+                                  ambiguous_micro_usd:
+                                    description: "Reserve held for an interrupted/unknown-outcome call, still counted against the cap."
+                                    minimum: 0
+                                    type: "integer"
+                                  cap_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  funded:
+                                    description: "Whether the phase has a funded cap (the prospective-test phase starts unfunded)."
+                                    type: "boolean"
+                                  phase:
+                                    enum:
+                                      - "screen"
+                                      - "test"
+                                    type: "string"
+                                  remaining_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  reserved_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  spent_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "phase"
+                                  - "funded"
+                                  - "cap_micro_usd"
+                                  - "reserved_micro_usd"
+                                  - "spent_micro_usd"
+                                  - "ambiguous_micro_usd"
+                                  - "remaining_micro_usd"
+                                type: "object"
+                              type: "array"
+                            remaining_micro_usd:
+                              minimum: 0
+                              type: "integer"
+                            reserved_micro_usd:
+                              minimum: 0
+                              type: "integer"
+                            spent_micro_usd:
+                              minimum: 0
+                              type: "integer"
+                          required:
+                            - "reserved_micro_usd"
+                            - "spent_micro_usd"
+                            - "ambiguous_micro_usd"
+                            - "remaining_micro_usd"
+                            - "phases"
+                          type: "object"
                         situation_class:
                           type: "string"
                         state:
@@ -17907,6 +18093,68 @@ paths:
                         type: "string"
                       prereg_hash:
                         type: "string"
+                      reservations:
+                        default: null
+                        description: "The atomic per-call reservation ledger: the experiment total + each phase (micro-USD)."
+                        nullable: true
+                        properties:
+                          ambiguous_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          phases:
+                            items:
+                              description: "One phase of the atomic reservation ledger (micro-USD)."
+                              properties:
+                                ambiguous_micro_usd:
+                                  description: "Reserve held for an interrupted/unknown-outcome call, still counted against the cap."
+                                  minimum: 0
+                                  type: "integer"
+                                cap_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                funded:
+                                  description: "Whether the phase has a funded cap (the prospective-test phase starts unfunded)."
+                                  type: "boolean"
+                                phase:
+                                  enum:
+                                    - "screen"
+                                    - "test"
+                                  type: "string"
+                                remaining_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                reserved_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                spent_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                              required:
+                                - "phase"
+                                - "funded"
+                                - "cap_micro_usd"
+                                - "reserved_micro_usd"
+                                - "spent_micro_usd"
+                                - "ambiguous_micro_usd"
+                                - "remaining_micro_usd"
+                              type: "object"
+                            type: "array"
+                          remaining_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          reserved_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          spent_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "reserved_micro_usd"
+                          - "spent_micro_usd"
+                          - "ambiguous_micro_usd"
+                          - "remaining_micro_usd"
+                          - "phases"
+                        type: "object"
                       situation_class:
                         type: "string"
                       state:
@@ -18125,6 +18373,68 @@ paths:
                         type: "string"
                       prereg_hash:
                         type: "string"
+                      reservations:
+                        default: null
+                        description: "The atomic per-call reservation ledger: the experiment total + each phase (micro-USD)."
+                        nullable: true
+                        properties:
+                          ambiguous_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          phases:
+                            items:
+                              description: "One phase of the atomic reservation ledger (micro-USD)."
+                              properties:
+                                ambiguous_micro_usd:
+                                  description: "Reserve held for an interrupted/unknown-outcome call, still counted against the cap."
+                                  minimum: 0
+                                  type: "integer"
+                                cap_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                funded:
+                                  description: "Whether the phase has a funded cap (the prospective-test phase starts unfunded)."
+                                  type: "boolean"
+                                phase:
+                                  enum:
+                                    - "screen"
+                                    - "test"
+                                  type: "string"
+                                remaining_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                reserved_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                spent_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                              required:
+                                - "phase"
+                                - "funded"
+                                - "cap_micro_usd"
+                                - "reserved_micro_usd"
+                                - "spent_micro_usd"
+                                - "ambiguous_micro_usd"
+                                - "remaining_micro_usd"
+                              type: "object"
+                            type: "array"
+                          remaining_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          reserved_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          spent_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "reserved_micro_usd"
+                          - "spent_micro_usd"
+                          - "ambiguous_micro_usd"
+                          - "remaining_micro_usd"
+                          - "phases"
+                        type: "object"
                       situation_class:
                         type: "string"
                       state:
@@ -18335,6 +18645,68 @@ paths:
                         type: "string"
                       prereg_hash:
                         type: "string"
+                      reservations:
+                        default: null
+                        description: "The atomic per-call reservation ledger: the experiment total + each phase (micro-USD)."
+                        nullable: true
+                        properties:
+                          ambiguous_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          phases:
+                            items:
+                              description: "One phase of the atomic reservation ledger (micro-USD)."
+                              properties:
+                                ambiguous_micro_usd:
+                                  description: "Reserve held for an interrupted/unknown-outcome call, still counted against the cap."
+                                  minimum: 0
+                                  type: "integer"
+                                cap_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                funded:
+                                  description: "Whether the phase has a funded cap (the prospective-test phase starts unfunded)."
+                                  type: "boolean"
+                                phase:
+                                  enum:
+                                    - "screen"
+                                    - "test"
+                                  type: "string"
+                                remaining_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                reserved_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                spent_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                              required:
+                                - "phase"
+                                - "funded"
+                                - "cap_micro_usd"
+                                - "reserved_micro_usd"
+                                - "spent_micro_usd"
+                                - "ambiguous_micro_usd"
+                                - "remaining_micro_usd"
+                              type: "object"
+                            type: "array"
+                          remaining_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          reserved_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          spent_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "reserved_micro_usd"
+                          - "spent_micro_usd"
+                          - "ambiguous_micro_usd"
+                          - "remaining_micro_usd"
+                          - "phases"
+                        type: "object"
                       situation_class:
                         type: "string"
                       state:
@@ -18545,6 +18917,68 @@ paths:
                         type: "string"
                       prereg_hash:
                         type: "string"
+                      reservations:
+                        default: null
+                        description: "The atomic per-call reservation ledger: the experiment total + each phase (micro-USD)."
+                        nullable: true
+                        properties:
+                          ambiguous_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          phases:
+                            items:
+                              description: "One phase of the atomic reservation ledger (micro-USD)."
+                              properties:
+                                ambiguous_micro_usd:
+                                  description: "Reserve held for an interrupted/unknown-outcome call, still counted against the cap."
+                                  minimum: 0
+                                  type: "integer"
+                                cap_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                funded:
+                                  description: "Whether the phase has a funded cap (the prospective-test phase starts unfunded)."
+                                  type: "boolean"
+                                phase:
+                                  enum:
+                                    - "screen"
+                                    - "test"
+                                  type: "string"
+                                remaining_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                reserved_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                spent_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                              required:
+                                - "phase"
+                                - "funded"
+                                - "cap_micro_usd"
+                                - "reserved_micro_usd"
+                                - "spent_micro_usd"
+                                - "ambiguous_micro_usd"
+                                - "remaining_micro_usd"
+                              type: "object"
+                            type: "array"
+                          remaining_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          reserved_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          spent_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "reserved_micro_usd"
+                          - "spent_micro_usd"
+                          - "ambiguous_micro_usd"
+                          - "remaining_micro_usd"
+                          - "phases"
+                        type: "object"
                       situation_class:
                         type: "string"
                       state:
