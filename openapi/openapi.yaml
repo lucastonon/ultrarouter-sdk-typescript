@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: c8601952e85c5d1b51a8f7c970d90396b04bfcc9652c591f917b41d3782c5d9d
+# spec-sha256: b72475c5d9019680a45503a1e51de9ebb657134cd69cbc535e1d3d7d7e5672b1
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -7404,6 +7404,142 @@ components:
               - "last_observed_at"
             type: "object"
           type: "array"
+        experiment:
+          description: "The current bounded experiment, or null — benchmarkable is always false."
+          nullable: true
+          properties:
+            admission:
+              description: "The frozen admission verdict — admitted + the rules applied + the evidence (the owner receipt)."
+              nullable: true
+              properties:
+                admitted:
+                  type: "boolean"
+                applied:
+                  description: "The frozen thresholds the admission applied."
+                  properties:
+                    budget_cap_micro_usd:
+                      minimum: 0
+                      type: "integer"
+                    expiry_days:
+                      minimum: 0
+                      type: "integer"
+                    min_contrast_ideas:
+                      minimum: 0
+                      type: "integer"
+                    min_delivered_fit:
+                      minimum: 0
+                      type: "integer"
+                    min_held_fit:
+                      minimum: 0
+                      type: "integer"
+                    min_resolved_fit:
+                      minimum: 0
+                      type: "integer"
+                    screen_subcap_micro_usd:
+                      minimum: 0
+                      type: "integer"
+                    verifier_version:
+                      type: "string"
+                  required:
+                    - "verifier_version"
+                    - "min_resolved_fit"
+                    - "min_delivered_fit"
+                    - "min_held_fit"
+                    - "min_contrast_ideas"
+                    - "budget_cap_micro_usd"
+                    - "screen_subcap_micro_usd"
+                    - "expiry_days"
+                  type: "object"
+                evidence:
+                  description: "The mechanical evidence the admission weighed (verifier verdict + the fit-split counts)."
+                  properties:
+                    contrast_ideas_fit:
+                      minimum: 0
+                      type: "integer"
+                    delivered_fit:
+                      minimum: 0
+                      type: "integer"
+                    held_fit:
+                      minimum: 0
+                      type: "integer"
+                    resolved_fit_executions:
+                      minimum: 0
+                      type: "integer"
+                    verifier_refusals:
+                      items:
+                        type: "string"
+                      type: "array"
+                    verifier_version:
+                      type: "string"
+                  required:
+                    - "verifier_version"
+                    - "verifier_refusals"
+                    - "resolved_fit_executions"
+                    - "delivered_fit"
+                    - "held_fit"
+                    - "contrast_ideas_fit"
+                  type: "object"
+                refusals:
+                  description: "Every failing admission rule, by name (empty ⇒ admitted)."
+                  items:
+                    type: "string"
+                  type: "array"
+              required:
+                - "admitted"
+                - "refusals"
+                - "applied"
+                - "evidence"
+              type: "object"
+            benchmarkable:
+              enum:
+                - false
+              type: "boolean"
+            budget:
+              description: "The experiment budget caps + running spend (micro-USD)."
+              properties:
+                cap_micro_usd:
+                  minimum: 0
+                  type: "integer"
+                screen_subcap_micro_usd:
+                  minimum: 0
+                  type: "integer"
+                spend_micro_usd:
+                  minimum: 0
+                  type: "integer"
+              required:
+                - "cap_micro_usd"
+                - "screen_subcap_micro_usd"
+                - "spend_micro_usd"
+              type: "object"
+            expires_at:
+              nullable: true
+              type: "string"
+            id:
+              type: "string"
+            prereg_hash:
+              type: "string"
+            state:
+              enum:
+                - "admitted"
+                - "refused"
+                - "candidate_frozen"
+                - "screening"
+                - "closed"
+                - "expired"
+                - "abandoned"
+              type: "string"
+            verifier_version:
+              type: "string"
+          required:
+            - "id"
+            - "state"
+            - "admission"
+            - "prereg_hash"
+            - "verifier_version"
+            - "budget"
+            - "expires_at"
+            - "benchmarkable"
+          type: "object"
         imports:
           description: "History-import integration health."
           properties:
@@ -7586,6 +7722,7 @@ components:
         - "channels"
         - "imports"
         - "learning"
+        - "experiment"
       type: "object"
     FlywheelUsageBlock:
       description: "The four SEPARATED Flywheel usage quantities + caps + storage + COGS."
@@ -9709,6 +9846,142 @@ components:
     MoatNextResponse:
       description: "What your moat needs next — per-unit readiness + the missing-precondition sentence."
       properties:
+        experiment:
+          description: "The current bounded experiment, or null — benchmarkable is always false."
+          nullable: true
+          properties:
+            admission:
+              description: "The frozen admission verdict — admitted + the rules applied + the evidence (the owner receipt)."
+              nullable: true
+              properties:
+                admitted:
+                  type: "boolean"
+                applied:
+                  description: "The frozen thresholds the admission applied."
+                  properties:
+                    budget_cap_micro_usd:
+                      minimum: 0
+                      type: "integer"
+                    expiry_days:
+                      minimum: 0
+                      type: "integer"
+                    min_contrast_ideas:
+                      minimum: 0
+                      type: "integer"
+                    min_delivered_fit:
+                      minimum: 0
+                      type: "integer"
+                    min_held_fit:
+                      minimum: 0
+                      type: "integer"
+                    min_resolved_fit:
+                      minimum: 0
+                      type: "integer"
+                    screen_subcap_micro_usd:
+                      minimum: 0
+                      type: "integer"
+                    verifier_version:
+                      type: "string"
+                  required:
+                    - "verifier_version"
+                    - "min_resolved_fit"
+                    - "min_delivered_fit"
+                    - "min_held_fit"
+                    - "min_contrast_ideas"
+                    - "budget_cap_micro_usd"
+                    - "screen_subcap_micro_usd"
+                    - "expiry_days"
+                  type: "object"
+                evidence:
+                  description: "The mechanical evidence the admission weighed (verifier verdict + the fit-split counts)."
+                  properties:
+                    contrast_ideas_fit:
+                      minimum: 0
+                      type: "integer"
+                    delivered_fit:
+                      minimum: 0
+                      type: "integer"
+                    held_fit:
+                      minimum: 0
+                      type: "integer"
+                    resolved_fit_executions:
+                      minimum: 0
+                      type: "integer"
+                    verifier_refusals:
+                      items:
+                        type: "string"
+                      type: "array"
+                    verifier_version:
+                      type: "string"
+                  required:
+                    - "verifier_version"
+                    - "verifier_refusals"
+                    - "resolved_fit_executions"
+                    - "delivered_fit"
+                    - "held_fit"
+                    - "contrast_ideas_fit"
+                  type: "object"
+                refusals:
+                  description: "Every failing admission rule, by name (empty ⇒ admitted)."
+                  items:
+                    type: "string"
+                  type: "array"
+              required:
+                - "admitted"
+                - "refusals"
+                - "applied"
+                - "evidence"
+              type: "object"
+            benchmarkable:
+              enum:
+                - false
+              type: "boolean"
+            budget:
+              description: "The experiment budget caps + running spend (micro-USD)."
+              properties:
+                cap_micro_usd:
+                  minimum: 0
+                  type: "integer"
+                screen_subcap_micro_usd:
+                  minimum: 0
+                  type: "integer"
+                spend_micro_usd:
+                  minimum: 0
+                  type: "integer"
+              required:
+                - "cap_micro_usd"
+                - "screen_subcap_micro_usd"
+                - "spend_micro_usd"
+              type: "object"
+            expires_at:
+              nullable: true
+              type: "string"
+            id:
+              type: "string"
+            prereg_hash:
+              type: "string"
+            state:
+              enum:
+                - "admitted"
+                - "refused"
+                - "candidate_frozen"
+                - "screening"
+                - "closed"
+                - "expired"
+                - "abandoned"
+              type: "string"
+            verifier_version:
+              type: "string"
+          required:
+            - "id"
+            - "state"
+            - "admission"
+            - "prereg_hash"
+            - "verifier_version"
+            - "budget"
+            - "expires_at"
+            - "benchmarkable"
+          type: "object"
         items:
           items:
             description: "What one unit of the moat needs next: ready + verdict, or the named missing precondition."
@@ -9795,6 +10068,7 @@ components:
         - "object"
         - "workspace_id"
         - "items"
+        - "experiment"
       type: "object"
     ModelDetailResponse:
       description: "A catalog model with its per-provider offers. Provenance (origin/weights) is a top-level LOGICAL-model fact; hosting is per-offer."
@@ -17190,6 +17464,1144 @@ paths:
         -
           sessionCookie: []
       summary: "The human accept/reject/revert press on a candidate confirmation"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments":
+    get:
+      description: "LIST the workspace bounded experiments, newest first — ids / hashes / state / admission receipt / budget / expiry only (never a body). OWNER SESSION only (`flywheel.experiment`)."
+      operationId: "listFlywheelExperiments"
+      parameters:
+        -
+          description: "The workspace id (session path; or the X-UR-Workspace header)."
+          in: "query"
+          name: "workspace_id"
+          required: false
+          schema:
+            description: "The workspace id (session path; or the X-UR-Workspace header)."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "The workspace bounded experiments (newest first)."
+                properties:
+                  experiments:
+                    items:
+                      description: "A bounded experiment — ids / hashes / counts / state only, never a body."
+                      properties:
+                        admission:
+                          description: "The frozen admission verdict — admitted + the rules applied + the evidence (the owner receipt)."
+                          nullable: true
+                          properties:
+                            admitted:
+                              type: "boolean"
+                            applied:
+                              description: "The frozen thresholds the admission applied."
+                              properties:
+                                budget_cap_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                expiry_days:
+                                  minimum: 0
+                                  type: "integer"
+                                min_contrast_ideas:
+                                  minimum: 0
+                                  type: "integer"
+                                min_delivered_fit:
+                                  minimum: 0
+                                  type: "integer"
+                                min_held_fit:
+                                  minimum: 0
+                                  type: "integer"
+                                min_resolved_fit:
+                                  minimum: 0
+                                  type: "integer"
+                                screen_subcap_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                verifier_version:
+                                  type: "string"
+                              required:
+                                - "verifier_version"
+                                - "min_resolved_fit"
+                                - "min_delivered_fit"
+                                - "min_held_fit"
+                                - "min_contrast_ideas"
+                                - "budget_cap_micro_usd"
+                                - "screen_subcap_micro_usd"
+                                - "expiry_days"
+                              type: "object"
+                            evidence:
+                              description: "The mechanical evidence the admission weighed (verifier verdict + the fit-split counts)."
+                              properties:
+                                contrast_ideas_fit:
+                                  minimum: 0
+                                  type: "integer"
+                                delivered_fit:
+                                  minimum: 0
+                                  type: "integer"
+                                held_fit:
+                                  minimum: 0
+                                  type: "integer"
+                                resolved_fit_executions:
+                                  minimum: 0
+                                  type: "integer"
+                                verifier_refusals:
+                                  items:
+                                    type: "string"
+                                  type: "array"
+                                verifier_version:
+                                  type: "string"
+                              required:
+                                - "verifier_version"
+                                - "verifier_refusals"
+                                - "resolved_fit_executions"
+                                - "delivered_fit"
+                                - "held_fit"
+                                - "contrast_ideas_fit"
+                              type: "object"
+                            refusals:
+                              description: "Every failing admission rule, by name (empty ⇒ admitted)."
+                              items:
+                                type: "string"
+                              type: "array"
+                          required:
+                            - "admitted"
+                            - "refusals"
+                            - "applied"
+                            - "evidence"
+                          type: "object"
+                        benchmarkable:
+                          enum:
+                            - false
+                          type: "boolean"
+                        budget:
+                          description: "The experiment budget caps + running spend (micro-USD)."
+                          properties:
+                            cap_micro_usd:
+                              minimum: 0
+                              type: "integer"
+                            screen_subcap_micro_usd:
+                              minimum: 0
+                              type: "integer"
+                            spend_micro_usd:
+                              minimum: 0
+                              type: "integer"
+                          required:
+                            - "cap_micro_usd"
+                            - "screen_subcap_micro_usd"
+                            - "spend_micro_usd"
+                          type: "object"
+                        call_type_id:
+                          type: "string"
+                        candidate_hash:
+                          nullable: true
+                          type: "string"
+                        created_at:
+                          type: "string"
+                        created_by_user_id:
+                          type: "string"
+                        expires_at:
+                          nullable: true
+                          type: "string"
+                        id:
+                          type: "string"
+                        import_id:
+                          nullable: true
+                          type: "string"
+                        lever_key:
+                          type: "string"
+                        object:
+                          enum:
+                            - "flywheel_experiment"
+                          type: "string"
+                        prereg_hash:
+                          type: "string"
+                        situation_class:
+                          type: "string"
+                        state:
+                          enum:
+                            - "admitted"
+                            - "refused"
+                            - "candidate_frozen"
+                            - "screening"
+                            - "closed"
+                            - "expired"
+                            - "abandoned"
+                          type: "string"
+                        updated_at:
+                          type: "string"
+                        verifier_version:
+                          type: "string"
+                        workspace_id:
+                          type: "string"
+                      required:
+                        - "id"
+                        - "state"
+                        - "admission"
+                        - "prereg_hash"
+                        - "verifier_version"
+                        - "budget"
+                        - "expires_at"
+                        - "benchmarkable"
+                        - "object"
+                        - "workspace_id"
+                        - "call_type_id"
+                        - "situation_class"
+                        - "lever_key"
+                        - "candidate_hash"
+                        - "import_id"
+                        - "created_by_user_id"
+                        - "created_at"
+                        - "updated_at"
+                      type: "object"
+                    type: "array"
+                  object:
+                    enum:
+                      - "flywheel_experiment_list"
+                    type: "string"
+                  workspace_id:
+                    type: "string"
+                required:
+                  - "object"
+                  - "workspace_id"
+                  - "experiments"
+                type: "object"
+          description: "The workspace bounded experiments (empty when none)."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "List the workspace bounded experiments"
+      tags:
+        - "Flywheel"
+    post:
+      description: "Declare ONE bounded EXPERIMENT on a unit (call type × situation × lever) whose history is below the protected benchmarkable floor. The platform admits it ONLY by its own FROZEN rule — the readiness unmet ONLY on the lifecycle floor + the evaluator qualification, and the imported history reproduced by the frozen workflow verifier from its receipts. Declaring it changes nothing in serving: nothing is produced, injected, served, adopted or spent; the floor is never changed and the unit is never labelled benchmarkable. The row lands `admitted` or `refused` (the owner receipt names why). OWNER SESSION only (`flywheel.experiment`), never an api key; audited. NEVER a body."
+      operationId: "createFlywheelExperiment"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              description: "Declare a bounded, preregistered experiment — owner session only."
+              properties:
+                call_type_id:
+                  minLength: 1
+                  type: "string"
+                import_id:
+                  nullable: true
+                  type: "string"
+                lever_key:
+                  type: "string"
+                preregistration:
+                  description: "The frozen preregistration — the admission numbers, splits, budget caps and expiry."
+                  properties:
+                    budget_cap_micro_usd:
+                      description: "≤ $30 (30_000_000 µUSD)."
+                      exclusiveMinimum: true
+                      minimum: 0
+                      type: "integer"
+                    expiry_days:
+                      description: "≤ 30 days."
+                      exclusiveMinimum: true
+                      minimum: 0
+                      type: "integer"
+                    fit_families:
+                      description: "The FIT idea families (the admission counts these)."
+                      items:
+                        type: "string"
+                      minItems: 1
+                      type: "array"
+                    min_contrast_ideas:
+                      exclusiveMinimum: true
+                      minimum: 0
+                      type: "integer"
+                    min_delivered_fit:
+                      exclusiveMinimum: true
+                      minimum: 0
+                      type: "integer"
+                    min_held_fit:
+                      exclusiveMinimum: true
+                      minimum: 0
+                      type: "integer"
+                    min_resolved_fit:
+                      exclusiveMinimum: true
+                      minimum: 0
+                      type: "integer"
+                    screen_families:
+                      description: "The SCREEN idea families (disjoint from fit + test)."
+                      items:
+                        type: "string"
+                      minItems: 1
+                      type: "array"
+                    screen_subcap_micro_usd:
+                      description: "≤ $2 (2_000_000 µUSD)."
+                      exclusiveMinimum: true
+                      minimum: 0
+                      type: "integer"
+                    test_families:
+                      description: "The TEST idea families (disjoint from fit + screen)."
+                      items:
+                        type: "string"
+                      minItems: 1
+                      type: "array"
+                    verifier_version:
+                      description: "The frozen workflow-verifier version the imported history must reproduce under."
+                      type: "string"
+                  required:
+                    - "verifier_version"
+                    - "budget_cap_micro_usd"
+                    - "screen_subcap_micro_usd"
+                    - "expiry_days"
+                    - "fit_families"
+                    - "screen_families"
+                    - "test_families"
+                  type: "object"
+                situation_class:
+                  type: "string"
+              required:
+                - "call_type_id"
+                - "preregistration"
+              type: "object"
+        required: true
+      responses:
+        "201":
+          content:
+            "application/json":
+              schema:
+                description: "One bounded experiment."
+                properties:
+                  experiment:
+                    description: "A bounded experiment — ids / hashes / counts / state only, never a body."
+                    properties:
+                      admission:
+                        description: "The frozen admission verdict — admitted + the rules applied + the evidence (the owner receipt)."
+                        nullable: true
+                        properties:
+                          admitted:
+                            type: "boolean"
+                          applied:
+                            description: "The frozen thresholds the admission applied."
+                            properties:
+                              budget_cap_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              expiry_days:
+                                minimum: 0
+                                type: "integer"
+                              min_contrast_ideas:
+                                minimum: 0
+                                type: "integer"
+                              min_delivered_fit:
+                                minimum: 0
+                                type: "integer"
+                              min_held_fit:
+                                minimum: 0
+                                type: "integer"
+                              min_resolved_fit:
+                                minimum: 0
+                                type: "integer"
+                              screen_subcap_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              verifier_version:
+                                type: "string"
+                            required:
+                              - "verifier_version"
+                              - "min_resolved_fit"
+                              - "min_delivered_fit"
+                              - "min_held_fit"
+                              - "min_contrast_ideas"
+                              - "budget_cap_micro_usd"
+                              - "screen_subcap_micro_usd"
+                              - "expiry_days"
+                            type: "object"
+                          evidence:
+                            description: "The mechanical evidence the admission weighed (verifier verdict + the fit-split counts)."
+                            properties:
+                              contrast_ideas_fit:
+                                minimum: 0
+                                type: "integer"
+                              delivered_fit:
+                                minimum: 0
+                                type: "integer"
+                              held_fit:
+                                minimum: 0
+                                type: "integer"
+                              resolved_fit_executions:
+                                minimum: 0
+                                type: "integer"
+                              verifier_refusals:
+                                items:
+                                  type: "string"
+                                type: "array"
+                              verifier_version:
+                                type: "string"
+                            required:
+                              - "verifier_version"
+                              - "verifier_refusals"
+                              - "resolved_fit_executions"
+                              - "delivered_fit"
+                              - "held_fit"
+                              - "contrast_ideas_fit"
+                            type: "object"
+                          refusals:
+                            description: "Every failing admission rule, by name (empty ⇒ admitted)."
+                            items:
+                              type: "string"
+                            type: "array"
+                        required:
+                          - "admitted"
+                          - "refusals"
+                          - "applied"
+                          - "evidence"
+                        type: "object"
+                      benchmarkable:
+                        enum:
+                          - false
+                        type: "boolean"
+                      budget:
+                        description: "The experiment budget caps + running spend (micro-USD)."
+                        properties:
+                          cap_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          screen_subcap_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          spend_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "cap_micro_usd"
+                          - "screen_subcap_micro_usd"
+                          - "spend_micro_usd"
+                        type: "object"
+                      call_type_id:
+                        type: "string"
+                      candidate_hash:
+                        nullable: true
+                        type: "string"
+                      created_at:
+                        type: "string"
+                      created_by_user_id:
+                        type: "string"
+                      expires_at:
+                        nullable: true
+                        type: "string"
+                      id:
+                        type: "string"
+                      import_id:
+                        nullable: true
+                        type: "string"
+                      lever_key:
+                        type: "string"
+                      object:
+                        enum:
+                          - "flywheel_experiment"
+                        type: "string"
+                      prereg_hash:
+                        type: "string"
+                      situation_class:
+                        type: "string"
+                      state:
+                        enum:
+                          - "admitted"
+                          - "refused"
+                          - "candidate_frozen"
+                          - "screening"
+                          - "closed"
+                          - "expired"
+                          - "abandoned"
+                        type: "string"
+                      updated_at:
+                        type: "string"
+                      verifier_version:
+                        type: "string"
+                      workspace_id:
+                        type: "string"
+                    required:
+                      - "id"
+                      - "state"
+                      - "admission"
+                      - "prereg_hash"
+                      - "verifier_version"
+                      - "budget"
+                      - "expires_at"
+                      - "benchmarkable"
+                      - "object"
+                      - "workspace_id"
+                      - "call_type_id"
+                      - "situation_class"
+                      - "lever_key"
+                      - "candidate_hash"
+                      - "import_id"
+                      - "created_by_user_id"
+                      - "created_at"
+                      - "updated_at"
+                    type: "object"
+                  object:
+                    enum:
+                      - "flywheel_experiment_envelope"
+                    type: "string"
+                required:
+                  - "object"
+                  - "experiment"
+                type: "object"
+          description: "The experiment (state admitted | refused) + its frozen admission receipt."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Declare a bounded, preregistered experiment on a unit below the protected floor"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments/{id}":
+    get:
+      description: "Read ONE bounded experiment by id — the frozen preregistration hash, the verifier version, the admission receipt, the budget caps + spend, the state and the expiry. OWNER SESSION only (`flywheel.experiment`). NEVER a body."
+      operationId: "getFlywheelExperiment"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+        -
+          description: "The workspace id (session path; or the X-UR-Workspace header)."
+          in: "query"
+          name: "workspace_id"
+          required: false
+          schema:
+            description: "The workspace id (session path; or the X-UR-Workspace header)."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "One bounded experiment."
+                properties:
+                  experiment:
+                    description: "A bounded experiment — ids / hashes / counts / state only, never a body."
+                    properties:
+                      admission:
+                        description: "The frozen admission verdict — admitted + the rules applied + the evidence (the owner receipt)."
+                        nullable: true
+                        properties:
+                          admitted:
+                            type: "boolean"
+                          applied:
+                            description: "The frozen thresholds the admission applied."
+                            properties:
+                              budget_cap_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              expiry_days:
+                                minimum: 0
+                                type: "integer"
+                              min_contrast_ideas:
+                                minimum: 0
+                                type: "integer"
+                              min_delivered_fit:
+                                minimum: 0
+                                type: "integer"
+                              min_held_fit:
+                                minimum: 0
+                                type: "integer"
+                              min_resolved_fit:
+                                minimum: 0
+                                type: "integer"
+                              screen_subcap_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              verifier_version:
+                                type: "string"
+                            required:
+                              - "verifier_version"
+                              - "min_resolved_fit"
+                              - "min_delivered_fit"
+                              - "min_held_fit"
+                              - "min_contrast_ideas"
+                              - "budget_cap_micro_usd"
+                              - "screen_subcap_micro_usd"
+                              - "expiry_days"
+                            type: "object"
+                          evidence:
+                            description: "The mechanical evidence the admission weighed (verifier verdict + the fit-split counts)."
+                            properties:
+                              contrast_ideas_fit:
+                                minimum: 0
+                                type: "integer"
+                              delivered_fit:
+                                minimum: 0
+                                type: "integer"
+                              held_fit:
+                                minimum: 0
+                                type: "integer"
+                              resolved_fit_executions:
+                                minimum: 0
+                                type: "integer"
+                              verifier_refusals:
+                                items:
+                                  type: "string"
+                                type: "array"
+                              verifier_version:
+                                type: "string"
+                            required:
+                              - "verifier_version"
+                              - "verifier_refusals"
+                              - "resolved_fit_executions"
+                              - "delivered_fit"
+                              - "held_fit"
+                              - "contrast_ideas_fit"
+                            type: "object"
+                          refusals:
+                            description: "Every failing admission rule, by name (empty ⇒ admitted)."
+                            items:
+                              type: "string"
+                            type: "array"
+                        required:
+                          - "admitted"
+                          - "refusals"
+                          - "applied"
+                          - "evidence"
+                        type: "object"
+                      benchmarkable:
+                        enum:
+                          - false
+                        type: "boolean"
+                      budget:
+                        description: "The experiment budget caps + running spend (micro-USD)."
+                        properties:
+                          cap_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          screen_subcap_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          spend_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "cap_micro_usd"
+                          - "screen_subcap_micro_usd"
+                          - "spend_micro_usd"
+                        type: "object"
+                      call_type_id:
+                        type: "string"
+                      candidate_hash:
+                        nullable: true
+                        type: "string"
+                      created_at:
+                        type: "string"
+                      created_by_user_id:
+                        type: "string"
+                      expires_at:
+                        nullable: true
+                        type: "string"
+                      id:
+                        type: "string"
+                      import_id:
+                        nullable: true
+                        type: "string"
+                      lever_key:
+                        type: "string"
+                      object:
+                        enum:
+                          - "flywheel_experiment"
+                        type: "string"
+                      prereg_hash:
+                        type: "string"
+                      situation_class:
+                        type: "string"
+                      state:
+                        enum:
+                          - "admitted"
+                          - "refused"
+                          - "candidate_frozen"
+                          - "screening"
+                          - "closed"
+                          - "expired"
+                          - "abandoned"
+                        type: "string"
+                      updated_at:
+                        type: "string"
+                      verifier_version:
+                        type: "string"
+                      workspace_id:
+                        type: "string"
+                    required:
+                      - "id"
+                      - "state"
+                      - "admission"
+                      - "prereg_hash"
+                      - "verifier_version"
+                      - "budget"
+                      - "expires_at"
+                      - "benchmarkable"
+                      - "object"
+                      - "workspace_id"
+                      - "call_type_id"
+                      - "situation_class"
+                      - "lever_key"
+                      - "candidate_hash"
+                      - "import_id"
+                      - "created_by_user_id"
+                      - "created_at"
+                      - "updated_at"
+                    type: "object"
+                  object:
+                    enum:
+                      - "flywheel_experiment_envelope"
+                    type: "string"
+                required:
+                  - "object"
+                  - "experiment"
+                type: "object"
+          description: "The bounded experiment."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Read one bounded experiment"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments/{id}/abandon":
+    post:
+      description: "ABANDON a live experiment — transition it to `abandoned` (terminal). A refused / closed / expired experiment cannot be abandoned (409). OWNER SESSION only (`flywheel.experiment`); audited. NEVER a body."
+      operationId: "abandonFlywheelExperiment"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "One bounded experiment."
+                properties:
+                  experiment:
+                    description: "A bounded experiment — ids / hashes / counts / state only, never a body."
+                    properties:
+                      admission:
+                        description: "The frozen admission verdict — admitted + the rules applied + the evidence (the owner receipt)."
+                        nullable: true
+                        properties:
+                          admitted:
+                            type: "boolean"
+                          applied:
+                            description: "The frozen thresholds the admission applied."
+                            properties:
+                              budget_cap_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              expiry_days:
+                                minimum: 0
+                                type: "integer"
+                              min_contrast_ideas:
+                                minimum: 0
+                                type: "integer"
+                              min_delivered_fit:
+                                minimum: 0
+                                type: "integer"
+                              min_held_fit:
+                                minimum: 0
+                                type: "integer"
+                              min_resolved_fit:
+                                minimum: 0
+                                type: "integer"
+                              screen_subcap_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              verifier_version:
+                                type: "string"
+                            required:
+                              - "verifier_version"
+                              - "min_resolved_fit"
+                              - "min_delivered_fit"
+                              - "min_held_fit"
+                              - "min_contrast_ideas"
+                              - "budget_cap_micro_usd"
+                              - "screen_subcap_micro_usd"
+                              - "expiry_days"
+                            type: "object"
+                          evidence:
+                            description: "The mechanical evidence the admission weighed (verifier verdict + the fit-split counts)."
+                            properties:
+                              contrast_ideas_fit:
+                                minimum: 0
+                                type: "integer"
+                              delivered_fit:
+                                minimum: 0
+                                type: "integer"
+                              held_fit:
+                                minimum: 0
+                                type: "integer"
+                              resolved_fit_executions:
+                                minimum: 0
+                                type: "integer"
+                              verifier_refusals:
+                                items:
+                                  type: "string"
+                                type: "array"
+                              verifier_version:
+                                type: "string"
+                            required:
+                              - "verifier_version"
+                              - "verifier_refusals"
+                              - "resolved_fit_executions"
+                              - "delivered_fit"
+                              - "held_fit"
+                              - "contrast_ideas_fit"
+                            type: "object"
+                          refusals:
+                            description: "Every failing admission rule, by name (empty ⇒ admitted)."
+                            items:
+                              type: "string"
+                            type: "array"
+                        required:
+                          - "admitted"
+                          - "refusals"
+                          - "applied"
+                          - "evidence"
+                        type: "object"
+                      benchmarkable:
+                        enum:
+                          - false
+                        type: "boolean"
+                      budget:
+                        description: "The experiment budget caps + running spend (micro-USD)."
+                        properties:
+                          cap_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          screen_subcap_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          spend_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "cap_micro_usd"
+                          - "screen_subcap_micro_usd"
+                          - "spend_micro_usd"
+                        type: "object"
+                      call_type_id:
+                        type: "string"
+                      candidate_hash:
+                        nullable: true
+                        type: "string"
+                      created_at:
+                        type: "string"
+                      created_by_user_id:
+                        type: "string"
+                      expires_at:
+                        nullable: true
+                        type: "string"
+                      id:
+                        type: "string"
+                      import_id:
+                        nullable: true
+                        type: "string"
+                      lever_key:
+                        type: "string"
+                      object:
+                        enum:
+                          - "flywheel_experiment"
+                        type: "string"
+                      prereg_hash:
+                        type: "string"
+                      situation_class:
+                        type: "string"
+                      state:
+                        enum:
+                          - "admitted"
+                          - "refused"
+                          - "candidate_frozen"
+                          - "screening"
+                          - "closed"
+                          - "expired"
+                          - "abandoned"
+                        type: "string"
+                      updated_at:
+                        type: "string"
+                      verifier_version:
+                        type: "string"
+                      workspace_id:
+                        type: "string"
+                    required:
+                      - "id"
+                      - "state"
+                      - "admission"
+                      - "prereg_hash"
+                      - "verifier_version"
+                      - "budget"
+                      - "expires_at"
+                      - "benchmarkable"
+                      - "object"
+                      - "workspace_id"
+                      - "call_type_id"
+                      - "situation_class"
+                      - "lever_key"
+                      - "candidate_hash"
+                      - "import_id"
+                      - "created_by_user_id"
+                      - "created_at"
+                      - "updated_at"
+                    type: "object"
+                  object:
+                    enum:
+                      - "flywheel_experiment_envelope"
+                    type: "string"
+                required:
+                  - "object"
+                  - "experiment"
+                type: "object"
+          description: "The abandoned experiment."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Abandon a live experiment"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments/{id}/admit":
+    post:
+      description: "RE-AFFIRM an `admitted` experiment: re-run the admission against the CURRENT readiness + the verifier. If it no longer holds (consent revoked, the verifier now refuses) it transitions `admitted → refused`; otherwise it stays admitted (idempotent). The frozen create-time admission receipt is NEVER rewritten. OWNER SESSION only (`flywheel.experiment`); audited. NEVER a body."
+      operationId: "admitFlywheelExperiment"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "One bounded experiment."
+                properties:
+                  experiment:
+                    description: "A bounded experiment — ids / hashes / counts / state only, never a body."
+                    properties:
+                      admission:
+                        description: "The frozen admission verdict — admitted + the rules applied + the evidence (the owner receipt)."
+                        nullable: true
+                        properties:
+                          admitted:
+                            type: "boolean"
+                          applied:
+                            description: "The frozen thresholds the admission applied."
+                            properties:
+                              budget_cap_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              expiry_days:
+                                minimum: 0
+                                type: "integer"
+                              min_contrast_ideas:
+                                minimum: 0
+                                type: "integer"
+                              min_delivered_fit:
+                                minimum: 0
+                                type: "integer"
+                              min_held_fit:
+                                minimum: 0
+                                type: "integer"
+                              min_resolved_fit:
+                                minimum: 0
+                                type: "integer"
+                              screen_subcap_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              verifier_version:
+                                type: "string"
+                            required:
+                              - "verifier_version"
+                              - "min_resolved_fit"
+                              - "min_delivered_fit"
+                              - "min_held_fit"
+                              - "min_contrast_ideas"
+                              - "budget_cap_micro_usd"
+                              - "screen_subcap_micro_usd"
+                              - "expiry_days"
+                            type: "object"
+                          evidence:
+                            description: "The mechanical evidence the admission weighed (verifier verdict + the fit-split counts)."
+                            properties:
+                              contrast_ideas_fit:
+                                minimum: 0
+                                type: "integer"
+                              delivered_fit:
+                                minimum: 0
+                                type: "integer"
+                              held_fit:
+                                minimum: 0
+                                type: "integer"
+                              resolved_fit_executions:
+                                minimum: 0
+                                type: "integer"
+                              verifier_refusals:
+                                items:
+                                  type: "string"
+                                type: "array"
+                              verifier_version:
+                                type: "string"
+                            required:
+                              - "verifier_version"
+                              - "verifier_refusals"
+                              - "resolved_fit_executions"
+                              - "delivered_fit"
+                              - "held_fit"
+                              - "contrast_ideas_fit"
+                            type: "object"
+                          refusals:
+                            description: "Every failing admission rule, by name (empty ⇒ admitted)."
+                            items:
+                              type: "string"
+                            type: "array"
+                        required:
+                          - "admitted"
+                          - "refusals"
+                          - "applied"
+                          - "evidence"
+                        type: "object"
+                      benchmarkable:
+                        enum:
+                          - false
+                        type: "boolean"
+                      budget:
+                        description: "The experiment budget caps + running spend (micro-USD)."
+                        properties:
+                          cap_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          screen_subcap_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          spend_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "cap_micro_usd"
+                          - "screen_subcap_micro_usd"
+                          - "spend_micro_usd"
+                        type: "object"
+                      call_type_id:
+                        type: "string"
+                      candidate_hash:
+                        nullable: true
+                        type: "string"
+                      created_at:
+                        type: "string"
+                      created_by_user_id:
+                        type: "string"
+                      expires_at:
+                        nullable: true
+                        type: "string"
+                      id:
+                        type: "string"
+                      import_id:
+                        nullable: true
+                        type: "string"
+                      lever_key:
+                        type: "string"
+                      object:
+                        enum:
+                          - "flywheel_experiment"
+                        type: "string"
+                      prereg_hash:
+                        type: "string"
+                      situation_class:
+                        type: "string"
+                      state:
+                        enum:
+                          - "admitted"
+                          - "refused"
+                          - "candidate_frozen"
+                          - "screening"
+                          - "closed"
+                          - "expired"
+                          - "abandoned"
+                        type: "string"
+                      updated_at:
+                        type: "string"
+                      verifier_version:
+                        type: "string"
+                      workspace_id:
+                        type: "string"
+                    required:
+                      - "id"
+                      - "state"
+                      - "admission"
+                      - "prereg_hash"
+                      - "verifier_version"
+                      - "budget"
+                      - "expires_at"
+                      - "benchmarkable"
+                      - "object"
+                      - "workspace_id"
+                      - "call_type_id"
+                      - "situation_class"
+                      - "lever_key"
+                      - "candidate_hash"
+                      - "import_id"
+                      - "created_by_user_id"
+                      - "created_at"
+                      - "updated_at"
+                    type: "object"
+                  object:
+                    enum:
+                      - "flywheel_experiment_envelope"
+                    type: "string"
+                required:
+                  - "object"
+                  - "experiment"
+                type: "object"
+          description: "The experiment after re-affirmation (admitted, or refused if it no longer holds)."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Re-affirm an admitted experiment against the current evidence"
       tags:
         - "Flywheel"
   "/v1/flywheel/grants":
