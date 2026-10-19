@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: 1875ea6f22435b6010a67a22fe049d232cb6293c5f474101a338a42cb1cb9503
+# spec-sha256: fdc0222948dfd00b5c22105a42d057a447037b9b8f792e166238dccb5f88edf2
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -7590,6 +7590,10 @@ components:
                 - "screen_failed"
                 - "screen_incomplete"
                 - "awaiting_test_funding"
+                - "test_open"
+                - "test_passed"
+                - "test_failed"
+                - "test_incomplete"
                 - "closed"
                 - "expired"
                 - "abandoned"
@@ -10098,6 +10102,10 @@ components:
                 - "screen_failed"
                 - "screen_incomplete"
                 - "awaiting_test_funding"
+                - "test_open"
+                - "test_passed"
+                - "test_failed"
+                - "test_incomplete"
                 - "closed"
                 - "expired"
                 - "abandoned"
@@ -18471,10 +18479,462 @@ paths:
                             - "screen_failed"
                             - "screen_incomplete"
                             - "awaiting_test_funding"
+                            - "test_open"
+                            - "test_passed"
+                            - "test_failed"
+                            - "test_incomplete"
                             - "closed"
                             - "expired"
                             - "abandoned"
                           type: "string"
+                        test:
+                          default: null
+                          description: "The prospective test: barrier counts (no peeking) and, once computed, the decision."
+                          nullable: true
+                          properties:
+                            executions:
+                              items:
+                                description: "One enrolled test execution — ids, arm and standing only."
+                                properties:
+                                  arm:
+                                    enum:
+                                      - "control"
+                                      - "treated"
+                                    type: "string"
+                                  execution_id:
+                                    type: "string"
+                                  pair_key:
+                                    type: "string"
+                                  slot:
+                                    maximum: 1
+                                    minimum: 0
+                                    type: "integer"
+                                  status:
+                                    description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                    enum:
+                                      - "no_outcome"
+                                      - "pending_rows"
+                                      - "cost_unsettled"
+                                      - "invalid"
+                                      - "complete"
+                                    type: "string"
+                                required:
+                                  - "execution_id"
+                                  - "pair_key"
+                                  - "slot"
+                                  - "arm"
+                                  - "status"
+                                type: "object"
+                              type: "array"
+                            manifest_committed:
+                              type: "boolean"
+                            manifest_hash:
+                              nullable: true
+                              type: "string"
+                            n:
+                              minimum: 0
+                              type: "integer"
+                            progress:
+                              description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                              properties:
+                                cap_stopped:
+                                  type: "boolean"
+                                executions_complete:
+                                  minimum: 0
+                                  type: "integer"
+                                executions_cost_unsettled:
+                                  minimum: 0
+                                  type: "integer"
+                                executions_enrolled:
+                                  minimum: 0
+                                  type: "integer"
+                                executions_incomplete:
+                                  minimum: 0
+                                  type: "integer"
+                                executions_invalid:
+                                  minimum: 0
+                                  type: "integer"
+                                executions_pending_rows:
+                                  minimum: 0
+                                  type: "integer"
+                                holds_ambiguous:
+                                  minimum: 0
+                                  type: "integer"
+                                holds_reserved:
+                                  minimum: 0
+                                  type: "integer"
+                                judgements_recorded:
+                                  minimum: 0
+                                  type: "integer"
+                                judges_required:
+                                  minimum: 0
+                                  type: "integer"
+                                n:
+                                  minimum: 0
+                                  type: "integer"
+                                outcomes_recorded:
+                                  minimum: 0
+                                  type: "integer"
+                                pairs_complete:
+                                  minimum: 0
+                                  type: "integer"
+                                pairs_total:
+                                  minimum: 0
+                                  type: "integer"
+                              required:
+                                - "n"
+                                - "pairs_total"
+                                - "pairs_complete"
+                                - "executions_enrolled"
+                                - "outcomes_recorded"
+                                - "executions_complete"
+                                - "executions_incomplete"
+                                - "executions_pending_rows"
+                                - "executions_cost_unsettled"
+                                - "executions_invalid"
+                                - "holds_reserved"
+                                - "holds_ambiguous"
+                                - "judgements_recorded"
+                                - "judges_required"
+                                - "cap_stopped"
+                              type: "object"
+                            verdict:
+                              description: "Null until the completion barrier is met and the decision is stored."
+                              nullable: true
+                              properties:
+                                candidate_hash:
+                                  type: "string"
+                                claim_text:
+                                  description: "The frozen claim text (a pass only) — never more than it is licensed to say."
+                                  nullable: true
+                                  type: "string"
+                                created_at:
+                                  type: "string"
+                                economics:
+                                  nullable: true
+                                  properties:
+                                    control_cost_micro_usd:
+                                      minimum: 0
+                                      type: "integer"
+                                    control_deliveries:
+                                      minimum: 0
+                                      type: "integer"
+                                    inconclusive:
+                                      type: "boolean"
+                                    min_ratio:
+                                      type: "number"
+                                    pass:
+                                      type: "boolean"
+                                    permutation_p_value:
+                                      nullable: true
+                                      type: "number"
+                                    permutations:
+                                      minimum: 0
+                                      type: "integer"
+                                    ratio:
+                                      nullable: true
+                                      type: "number"
+                                    seed:
+                                      type: "integer"
+                                    treated_cost_micro_usd:
+                                      minimum: 0
+                                      type: "integer"
+                                    treated_deliveries:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "pass"
+                                    - "inconclusive"
+                                    - "ratio"
+                                    - "min_ratio"
+                                    - "permutation_p_value"
+                                    - "permutations"
+                                    - "seed"
+                                    - "treated_deliveries"
+                                    - "control_deliveries"
+                                    - "treated_cost_micro_usd"
+                                    - "control_cost_micro_usd"
+                                  type: "object"
+                                economics_permutations:
+                                  minimum: 0
+                                  type: "integer"
+                                economics_seed:
+                                  type: "integer"
+                                failing_parts:
+                                  description: "Every failing part (test_failed); empty otherwise."
+                                  items:
+                                    type: "string"
+                                  type: "array"
+                                goodhart:
+                                  nullable: true
+                                  properties:
+                                    arms:
+                                      items:
+                                        properties:
+                                          arm:
+                                            enum:
+                                              - "control"
+                                              - "treated"
+                                            type: "string"
+                                          first_draft_cited_quotes_band:
+                                            additionalProperties:
+                                              minimum: 0
+                                              type: "integer"
+                                            type: "object"
+                                          first_draft_length_band:
+                                            additionalProperties:
+                                              minimum: 0
+                                              type: "integer"
+                                            type: "object"
+                                          repair_count:
+                                            additionalProperties:
+                                              minimum: 0
+                                              type: "integer"
+                                            type: "object"
+                                          stranger_usefulness:
+                                            additionalProperties:
+                                              minimum: 0
+                                              type: "integer"
+                                            type: "object"
+                                        required:
+                                          - "arm"
+                                          - "first_draft_length_band"
+                                          - "first_draft_cited_quotes_band"
+                                          - "stranger_usefulness"
+                                          - "repair_count"
+                                        type: "object"
+                                      type: "array"
+                                  required:
+                                    - "arms"
+                                  type: "object"
+                                incomplete_reasons:
+                                  description: "Why it can never complete (test_incomplete); else empty."
+                                  items:
+                                    type: "string"
+                                  type: "array"
+                                inputs_hash:
+                                  type: "string"
+                                prereg_hash:
+                                  type: "string"
+                                primary:
+                                  nullable: true
+                                  properties:
+                                    alpha:
+                                      type: "number"
+                                    control_delivered:
+                                      minimum: 0
+                                      type: "integer"
+                                    losses:
+                                      minimum: 0
+                                      type: "integer"
+                                    p_value:
+                                      type: "number"
+                                    pairs_analysed:
+                                      minimum: 0
+                                      type: "integer"
+                                    pass:
+                                      type: "boolean"
+                                    treated_delivered:
+                                      minimum: 0
+                                      type: "integer"
+                                    wins:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "pass"
+                                    - "p_value"
+                                    - "alpha"
+                                    - "wins"
+                                    - "losses"
+                                    - "treated_delivered"
+                                    - "control_delivered"
+                                    - "pairs_analysed"
+                                  type: "object"
+                                progress:
+                                  description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                                  properties:
+                                    cap_stopped:
+                                      type: "boolean"
+                                    executions_complete:
+                                      minimum: 0
+                                      type: "integer"
+                                    executions_cost_unsettled:
+                                      minimum: 0
+                                      type: "integer"
+                                    executions_enrolled:
+                                      minimum: 0
+                                      type: "integer"
+                                    executions_incomplete:
+                                      minimum: 0
+                                      type: "integer"
+                                    executions_invalid:
+                                      minimum: 0
+                                      type: "integer"
+                                    executions_pending_rows:
+                                      minimum: 0
+                                      type: "integer"
+                                    holds_ambiguous:
+                                      minimum: 0
+                                      type: "integer"
+                                    holds_reserved:
+                                      minimum: 0
+                                      type: "integer"
+                                    judgements_recorded:
+                                      minimum: 0
+                                      type: "integer"
+                                    judges_required:
+                                      minimum: 0
+                                      type: "integer"
+                                    n:
+                                      minimum: 0
+                                      type: "integer"
+                                    outcomes_recorded:
+                                      minimum: 0
+                                      type: "integer"
+                                    pairs_complete:
+                                      minimum: 0
+                                      type: "integer"
+                                    pairs_total:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "n"
+                                    - "pairs_total"
+                                    - "pairs_complete"
+                                    - "executions_enrolled"
+                                    - "outcomes_recorded"
+                                    - "executions_complete"
+                                    - "executions_incomplete"
+                                    - "executions_pending_rows"
+                                    - "executions_cost_unsettled"
+                                    - "executions_invalid"
+                                    - "holds_reserved"
+                                    - "holds_ambiguous"
+                                    - "judgements_recorded"
+                                    - "judges_required"
+                                    - "cap_stopped"
+                                  type: "object"
+                                quality:
+                                  nullable: true
+                                  properties:
+                                    min_delta:
+                                      type: "number"
+                                    pass:
+                                      type: "boolean"
+                                    per_judge:
+                                      items:
+                                        properties:
+                                          clears:
+                                            type: "boolean"
+                                          control_deliveries:
+                                            minimum: 0
+                                            type: "integer"
+                                          control_publishable:
+                                            minimum: 0
+                                            type: "integer"
+                                          control_publishable_rate:
+                                            nullable: true
+                                            type: "number"
+                                          delta:
+                                            nullable: true
+                                            type: "number"
+                                          judge:
+                                            type: "string"
+                                          recorded:
+                                            type: "boolean"
+                                          serious_treated_defects:
+                                            minimum: 0
+                                            type: "integer"
+                                          treated_deliveries:
+                                            minimum: 0
+                                            type: "integer"
+                                          treated_publishable:
+                                            minimum: 0
+                                            type: "integer"
+                                          treated_publishable_rate:
+                                            nullable: true
+                                            type: "number"
+                                        required:
+                                          - "judge"
+                                          - "recorded"
+                                          - "treated_deliveries"
+                                          - "control_deliveries"
+                                          - "treated_publishable"
+                                          - "control_publishable"
+                                          - "treated_publishable_rate"
+                                          - "control_publishable_rate"
+                                          - "delta"
+                                          - "serious_treated_defects"
+                                          - "clears"
+                                        type: "object"
+                                      type: "array"
+                                  required:
+                                    - "pass"
+                                    - "min_delta"
+                                    - "per_judge"
+                                  type: "object"
+                                rule:
+                                  properties:
+                                    alpha:
+                                      type: "number"
+                                    economics_min_ratio:
+                                      type: "number"
+                                    economics_permutations:
+                                      minimum: 0
+                                      type: "integer"
+                                    economics_seed:
+                                      type: "integer"
+                                    n:
+                                      minimum: 0
+                                      type: "integer"
+                                    quality_min_delta:
+                                      type: "number"
+                                    version:
+                                      type: "string"
+                                  required:
+                                    - "version"
+                                    - "n"
+                                    - "alpha"
+                                    - "economics_min_ratio"
+                                    - "economics_permutations"
+                                    - "economics_seed"
+                                    - "quality_min_delta"
+                                  type: "object"
+                                rule_version:
+                                  type: "string"
+                                verdict:
+                                  enum:
+                                    - "test_passed"
+                                    - "test_failed"
+                                    - "test_incomplete"
+                                  type: "string"
+                              required:
+                                - "verdict"
+                                - "failing_parts"
+                                - "incomplete_reasons"
+                                - "primary"
+                                - "economics"
+                                - "quality"
+                                - "goodhart"
+                                - "claim_text"
+                                - "progress"
+                                - "rule_version"
+                                - "rule"
+                                - "economics_seed"
+                                - "economics_permutations"
+                                - "inputs_hash"
+                                - "candidate_hash"
+                                - "prereg_hash"
+                                - "created_at"
+                              type: "object"
+                          required:
+                            - "manifest_committed"
+                            - "manifest_hash"
+                            - "n"
+                            - "progress"
+                            - "executions"
+                            - "verdict"
+                          type: "object"
                         updated_at:
                           type: "string"
                         verifier_version:
@@ -18623,6 +19083,52 @@ paths:
                       exclusiveMinimum: true
                       minimum: 0
                       type: "integer"
+                    test_block:
+                      additionalProperties: false
+                      description: "The preregistered prospective-test block (may only tighten the defaults; part of the prereg hash)."
+                      properties:
+                        alpha:
+                          description: "The one-sided exact sign test α (default .05; may only shrink)."
+                          exclusiveMinimum: true
+                          minimum: 0
+                          type: "number"
+                        economics_min_ratio:
+                          description: "The deliveries-per-dollar ratio floor (default 1.20; may only rise)."
+                          type: "number"
+                        economics_permutations:
+                          description: "The economics permutation count (default 199,999; may only rise)."
+                          type: "integer"
+                        economics_seed:
+                          description: "The economics permutation seed (default 20261019; frozen, part of the hash)."
+                          type: "integer"
+                        n:
+                          description: "The number of fresh paired ideas the test manifest commits (default 30)."
+                          exclusiveMinimum: true
+                          minimum: 0
+                          type: "integer"
+                        quality_min_delta:
+                          description: "The quality degradation floor (default −0.21; may only tighten toward 0)."
+                          type: "number"
+                        test_judging:
+                          additionalProperties: false
+                          description: "The two preregistered blind test judges — absent, the test can never pass."
+                          properties:
+                            judges:
+                              description: "Exactly two distinct blind-judge keys."
+                              items:
+                                maxLength: 100
+                                minLength: 1
+                                type: "string"
+                              type: "array"
+                            rubric_id:
+                              maxLength: 200
+                              minLength: 1
+                              type: "string"
+                          required:
+                            - "rubric_id"
+                            - "judges"
+                          type: "object"
+                      type: "object"
                     test_families:
                       description: "The TEST idea families (disjoint from fit + screen)."
                       items:
@@ -19507,10 +20013,462 @@ paths:
                           - "screen_failed"
                           - "screen_incomplete"
                           - "awaiting_test_funding"
+                          - "test_open"
+                          - "test_passed"
+                          - "test_failed"
+                          - "test_incomplete"
                           - "closed"
                           - "expired"
                           - "abandoned"
                         type: "string"
+                      test:
+                        default: null
+                        description: "The prospective test: barrier counts (no peeking) and, once computed, the decision."
+                        nullable: true
+                        properties:
+                          executions:
+                            items:
+                              description: "One enrolled test execution — ids, arm and standing only."
+                              properties:
+                                arm:
+                                  enum:
+                                    - "control"
+                                    - "treated"
+                                  type: "string"
+                                execution_id:
+                                  type: "string"
+                                pair_key:
+                                  type: "string"
+                                slot:
+                                  maximum: 1
+                                  minimum: 0
+                                  type: "integer"
+                                status:
+                                  description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                  enum:
+                                    - "no_outcome"
+                                    - "pending_rows"
+                                    - "cost_unsettled"
+                                    - "invalid"
+                                    - "complete"
+                                  type: "string"
+                              required:
+                                - "execution_id"
+                                - "pair_key"
+                                - "slot"
+                                - "arm"
+                                - "status"
+                              type: "object"
+                            type: "array"
+                          manifest_committed:
+                            type: "boolean"
+                          manifest_hash:
+                            nullable: true
+                            type: "string"
+                          n:
+                            minimum: 0
+                            type: "integer"
+                          progress:
+                            description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                            properties:
+                              cap_stopped:
+                                type: "boolean"
+                              executions_complete:
+                                minimum: 0
+                                type: "integer"
+                              executions_cost_unsettled:
+                                minimum: 0
+                                type: "integer"
+                              executions_enrolled:
+                                minimum: 0
+                                type: "integer"
+                              executions_incomplete:
+                                minimum: 0
+                                type: "integer"
+                              executions_invalid:
+                                minimum: 0
+                                type: "integer"
+                              executions_pending_rows:
+                                minimum: 0
+                                type: "integer"
+                              holds_ambiguous:
+                                minimum: 0
+                                type: "integer"
+                              holds_reserved:
+                                minimum: 0
+                                type: "integer"
+                              judgements_recorded:
+                                minimum: 0
+                                type: "integer"
+                              judges_required:
+                                minimum: 0
+                                type: "integer"
+                              n:
+                                minimum: 0
+                                type: "integer"
+                              outcomes_recorded:
+                                minimum: 0
+                                type: "integer"
+                              pairs_complete:
+                                minimum: 0
+                                type: "integer"
+                              pairs_total:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "n"
+                              - "pairs_total"
+                              - "pairs_complete"
+                              - "executions_enrolled"
+                              - "outcomes_recorded"
+                              - "executions_complete"
+                              - "executions_incomplete"
+                              - "executions_pending_rows"
+                              - "executions_cost_unsettled"
+                              - "executions_invalid"
+                              - "holds_reserved"
+                              - "holds_ambiguous"
+                              - "judgements_recorded"
+                              - "judges_required"
+                              - "cap_stopped"
+                            type: "object"
+                          verdict:
+                            description: "Null until the completion barrier is met and the decision is stored."
+                            nullable: true
+                            properties:
+                              candidate_hash:
+                                type: "string"
+                              claim_text:
+                                description: "The frozen claim text (a pass only) — never more than it is licensed to say."
+                                nullable: true
+                                type: "string"
+                              created_at:
+                                type: "string"
+                              economics:
+                                nullable: true
+                                properties:
+                                  control_cost_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  control_deliveries:
+                                    minimum: 0
+                                    type: "integer"
+                                  inconclusive:
+                                    type: "boolean"
+                                  min_ratio:
+                                    type: "number"
+                                  pass:
+                                    type: "boolean"
+                                  permutation_p_value:
+                                    nullable: true
+                                    type: "number"
+                                  permutations:
+                                    minimum: 0
+                                    type: "integer"
+                                  ratio:
+                                    nullable: true
+                                    type: "number"
+                                  seed:
+                                    type: "integer"
+                                  treated_cost_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  treated_deliveries:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pass"
+                                  - "inconclusive"
+                                  - "ratio"
+                                  - "min_ratio"
+                                  - "permutation_p_value"
+                                  - "permutations"
+                                  - "seed"
+                                  - "treated_deliveries"
+                                  - "control_deliveries"
+                                  - "treated_cost_micro_usd"
+                                  - "control_cost_micro_usd"
+                                type: "object"
+                              economics_permutations:
+                                minimum: 0
+                                type: "integer"
+                              economics_seed:
+                                type: "integer"
+                              failing_parts:
+                                description: "Every failing part (test_failed); empty otherwise."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              goodhart:
+                                nullable: true
+                                properties:
+                                  arms:
+                                    items:
+                                      properties:
+                                        arm:
+                                          enum:
+                                            - "control"
+                                            - "treated"
+                                          type: "string"
+                                        first_draft_cited_quotes_band:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        first_draft_length_band:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        repair_count:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        stranger_usefulness:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                      required:
+                                        - "arm"
+                                        - "first_draft_length_band"
+                                        - "first_draft_cited_quotes_band"
+                                        - "stranger_usefulness"
+                                        - "repair_count"
+                                      type: "object"
+                                    type: "array"
+                                required:
+                                  - "arms"
+                                type: "object"
+                              incomplete_reasons:
+                                description: "Why it can never complete (test_incomplete); else empty."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              inputs_hash:
+                                type: "string"
+                              prereg_hash:
+                                type: "string"
+                              primary:
+                                nullable: true
+                                properties:
+                                  alpha:
+                                    type: "number"
+                                  control_delivered:
+                                    minimum: 0
+                                    type: "integer"
+                                  losses:
+                                    minimum: 0
+                                    type: "integer"
+                                  p_value:
+                                    type: "number"
+                                  pairs_analysed:
+                                    minimum: 0
+                                    type: "integer"
+                                  pass:
+                                    type: "boolean"
+                                  treated_delivered:
+                                    minimum: 0
+                                    type: "integer"
+                                  wins:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pass"
+                                  - "p_value"
+                                  - "alpha"
+                                  - "wins"
+                                  - "losses"
+                                  - "treated_delivered"
+                                  - "control_delivered"
+                                  - "pairs_analysed"
+                                type: "object"
+                              progress:
+                                description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                                properties:
+                                  cap_stopped:
+                                    type: "boolean"
+                                  executions_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_cost_unsettled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_enrolled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_incomplete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_invalid:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_pending_rows:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_ambiguous:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_reserved:
+                                    minimum: 0
+                                    type: "integer"
+                                  judgements_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  judges_required:
+                                    minimum: 0
+                                    type: "integer"
+                                  n:
+                                    minimum: 0
+                                    type: "integer"
+                                  outcomes_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_total:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "n"
+                                  - "pairs_total"
+                                  - "pairs_complete"
+                                  - "executions_enrolled"
+                                  - "outcomes_recorded"
+                                  - "executions_complete"
+                                  - "executions_incomplete"
+                                  - "executions_pending_rows"
+                                  - "executions_cost_unsettled"
+                                  - "executions_invalid"
+                                  - "holds_reserved"
+                                  - "holds_ambiguous"
+                                  - "judgements_recorded"
+                                  - "judges_required"
+                                  - "cap_stopped"
+                                type: "object"
+                              quality:
+                                nullable: true
+                                properties:
+                                  min_delta:
+                                    type: "number"
+                                  pass:
+                                    type: "boolean"
+                                  per_judge:
+                                    items:
+                                      properties:
+                                        clears:
+                                          type: "boolean"
+                                        control_deliveries:
+                                          minimum: 0
+                                          type: "integer"
+                                        control_publishable:
+                                          minimum: 0
+                                          type: "integer"
+                                        control_publishable_rate:
+                                          nullable: true
+                                          type: "number"
+                                        delta:
+                                          nullable: true
+                                          type: "number"
+                                        judge:
+                                          type: "string"
+                                        recorded:
+                                          type: "boolean"
+                                        serious_treated_defects:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_deliveries:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_publishable:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_publishable_rate:
+                                          nullable: true
+                                          type: "number"
+                                      required:
+                                        - "judge"
+                                        - "recorded"
+                                        - "treated_deliveries"
+                                        - "control_deliveries"
+                                        - "treated_publishable"
+                                        - "control_publishable"
+                                        - "treated_publishable_rate"
+                                        - "control_publishable_rate"
+                                        - "delta"
+                                        - "serious_treated_defects"
+                                        - "clears"
+                                      type: "object"
+                                    type: "array"
+                                required:
+                                  - "pass"
+                                  - "min_delta"
+                                  - "per_judge"
+                                type: "object"
+                              rule:
+                                properties:
+                                  alpha:
+                                    type: "number"
+                                  economics_min_ratio:
+                                    type: "number"
+                                  economics_permutations:
+                                    minimum: 0
+                                    type: "integer"
+                                  economics_seed:
+                                    type: "integer"
+                                  n:
+                                    minimum: 0
+                                    type: "integer"
+                                  quality_min_delta:
+                                    type: "number"
+                                  version:
+                                    type: "string"
+                                required:
+                                  - "version"
+                                  - "n"
+                                  - "alpha"
+                                  - "economics_min_ratio"
+                                  - "economics_permutations"
+                                  - "economics_seed"
+                                  - "quality_min_delta"
+                                type: "object"
+                              rule_version:
+                                type: "string"
+                              verdict:
+                                enum:
+                                  - "test_passed"
+                                  - "test_failed"
+                                  - "test_incomplete"
+                                type: "string"
+                            required:
+                              - "verdict"
+                              - "failing_parts"
+                              - "incomplete_reasons"
+                              - "primary"
+                              - "economics"
+                              - "quality"
+                              - "goodhart"
+                              - "claim_text"
+                              - "progress"
+                              - "rule_version"
+                              - "rule"
+                              - "economics_seed"
+                              - "economics_permutations"
+                              - "inputs_hash"
+                              - "candidate_hash"
+                              - "prereg_hash"
+                              - "created_at"
+                            type: "object"
+                        required:
+                          - "manifest_committed"
+                          - "manifest_hash"
+                          - "n"
+                          - "progress"
+                          - "executions"
+                          - "verdict"
+                        type: "object"
                       updated_at:
                         type: "string"
                       verifier_version:
@@ -20438,10 +21396,462 @@ paths:
                           - "screen_failed"
                           - "screen_incomplete"
                           - "awaiting_test_funding"
+                          - "test_open"
+                          - "test_passed"
+                          - "test_failed"
+                          - "test_incomplete"
                           - "closed"
                           - "expired"
                           - "abandoned"
                         type: "string"
+                      test:
+                        default: null
+                        description: "The prospective test: barrier counts (no peeking) and, once computed, the decision."
+                        nullable: true
+                        properties:
+                          executions:
+                            items:
+                              description: "One enrolled test execution — ids, arm and standing only."
+                              properties:
+                                arm:
+                                  enum:
+                                    - "control"
+                                    - "treated"
+                                  type: "string"
+                                execution_id:
+                                  type: "string"
+                                pair_key:
+                                  type: "string"
+                                slot:
+                                  maximum: 1
+                                  minimum: 0
+                                  type: "integer"
+                                status:
+                                  description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                  enum:
+                                    - "no_outcome"
+                                    - "pending_rows"
+                                    - "cost_unsettled"
+                                    - "invalid"
+                                    - "complete"
+                                  type: "string"
+                              required:
+                                - "execution_id"
+                                - "pair_key"
+                                - "slot"
+                                - "arm"
+                                - "status"
+                              type: "object"
+                            type: "array"
+                          manifest_committed:
+                            type: "boolean"
+                          manifest_hash:
+                            nullable: true
+                            type: "string"
+                          n:
+                            minimum: 0
+                            type: "integer"
+                          progress:
+                            description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                            properties:
+                              cap_stopped:
+                                type: "boolean"
+                              executions_complete:
+                                minimum: 0
+                                type: "integer"
+                              executions_cost_unsettled:
+                                minimum: 0
+                                type: "integer"
+                              executions_enrolled:
+                                minimum: 0
+                                type: "integer"
+                              executions_incomplete:
+                                minimum: 0
+                                type: "integer"
+                              executions_invalid:
+                                minimum: 0
+                                type: "integer"
+                              executions_pending_rows:
+                                minimum: 0
+                                type: "integer"
+                              holds_ambiguous:
+                                minimum: 0
+                                type: "integer"
+                              holds_reserved:
+                                minimum: 0
+                                type: "integer"
+                              judgements_recorded:
+                                minimum: 0
+                                type: "integer"
+                              judges_required:
+                                minimum: 0
+                                type: "integer"
+                              n:
+                                minimum: 0
+                                type: "integer"
+                              outcomes_recorded:
+                                minimum: 0
+                                type: "integer"
+                              pairs_complete:
+                                minimum: 0
+                                type: "integer"
+                              pairs_total:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "n"
+                              - "pairs_total"
+                              - "pairs_complete"
+                              - "executions_enrolled"
+                              - "outcomes_recorded"
+                              - "executions_complete"
+                              - "executions_incomplete"
+                              - "executions_pending_rows"
+                              - "executions_cost_unsettled"
+                              - "executions_invalid"
+                              - "holds_reserved"
+                              - "holds_ambiguous"
+                              - "judgements_recorded"
+                              - "judges_required"
+                              - "cap_stopped"
+                            type: "object"
+                          verdict:
+                            description: "Null until the completion barrier is met and the decision is stored."
+                            nullable: true
+                            properties:
+                              candidate_hash:
+                                type: "string"
+                              claim_text:
+                                description: "The frozen claim text (a pass only) — never more than it is licensed to say."
+                                nullable: true
+                                type: "string"
+                              created_at:
+                                type: "string"
+                              economics:
+                                nullable: true
+                                properties:
+                                  control_cost_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  control_deliveries:
+                                    minimum: 0
+                                    type: "integer"
+                                  inconclusive:
+                                    type: "boolean"
+                                  min_ratio:
+                                    type: "number"
+                                  pass:
+                                    type: "boolean"
+                                  permutation_p_value:
+                                    nullable: true
+                                    type: "number"
+                                  permutations:
+                                    minimum: 0
+                                    type: "integer"
+                                  ratio:
+                                    nullable: true
+                                    type: "number"
+                                  seed:
+                                    type: "integer"
+                                  treated_cost_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  treated_deliveries:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pass"
+                                  - "inconclusive"
+                                  - "ratio"
+                                  - "min_ratio"
+                                  - "permutation_p_value"
+                                  - "permutations"
+                                  - "seed"
+                                  - "treated_deliveries"
+                                  - "control_deliveries"
+                                  - "treated_cost_micro_usd"
+                                  - "control_cost_micro_usd"
+                                type: "object"
+                              economics_permutations:
+                                minimum: 0
+                                type: "integer"
+                              economics_seed:
+                                type: "integer"
+                              failing_parts:
+                                description: "Every failing part (test_failed); empty otherwise."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              goodhart:
+                                nullable: true
+                                properties:
+                                  arms:
+                                    items:
+                                      properties:
+                                        arm:
+                                          enum:
+                                            - "control"
+                                            - "treated"
+                                          type: "string"
+                                        first_draft_cited_quotes_band:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        first_draft_length_band:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        repair_count:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        stranger_usefulness:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                      required:
+                                        - "arm"
+                                        - "first_draft_length_band"
+                                        - "first_draft_cited_quotes_band"
+                                        - "stranger_usefulness"
+                                        - "repair_count"
+                                      type: "object"
+                                    type: "array"
+                                required:
+                                  - "arms"
+                                type: "object"
+                              incomplete_reasons:
+                                description: "Why it can never complete (test_incomplete); else empty."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              inputs_hash:
+                                type: "string"
+                              prereg_hash:
+                                type: "string"
+                              primary:
+                                nullable: true
+                                properties:
+                                  alpha:
+                                    type: "number"
+                                  control_delivered:
+                                    minimum: 0
+                                    type: "integer"
+                                  losses:
+                                    minimum: 0
+                                    type: "integer"
+                                  p_value:
+                                    type: "number"
+                                  pairs_analysed:
+                                    minimum: 0
+                                    type: "integer"
+                                  pass:
+                                    type: "boolean"
+                                  treated_delivered:
+                                    minimum: 0
+                                    type: "integer"
+                                  wins:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pass"
+                                  - "p_value"
+                                  - "alpha"
+                                  - "wins"
+                                  - "losses"
+                                  - "treated_delivered"
+                                  - "control_delivered"
+                                  - "pairs_analysed"
+                                type: "object"
+                              progress:
+                                description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                                properties:
+                                  cap_stopped:
+                                    type: "boolean"
+                                  executions_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_cost_unsettled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_enrolled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_incomplete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_invalid:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_pending_rows:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_ambiguous:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_reserved:
+                                    minimum: 0
+                                    type: "integer"
+                                  judgements_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  judges_required:
+                                    minimum: 0
+                                    type: "integer"
+                                  n:
+                                    minimum: 0
+                                    type: "integer"
+                                  outcomes_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_total:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "n"
+                                  - "pairs_total"
+                                  - "pairs_complete"
+                                  - "executions_enrolled"
+                                  - "outcomes_recorded"
+                                  - "executions_complete"
+                                  - "executions_incomplete"
+                                  - "executions_pending_rows"
+                                  - "executions_cost_unsettled"
+                                  - "executions_invalid"
+                                  - "holds_reserved"
+                                  - "holds_ambiguous"
+                                  - "judgements_recorded"
+                                  - "judges_required"
+                                  - "cap_stopped"
+                                type: "object"
+                              quality:
+                                nullable: true
+                                properties:
+                                  min_delta:
+                                    type: "number"
+                                  pass:
+                                    type: "boolean"
+                                  per_judge:
+                                    items:
+                                      properties:
+                                        clears:
+                                          type: "boolean"
+                                        control_deliveries:
+                                          minimum: 0
+                                          type: "integer"
+                                        control_publishable:
+                                          minimum: 0
+                                          type: "integer"
+                                        control_publishable_rate:
+                                          nullable: true
+                                          type: "number"
+                                        delta:
+                                          nullable: true
+                                          type: "number"
+                                        judge:
+                                          type: "string"
+                                        recorded:
+                                          type: "boolean"
+                                        serious_treated_defects:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_deliveries:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_publishable:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_publishable_rate:
+                                          nullable: true
+                                          type: "number"
+                                      required:
+                                        - "judge"
+                                        - "recorded"
+                                        - "treated_deliveries"
+                                        - "control_deliveries"
+                                        - "treated_publishable"
+                                        - "control_publishable"
+                                        - "treated_publishable_rate"
+                                        - "control_publishable_rate"
+                                        - "delta"
+                                        - "serious_treated_defects"
+                                        - "clears"
+                                      type: "object"
+                                    type: "array"
+                                required:
+                                  - "pass"
+                                  - "min_delta"
+                                  - "per_judge"
+                                type: "object"
+                              rule:
+                                properties:
+                                  alpha:
+                                    type: "number"
+                                  economics_min_ratio:
+                                    type: "number"
+                                  economics_permutations:
+                                    minimum: 0
+                                    type: "integer"
+                                  economics_seed:
+                                    type: "integer"
+                                  n:
+                                    minimum: 0
+                                    type: "integer"
+                                  quality_min_delta:
+                                    type: "number"
+                                  version:
+                                    type: "string"
+                                required:
+                                  - "version"
+                                  - "n"
+                                  - "alpha"
+                                  - "economics_min_ratio"
+                                  - "economics_permutations"
+                                  - "economics_seed"
+                                  - "quality_min_delta"
+                                type: "object"
+                              rule_version:
+                                type: "string"
+                              verdict:
+                                enum:
+                                  - "test_passed"
+                                  - "test_failed"
+                                  - "test_incomplete"
+                                type: "string"
+                            required:
+                              - "verdict"
+                              - "failing_parts"
+                              - "incomplete_reasons"
+                              - "primary"
+                              - "economics"
+                              - "quality"
+                              - "goodhart"
+                              - "claim_text"
+                              - "progress"
+                              - "rule_version"
+                              - "rule"
+                              - "economics_seed"
+                              - "economics_permutations"
+                              - "inputs_hash"
+                              - "candidate_hash"
+                              - "prereg_hash"
+                              - "created_at"
+                            type: "object"
+                        required:
+                          - "manifest_committed"
+                          - "manifest_hash"
+                          - "n"
+                          - "progress"
+                          - "executions"
+                          - "verdict"
+                        type: "object"
                       updated_at:
                         type: "string"
                       verifier_version:
@@ -21361,10 +22771,462 @@ paths:
                           - "screen_failed"
                           - "screen_incomplete"
                           - "awaiting_test_funding"
+                          - "test_open"
+                          - "test_passed"
+                          - "test_failed"
+                          - "test_incomplete"
                           - "closed"
                           - "expired"
                           - "abandoned"
                         type: "string"
+                      test:
+                        default: null
+                        description: "The prospective test: barrier counts (no peeking) and, once computed, the decision."
+                        nullable: true
+                        properties:
+                          executions:
+                            items:
+                              description: "One enrolled test execution — ids, arm and standing only."
+                              properties:
+                                arm:
+                                  enum:
+                                    - "control"
+                                    - "treated"
+                                  type: "string"
+                                execution_id:
+                                  type: "string"
+                                pair_key:
+                                  type: "string"
+                                slot:
+                                  maximum: 1
+                                  minimum: 0
+                                  type: "integer"
+                                status:
+                                  description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                  enum:
+                                    - "no_outcome"
+                                    - "pending_rows"
+                                    - "cost_unsettled"
+                                    - "invalid"
+                                    - "complete"
+                                  type: "string"
+                              required:
+                                - "execution_id"
+                                - "pair_key"
+                                - "slot"
+                                - "arm"
+                                - "status"
+                              type: "object"
+                            type: "array"
+                          manifest_committed:
+                            type: "boolean"
+                          manifest_hash:
+                            nullable: true
+                            type: "string"
+                          n:
+                            minimum: 0
+                            type: "integer"
+                          progress:
+                            description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                            properties:
+                              cap_stopped:
+                                type: "boolean"
+                              executions_complete:
+                                minimum: 0
+                                type: "integer"
+                              executions_cost_unsettled:
+                                minimum: 0
+                                type: "integer"
+                              executions_enrolled:
+                                minimum: 0
+                                type: "integer"
+                              executions_incomplete:
+                                minimum: 0
+                                type: "integer"
+                              executions_invalid:
+                                minimum: 0
+                                type: "integer"
+                              executions_pending_rows:
+                                minimum: 0
+                                type: "integer"
+                              holds_ambiguous:
+                                minimum: 0
+                                type: "integer"
+                              holds_reserved:
+                                minimum: 0
+                                type: "integer"
+                              judgements_recorded:
+                                minimum: 0
+                                type: "integer"
+                              judges_required:
+                                minimum: 0
+                                type: "integer"
+                              n:
+                                minimum: 0
+                                type: "integer"
+                              outcomes_recorded:
+                                minimum: 0
+                                type: "integer"
+                              pairs_complete:
+                                minimum: 0
+                                type: "integer"
+                              pairs_total:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "n"
+                              - "pairs_total"
+                              - "pairs_complete"
+                              - "executions_enrolled"
+                              - "outcomes_recorded"
+                              - "executions_complete"
+                              - "executions_incomplete"
+                              - "executions_pending_rows"
+                              - "executions_cost_unsettled"
+                              - "executions_invalid"
+                              - "holds_reserved"
+                              - "holds_ambiguous"
+                              - "judgements_recorded"
+                              - "judges_required"
+                              - "cap_stopped"
+                            type: "object"
+                          verdict:
+                            description: "Null until the completion barrier is met and the decision is stored."
+                            nullable: true
+                            properties:
+                              candidate_hash:
+                                type: "string"
+                              claim_text:
+                                description: "The frozen claim text (a pass only) — never more than it is licensed to say."
+                                nullable: true
+                                type: "string"
+                              created_at:
+                                type: "string"
+                              economics:
+                                nullable: true
+                                properties:
+                                  control_cost_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  control_deliveries:
+                                    minimum: 0
+                                    type: "integer"
+                                  inconclusive:
+                                    type: "boolean"
+                                  min_ratio:
+                                    type: "number"
+                                  pass:
+                                    type: "boolean"
+                                  permutation_p_value:
+                                    nullable: true
+                                    type: "number"
+                                  permutations:
+                                    minimum: 0
+                                    type: "integer"
+                                  ratio:
+                                    nullable: true
+                                    type: "number"
+                                  seed:
+                                    type: "integer"
+                                  treated_cost_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  treated_deliveries:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pass"
+                                  - "inconclusive"
+                                  - "ratio"
+                                  - "min_ratio"
+                                  - "permutation_p_value"
+                                  - "permutations"
+                                  - "seed"
+                                  - "treated_deliveries"
+                                  - "control_deliveries"
+                                  - "treated_cost_micro_usd"
+                                  - "control_cost_micro_usd"
+                                type: "object"
+                              economics_permutations:
+                                minimum: 0
+                                type: "integer"
+                              economics_seed:
+                                type: "integer"
+                              failing_parts:
+                                description: "Every failing part (test_failed); empty otherwise."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              goodhart:
+                                nullable: true
+                                properties:
+                                  arms:
+                                    items:
+                                      properties:
+                                        arm:
+                                          enum:
+                                            - "control"
+                                            - "treated"
+                                          type: "string"
+                                        first_draft_cited_quotes_band:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        first_draft_length_band:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        repair_count:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        stranger_usefulness:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                      required:
+                                        - "arm"
+                                        - "first_draft_length_band"
+                                        - "first_draft_cited_quotes_band"
+                                        - "stranger_usefulness"
+                                        - "repair_count"
+                                      type: "object"
+                                    type: "array"
+                                required:
+                                  - "arms"
+                                type: "object"
+                              incomplete_reasons:
+                                description: "Why it can never complete (test_incomplete); else empty."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              inputs_hash:
+                                type: "string"
+                              prereg_hash:
+                                type: "string"
+                              primary:
+                                nullable: true
+                                properties:
+                                  alpha:
+                                    type: "number"
+                                  control_delivered:
+                                    minimum: 0
+                                    type: "integer"
+                                  losses:
+                                    minimum: 0
+                                    type: "integer"
+                                  p_value:
+                                    type: "number"
+                                  pairs_analysed:
+                                    minimum: 0
+                                    type: "integer"
+                                  pass:
+                                    type: "boolean"
+                                  treated_delivered:
+                                    minimum: 0
+                                    type: "integer"
+                                  wins:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pass"
+                                  - "p_value"
+                                  - "alpha"
+                                  - "wins"
+                                  - "losses"
+                                  - "treated_delivered"
+                                  - "control_delivered"
+                                  - "pairs_analysed"
+                                type: "object"
+                              progress:
+                                description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                                properties:
+                                  cap_stopped:
+                                    type: "boolean"
+                                  executions_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_cost_unsettled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_enrolled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_incomplete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_invalid:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_pending_rows:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_ambiguous:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_reserved:
+                                    minimum: 0
+                                    type: "integer"
+                                  judgements_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  judges_required:
+                                    minimum: 0
+                                    type: "integer"
+                                  n:
+                                    minimum: 0
+                                    type: "integer"
+                                  outcomes_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_total:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "n"
+                                  - "pairs_total"
+                                  - "pairs_complete"
+                                  - "executions_enrolled"
+                                  - "outcomes_recorded"
+                                  - "executions_complete"
+                                  - "executions_incomplete"
+                                  - "executions_pending_rows"
+                                  - "executions_cost_unsettled"
+                                  - "executions_invalid"
+                                  - "holds_reserved"
+                                  - "holds_ambiguous"
+                                  - "judgements_recorded"
+                                  - "judges_required"
+                                  - "cap_stopped"
+                                type: "object"
+                              quality:
+                                nullable: true
+                                properties:
+                                  min_delta:
+                                    type: "number"
+                                  pass:
+                                    type: "boolean"
+                                  per_judge:
+                                    items:
+                                      properties:
+                                        clears:
+                                          type: "boolean"
+                                        control_deliveries:
+                                          minimum: 0
+                                          type: "integer"
+                                        control_publishable:
+                                          minimum: 0
+                                          type: "integer"
+                                        control_publishable_rate:
+                                          nullable: true
+                                          type: "number"
+                                        delta:
+                                          nullable: true
+                                          type: "number"
+                                        judge:
+                                          type: "string"
+                                        recorded:
+                                          type: "boolean"
+                                        serious_treated_defects:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_deliveries:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_publishable:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_publishable_rate:
+                                          nullable: true
+                                          type: "number"
+                                      required:
+                                        - "judge"
+                                        - "recorded"
+                                        - "treated_deliveries"
+                                        - "control_deliveries"
+                                        - "treated_publishable"
+                                        - "control_publishable"
+                                        - "treated_publishable_rate"
+                                        - "control_publishable_rate"
+                                        - "delta"
+                                        - "serious_treated_defects"
+                                        - "clears"
+                                      type: "object"
+                                    type: "array"
+                                required:
+                                  - "pass"
+                                  - "min_delta"
+                                  - "per_judge"
+                                type: "object"
+                              rule:
+                                properties:
+                                  alpha:
+                                    type: "number"
+                                  economics_min_ratio:
+                                    type: "number"
+                                  economics_permutations:
+                                    minimum: 0
+                                    type: "integer"
+                                  economics_seed:
+                                    type: "integer"
+                                  n:
+                                    minimum: 0
+                                    type: "integer"
+                                  quality_min_delta:
+                                    type: "number"
+                                  version:
+                                    type: "string"
+                                required:
+                                  - "version"
+                                  - "n"
+                                  - "alpha"
+                                  - "economics_min_ratio"
+                                  - "economics_permutations"
+                                  - "economics_seed"
+                                  - "quality_min_delta"
+                                type: "object"
+                              rule_version:
+                                type: "string"
+                              verdict:
+                                enum:
+                                  - "test_passed"
+                                  - "test_failed"
+                                  - "test_incomplete"
+                                type: "string"
+                            required:
+                              - "verdict"
+                              - "failing_parts"
+                              - "incomplete_reasons"
+                              - "primary"
+                              - "economics"
+                              - "quality"
+                              - "goodhart"
+                              - "claim_text"
+                              - "progress"
+                              - "rule_version"
+                              - "rule"
+                              - "economics_seed"
+                              - "economics_permutations"
+                              - "inputs_hash"
+                              - "candidate_hash"
+                              - "prereg_hash"
+                              - "created_at"
+                            type: "object"
+                        required:
+                          - "manifest_committed"
+                          - "manifest_hash"
+                          - "n"
+                          - "progress"
+                          - "executions"
+                          - "verdict"
+                        type: "object"
                       updated_at:
                         type: "string"
                       verifier_version:
@@ -22284,10 +24146,462 @@ paths:
                           - "screen_failed"
                           - "screen_incomplete"
                           - "awaiting_test_funding"
+                          - "test_open"
+                          - "test_passed"
+                          - "test_failed"
+                          - "test_incomplete"
                           - "closed"
                           - "expired"
                           - "abandoned"
                         type: "string"
+                      test:
+                        default: null
+                        description: "The prospective test: barrier counts (no peeking) and, once computed, the decision."
+                        nullable: true
+                        properties:
+                          executions:
+                            items:
+                              description: "One enrolled test execution — ids, arm and standing only."
+                              properties:
+                                arm:
+                                  enum:
+                                    - "control"
+                                    - "treated"
+                                  type: "string"
+                                execution_id:
+                                  type: "string"
+                                pair_key:
+                                  type: "string"
+                                slot:
+                                  maximum: 1
+                                  minimum: 0
+                                  type: "integer"
+                                status:
+                                  description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                  enum:
+                                    - "no_outcome"
+                                    - "pending_rows"
+                                    - "cost_unsettled"
+                                    - "invalid"
+                                    - "complete"
+                                  type: "string"
+                              required:
+                                - "execution_id"
+                                - "pair_key"
+                                - "slot"
+                                - "arm"
+                                - "status"
+                              type: "object"
+                            type: "array"
+                          manifest_committed:
+                            type: "boolean"
+                          manifest_hash:
+                            nullable: true
+                            type: "string"
+                          n:
+                            minimum: 0
+                            type: "integer"
+                          progress:
+                            description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                            properties:
+                              cap_stopped:
+                                type: "boolean"
+                              executions_complete:
+                                minimum: 0
+                                type: "integer"
+                              executions_cost_unsettled:
+                                minimum: 0
+                                type: "integer"
+                              executions_enrolled:
+                                minimum: 0
+                                type: "integer"
+                              executions_incomplete:
+                                minimum: 0
+                                type: "integer"
+                              executions_invalid:
+                                minimum: 0
+                                type: "integer"
+                              executions_pending_rows:
+                                minimum: 0
+                                type: "integer"
+                              holds_ambiguous:
+                                minimum: 0
+                                type: "integer"
+                              holds_reserved:
+                                minimum: 0
+                                type: "integer"
+                              judgements_recorded:
+                                minimum: 0
+                                type: "integer"
+                              judges_required:
+                                minimum: 0
+                                type: "integer"
+                              n:
+                                minimum: 0
+                                type: "integer"
+                              outcomes_recorded:
+                                minimum: 0
+                                type: "integer"
+                              pairs_complete:
+                                minimum: 0
+                                type: "integer"
+                              pairs_total:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "n"
+                              - "pairs_total"
+                              - "pairs_complete"
+                              - "executions_enrolled"
+                              - "outcomes_recorded"
+                              - "executions_complete"
+                              - "executions_incomplete"
+                              - "executions_pending_rows"
+                              - "executions_cost_unsettled"
+                              - "executions_invalid"
+                              - "holds_reserved"
+                              - "holds_ambiguous"
+                              - "judgements_recorded"
+                              - "judges_required"
+                              - "cap_stopped"
+                            type: "object"
+                          verdict:
+                            description: "Null until the completion barrier is met and the decision is stored."
+                            nullable: true
+                            properties:
+                              candidate_hash:
+                                type: "string"
+                              claim_text:
+                                description: "The frozen claim text (a pass only) — never more than it is licensed to say."
+                                nullable: true
+                                type: "string"
+                              created_at:
+                                type: "string"
+                              economics:
+                                nullable: true
+                                properties:
+                                  control_cost_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  control_deliveries:
+                                    minimum: 0
+                                    type: "integer"
+                                  inconclusive:
+                                    type: "boolean"
+                                  min_ratio:
+                                    type: "number"
+                                  pass:
+                                    type: "boolean"
+                                  permutation_p_value:
+                                    nullable: true
+                                    type: "number"
+                                  permutations:
+                                    minimum: 0
+                                    type: "integer"
+                                  ratio:
+                                    nullable: true
+                                    type: "number"
+                                  seed:
+                                    type: "integer"
+                                  treated_cost_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  treated_deliveries:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pass"
+                                  - "inconclusive"
+                                  - "ratio"
+                                  - "min_ratio"
+                                  - "permutation_p_value"
+                                  - "permutations"
+                                  - "seed"
+                                  - "treated_deliveries"
+                                  - "control_deliveries"
+                                  - "treated_cost_micro_usd"
+                                  - "control_cost_micro_usd"
+                                type: "object"
+                              economics_permutations:
+                                minimum: 0
+                                type: "integer"
+                              economics_seed:
+                                type: "integer"
+                              failing_parts:
+                                description: "Every failing part (test_failed); empty otherwise."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              goodhart:
+                                nullable: true
+                                properties:
+                                  arms:
+                                    items:
+                                      properties:
+                                        arm:
+                                          enum:
+                                            - "control"
+                                            - "treated"
+                                          type: "string"
+                                        first_draft_cited_quotes_band:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        first_draft_length_band:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        repair_count:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        stranger_usefulness:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                      required:
+                                        - "arm"
+                                        - "first_draft_length_band"
+                                        - "first_draft_cited_quotes_band"
+                                        - "stranger_usefulness"
+                                        - "repair_count"
+                                      type: "object"
+                                    type: "array"
+                                required:
+                                  - "arms"
+                                type: "object"
+                              incomplete_reasons:
+                                description: "Why it can never complete (test_incomplete); else empty."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              inputs_hash:
+                                type: "string"
+                              prereg_hash:
+                                type: "string"
+                              primary:
+                                nullable: true
+                                properties:
+                                  alpha:
+                                    type: "number"
+                                  control_delivered:
+                                    minimum: 0
+                                    type: "integer"
+                                  losses:
+                                    minimum: 0
+                                    type: "integer"
+                                  p_value:
+                                    type: "number"
+                                  pairs_analysed:
+                                    minimum: 0
+                                    type: "integer"
+                                  pass:
+                                    type: "boolean"
+                                  treated_delivered:
+                                    minimum: 0
+                                    type: "integer"
+                                  wins:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pass"
+                                  - "p_value"
+                                  - "alpha"
+                                  - "wins"
+                                  - "losses"
+                                  - "treated_delivered"
+                                  - "control_delivered"
+                                  - "pairs_analysed"
+                                type: "object"
+                              progress:
+                                description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                                properties:
+                                  cap_stopped:
+                                    type: "boolean"
+                                  executions_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_cost_unsettled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_enrolled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_incomplete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_invalid:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_pending_rows:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_ambiguous:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_reserved:
+                                    minimum: 0
+                                    type: "integer"
+                                  judgements_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  judges_required:
+                                    minimum: 0
+                                    type: "integer"
+                                  n:
+                                    minimum: 0
+                                    type: "integer"
+                                  outcomes_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_total:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "n"
+                                  - "pairs_total"
+                                  - "pairs_complete"
+                                  - "executions_enrolled"
+                                  - "outcomes_recorded"
+                                  - "executions_complete"
+                                  - "executions_incomplete"
+                                  - "executions_pending_rows"
+                                  - "executions_cost_unsettled"
+                                  - "executions_invalid"
+                                  - "holds_reserved"
+                                  - "holds_ambiguous"
+                                  - "judgements_recorded"
+                                  - "judges_required"
+                                  - "cap_stopped"
+                                type: "object"
+                              quality:
+                                nullable: true
+                                properties:
+                                  min_delta:
+                                    type: "number"
+                                  pass:
+                                    type: "boolean"
+                                  per_judge:
+                                    items:
+                                      properties:
+                                        clears:
+                                          type: "boolean"
+                                        control_deliveries:
+                                          minimum: 0
+                                          type: "integer"
+                                        control_publishable:
+                                          minimum: 0
+                                          type: "integer"
+                                        control_publishable_rate:
+                                          nullable: true
+                                          type: "number"
+                                        delta:
+                                          nullable: true
+                                          type: "number"
+                                        judge:
+                                          type: "string"
+                                        recorded:
+                                          type: "boolean"
+                                        serious_treated_defects:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_deliveries:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_publishable:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_publishable_rate:
+                                          nullable: true
+                                          type: "number"
+                                      required:
+                                        - "judge"
+                                        - "recorded"
+                                        - "treated_deliveries"
+                                        - "control_deliveries"
+                                        - "treated_publishable"
+                                        - "control_publishable"
+                                        - "treated_publishable_rate"
+                                        - "control_publishable_rate"
+                                        - "delta"
+                                        - "serious_treated_defects"
+                                        - "clears"
+                                      type: "object"
+                                    type: "array"
+                                required:
+                                  - "pass"
+                                  - "min_delta"
+                                  - "per_judge"
+                                type: "object"
+                              rule:
+                                properties:
+                                  alpha:
+                                    type: "number"
+                                  economics_min_ratio:
+                                    type: "number"
+                                  economics_permutations:
+                                    minimum: 0
+                                    type: "integer"
+                                  economics_seed:
+                                    type: "integer"
+                                  n:
+                                    minimum: 0
+                                    type: "integer"
+                                  quality_min_delta:
+                                    type: "number"
+                                  version:
+                                    type: "string"
+                                required:
+                                  - "version"
+                                  - "n"
+                                  - "alpha"
+                                  - "economics_min_ratio"
+                                  - "economics_permutations"
+                                  - "economics_seed"
+                                  - "quality_min_delta"
+                                type: "object"
+                              rule_version:
+                                type: "string"
+                              verdict:
+                                enum:
+                                  - "test_passed"
+                                  - "test_failed"
+                                  - "test_incomplete"
+                                type: "string"
+                            required:
+                              - "verdict"
+                              - "failing_parts"
+                              - "incomplete_reasons"
+                              - "primary"
+                              - "economics"
+                              - "quality"
+                              - "goodhart"
+                              - "claim_text"
+                              - "progress"
+                              - "rule_version"
+                              - "rule"
+                              - "economics_seed"
+                              - "economics_permutations"
+                              - "inputs_hash"
+                              - "candidate_hash"
+                              - "prereg_hash"
+                              - "created_at"
+                            type: "object"
+                        required:
+                          - "manifest_committed"
+                          - "manifest_hash"
+                          - "n"
+                          - "progress"
+                          - "executions"
+                          - "verdict"
+                        type: "object"
                       updated_at:
                         type: "string"
                       verifier_version:
@@ -22692,6 +25006,10 @@ paths:
                           - "screen_failed"
                           - "screen_incomplete"
                           - "awaiting_test_funding"
+                          - "test_open"
+                          - "test_passed"
+                          - "test_failed"
+                          - "test_incomplete"
                           - "closed"
                           - "expired"
                           - "abandoned"
@@ -23038,6 +25356,10 @@ paths:
                       - "screen_failed"
                       - "screen_incomplete"
                       - "awaiting_test_funding"
+                      - "test_open"
+                      - "test_passed"
+                      - "test_failed"
+                      - "test_incomplete"
                       - "closed"
                       - "expired"
                       - "abandoned"
@@ -24084,10 +26406,462 @@ paths:
                           - "screen_failed"
                           - "screen_incomplete"
                           - "awaiting_test_funding"
+                          - "test_open"
+                          - "test_passed"
+                          - "test_failed"
+                          - "test_incomplete"
                           - "closed"
                           - "expired"
                           - "abandoned"
                         type: "string"
+                      test:
+                        default: null
+                        description: "The prospective test: barrier counts (no peeking) and, once computed, the decision."
+                        nullable: true
+                        properties:
+                          executions:
+                            items:
+                              description: "One enrolled test execution — ids, arm and standing only."
+                              properties:
+                                arm:
+                                  enum:
+                                    - "control"
+                                    - "treated"
+                                  type: "string"
+                                execution_id:
+                                  type: "string"
+                                pair_key:
+                                  type: "string"
+                                slot:
+                                  maximum: 1
+                                  minimum: 0
+                                  type: "integer"
+                                status:
+                                  description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                  enum:
+                                    - "no_outcome"
+                                    - "pending_rows"
+                                    - "cost_unsettled"
+                                    - "invalid"
+                                    - "complete"
+                                  type: "string"
+                              required:
+                                - "execution_id"
+                                - "pair_key"
+                                - "slot"
+                                - "arm"
+                                - "status"
+                              type: "object"
+                            type: "array"
+                          manifest_committed:
+                            type: "boolean"
+                          manifest_hash:
+                            nullable: true
+                            type: "string"
+                          n:
+                            minimum: 0
+                            type: "integer"
+                          progress:
+                            description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                            properties:
+                              cap_stopped:
+                                type: "boolean"
+                              executions_complete:
+                                minimum: 0
+                                type: "integer"
+                              executions_cost_unsettled:
+                                minimum: 0
+                                type: "integer"
+                              executions_enrolled:
+                                minimum: 0
+                                type: "integer"
+                              executions_incomplete:
+                                minimum: 0
+                                type: "integer"
+                              executions_invalid:
+                                minimum: 0
+                                type: "integer"
+                              executions_pending_rows:
+                                minimum: 0
+                                type: "integer"
+                              holds_ambiguous:
+                                minimum: 0
+                                type: "integer"
+                              holds_reserved:
+                                minimum: 0
+                                type: "integer"
+                              judgements_recorded:
+                                minimum: 0
+                                type: "integer"
+                              judges_required:
+                                minimum: 0
+                                type: "integer"
+                              n:
+                                minimum: 0
+                                type: "integer"
+                              outcomes_recorded:
+                                minimum: 0
+                                type: "integer"
+                              pairs_complete:
+                                minimum: 0
+                                type: "integer"
+                              pairs_total:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "n"
+                              - "pairs_total"
+                              - "pairs_complete"
+                              - "executions_enrolled"
+                              - "outcomes_recorded"
+                              - "executions_complete"
+                              - "executions_incomplete"
+                              - "executions_pending_rows"
+                              - "executions_cost_unsettled"
+                              - "executions_invalid"
+                              - "holds_reserved"
+                              - "holds_ambiguous"
+                              - "judgements_recorded"
+                              - "judges_required"
+                              - "cap_stopped"
+                            type: "object"
+                          verdict:
+                            description: "Null until the completion barrier is met and the decision is stored."
+                            nullable: true
+                            properties:
+                              candidate_hash:
+                                type: "string"
+                              claim_text:
+                                description: "The frozen claim text (a pass only) — never more than it is licensed to say."
+                                nullable: true
+                                type: "string"
+                              created_at:
+                                type: "string"
+                              economics:
+                                nullable: true
+                                properties:
+                                  control_cost_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  control_deliveries:
+                                    minimum: 0
+                                    type: "integer"
+                                  inconclusive:
+                                    type: "boolean"
+                                  min_ratio:
+                                    type: "number"
+                                  pass:
+                                    type: "boolean"
+                                  permutation_p_value:
+                                    nullable: true
+                                    type: "number"
+                                  permutations:
+                                    minimum: 0
+                                    type: "integer"
+                                  ratio:
+                                    nullable: true
+                                    type: "number"
+                                  seed:
+                                    type: "integer"
+                                  treated_cost_micro_usd:
+                                    minimum: 0
+                                    type: "integer"
+                                  treated_deliveries:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pass"
+                                  - "inconclusive"
+                                  - "ratio"
+                                  - "min_ratio"
+                                  - "permutation_p_value"
+                                  - "permutations"
+                                  - "seed"
+                                  - "treated_deliveries"
+                                  - "control_deliveries"
+                                  - "treated_cost_micro_usd"
+                                  - "control_cost_micro_usd"
+                                type: "object"
+                              economics_permutations:
+                                minimum: 0
+                                type: "integer"
+                              economics_seed:
+                                type: "integer"
+                              failing_parts:
+                                description: "Every failing part (test_failed); empty otherwise."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              goodhart:
+                                nullable: true
+                                properties:
+                                  arms:
+                                    items:
+                                      properties:
+                                        arm:
+                                          enum:
+                                            - "control"
+                                            - "treated"
+                                          type: "string"
+                                        first_draft_cited_quotes_band:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        first_draft_length_band:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        repair_count:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                        stranger_usefulness:
+                                          additionalProperties:
+                                            minimum: 0
+                                            type: "integer"
+                                          type: "object"
+                                      required:
+                                        - "arm"
+                                        - "first_draft_length_band"
+                                        - "first_draft_cited_quotes_band"
+                                        - "stranger_usefulness"
+                                        - "repair_count"
+                                      type: "object"
+                                    type: "array"
+                                required:
+                                  - "arms"
+                                type: "object"
+                              incomplete_reasons:
+                                description: "Why it can never complete (test_incomplete); else empty."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              inputs_hash:
+                                type: "string"
+                              prereg_hash:
+                                type: "string"
+                              primary:
+                                nullable: true
+                                properties:
+                                  alpha:
+                                    type: "number"
+                                  control_delivered:
+                                    minimum: 0
+                                    type: "integer"
+                                  losses:
+                                    minimum: 0
+                                    type: "integer"
+                                  p_value:
+                                    type: "number"
+                                  pairs_analysed:
+                                    minimum: 0
+                                    type: "integer"
+                                  pass:
+                                    type: "boolean"
+                                  treated_delivered:
+                                    minimum: 0
+                                    type: "integer"
+                                  wins:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pass"
+                                  - "p_value"
+                                  - "alpha"
+                                  - "wins"
+                                  - "losses"
+                                  - "treated_delivered"
+                                  - "control_delivered"
+                                  - "pairs_analysed"
+                                type: "object"
+                              progress:
+                                description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                                properties:
+                                  cap_stopped:
+                                    type: "boolean"
+                                  executions_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_cost_unsettled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_enrolled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_incomplete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_invalid:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_pending_rows:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_ambiguous:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_reserved:
+                                    minimum: 0
+                                    type: "integer"
+                                  judgements_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  judges_required:
+                                    minimum: 0
+                                    type: "integer"
+                                  n:
+                                    minimum: 0
+                                    type: "integer"
+                                  outcomes_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_total:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "n"
+                                  - "pairs_total"
+                                  - "pairs_complete"
+                                  - "executions_enrolled"
+                                  - "outcomes_recorded"
+                                  - "executions_complete"
+                                  - "executions_incomplete"
+                                  - "executions_pending_rows"
+                                  - "executions_cost_unsettled"
+                                  - "executions_invalid"
+                                  - "holds_reserved"
+                                  - "holds_ambiguous"
+                                  - "judgements_recorded"
+                                  - "judges_required"
+                                  - "cap_stopped"
+                                type: "object"
+                              quality:
+                                nullable: true
+                                properties:
+                                  min_delta:
+                                    type: "number"
+                                  pass:
+                                    type: "boolean"
+                                  per_judge:
+                                    items:
+                                      properties:
+                                        clears:
+                                          type: "boolean"
+                                        control_deliveries:
+                                          minimum: 0
+                                          type: "integer"
+                                        control_publishable:
+                                          minimum: 0
+                                          type: "integer"
+                                        control_publishable_rate:
+                                          nullable: true
+                                          type: "number"
+                                        delta:
+                                          nullable: true
+                                          type: "number"
+                                        judge:
+                                          type: "string"
+                                        recorded:
+                                          type: "boolean"
+                                        serious_treated_defects:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_deliveries:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_publishable:
+                                          minimum: 0
+                                          type: "integer"
+                                        treated_publishable_rate:
+                                          nullable: true
+                                          type: "number"
+                                      required:
+                                        - "judge"
+                                        - "recorded"
+                                        - "treated_deliveries"
+                                        - "control_deliveries"
+                                        - "treated_publishable"
+                                        - "control_publishable"
+                                        - "treated_publishable_rate"
+                                        - "control_publishable_rate"
+                                        - "delta"
+                                        - "serious_treated_defects"
+                                        - "clears"
+                                      type: "object"
+                                    type: "array"
+                                required:
+                                  - "pass"
+                                  - "min_delta"
+                                  - "per_judge"
+                                type: "object"
+                              rule:
+                                properties:
+                                  alpha:
+                                    type: "number"
+                                  economics_min_ratio:
+                                    type: "number"
+                                  economics_permutations:
+                                    minimum: 0
+                                    type: "integer"
+                                  economics_seed:
+                                    type: "integer"
+                                  n:
+                                    minimum: 0
+                                    type: "integer"
+                                  quality_min_delta:
+                                    type: "number"
+                                  version:
+                                    type: "string"
+                                required:
+                                  - "version"
+                                  - "n"
+                                  - "alpha"
+                                  - "economics_min_ratio"
+                                  - "economics_permutations"
+                                  - "economics_seed"
+                                  - "quality_min_delta"
+                                type: "object"
+                              rule_version:
+                                type: "string"
+                              verdict:
+                                enum:
+                                  - "test_passed"
+                                  - "test_failed"
+                                  - "test_incomplete"
+                                type: "string"
+                            required:
+                              - "verdict"
+                              - "failing_parts"
+                              - "incomplete_reasons"
+                              - "primary"
+                              - "economics"
+                              - "quality"
+                              - "goodhart"
+                              - "claim_text"
+                              - "progress"
+                              - "rule_version"
+                              - "rule"
+                              - "economics_seed"
+                              - "economics_permutations"
+                              - "inputs_hash"
+                              - "candidate_hash"
+                              - "prereg_hash"
+                              - "created_at"
+                            type: "object"
+                        required:
+                          - "manifest_committed"
+                          - "manifest_hash"
+                          - "n"
+                          - "progress"
+                          - "executions"
+                          - "verdict"
+                        type: "object"
                       updated_at:
                         type: "string"
                       verifier_version:
@@ -24170,6 +26944,10 @@ paths:
                       - "screen_failed"
                       - "screen_incomplete"
                       - "awaiting_test_funding"
+                      - "test_open"
+                      - "test_passed"
+                      - "test_failed"
+                      - "test_incomplete"
                       - "closed"
                       - "expired"
                       - "abandoned"
@@ -24748,6 +27526,10 @@ paths:
                       - "screen_failed"
                       - "screen_incomplete"
                       - "awaiting_test_funding"
+                      - "test_open"
+                      - "test_passed"
+                      - "test_failed"
+                      - "test_incomplete"
                       - "closed"
                       - "expired"
                       - "abandoned"
@@ -24783,6 +27565,859 @@ paths:
         -
           sessionCookie: []
       summary: "Record one preregistered blind judge’s screen verdict"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments/{id}/test/evaluate":
+    post:
+      description: "EVALUATE the prospective test explicitly — the same exactly-once decision a recorded outcome, judgement or hold reconciliation runs. When every manifest pair is complete, no test hold is open and both judges have recorded, the ONE decision is computed and stored ONCE (concurrent calls make one verdict and one audit event; `computed` is true only for that call): the PRIMARY one-sided exact paired sign test, the ECONOMICS guard (ratio ≥ min AND a within-pair permutation p ≤ .05) and the weak QUALITY degradation screen. Returns the test read: counts only before the verdict, the decision + the Goodhart report after it. Idempotent; reads no body. Auth: an api key with `flywheel:experiment:run`, OR the owner session (`flywheel.experiment`). Requires API-key scope: flywheel:experiment:run."
+      operationId: "evaluateFlywheelExperimentTest"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "The test after an explicit evaluation (counts only until the verdict)."
+                properties:
+                  computed:
+                    description: "True only for the ONE call that computed and stored the decision."
+                    type: "boolean"
+                  experiment_id:
+                    type: "string"
+                  experiment_state:
+                    enum:
+                      - "admitted"
+                      - "refused"
+                      - "candidate_frozen"
+                      - "screening"
+                      - "screen_passed"
+                      - "screen_failed"
+                      - "screen_incomplete"
+                      - "awaiting_test_funding"
+                      - "test_open"
+                      - "test_passed"
+                      - "test_failed"
+                      - "test_incomplete"
+                      - "closed"
+                      - "expired"
+                      - "abandoned"
+                    type: "string"
+                  object:
+                    enum:
+                      - "flywheel_experiment_test_evaluation"
+                    type: "string"
+                  test:
+                    description: "The prospective test: barrier counts (no peeking) and, once computed, the decision."
+                    properties:
+                      executions:
+                        items:
+                          description: "One enrolled test execution — ids, arm and standing only."
+                          properties:
+                            arm:
+                              enum:
+                                - "control"
+                                - "treated"
+                              type: "string"
+                            execution_id:
+                              type: "string"
+                            pair_key:
+                              type: "string"
+                            slot:
+                              maximum: 1
+                              minimum: 0
+                              type: "integer"
+                            status:
+                              description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                              enum:
+                                - "no_outcome"
+                                - "pending_rows"
+                                - "cost_unsettled"
+                                - "invalid"
+                                - "complete"
+                              type: "string"
+                          required:
+                            - "execution_id"
+                            - "pair_key"
+                            - "slot"
+                            - "arm"
+                            - "status"
+                          type: "object"
+                        type: "array"
+                      manifest_committed:
+                        type: "boolean"
+                      manifest_hash:
+                        nullable: true
+                        type: "string"
+                      n:
+                        minimum: 0
+                        type: "integer"
+                      progress:
+                        description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                        properties:
+                          cap_stopped:
+                            type: "boolean"
+                          executions_complete:
+                            minimum: 0
+                            type: "integer"
+                          executions_cost_unsettled:
+                            minimum: 0
+                            type: "integer"
+                          executions_enrolled:
+                            minimum: 0
+                            type: "integer"
+                          executions_incomplete:
+                            minimum: 0
+                            type: "integer"
+                          executions_invalid:
+                            minimum: 0
+                            type: "integer"
+                          executions_pending_rows:
+                            minimum: 0
+                            type: "integer"
+                          holds_ambiguous:
+                            minimum: 0
+                            type: "integer"
+                          holds_reserved:
+                            minimum: 0
+                            type: "integer"
+                          judgements_recorded:
+                            minimum: 0
+                            type: "integer"
+                          judges_required:
+                            minimum: 0
+                            type: "integer"
+                          n:
+                            minimum: 0
+                            type: "integer"
+                          outcomes_recorded:
+                            minimum: 0
+                            type: "integer"
+                          pairs_complete:
+                            minimum: 0
+                            type: "integer"
+                          pairs_total:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "n"
+                          - "pairs_total"
+                          - "pairs_complete"
+                          - "executions_enrolled"
+                          - "outcomes_recorded"
+                          - "executions_complete"
+                          - "executions_incomplete"
+                          - "executions_pending_rows"
+                          - "executions_cost_unsettled"
+                          - "executions_invalid"
+                          - "holds_reserved"
+                          - "holds_ambiguous"
+                          - "judgements_recorded"
+                          - "judges_required"
+                          - "cap_stopped"
+                        type: "object"
+                      verdict:
+                        description: "Null until the completion barrier is met and the decision is stored."
+                        nullable: true
+                        properties:
+                          candidate_hash:
+                            type: "string"
+                          claim_text:
+                            description: "The frozen claim text (a pass only) — never more than it is licensed to say."
+                            nullable: true
+                            type: "string"
+                          created_at:
+                            type: "string"
+                          economics:
+                            nullable: true
+                            properties:
+                              control_cost_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              control_deliveries:
+                                minimum: 0
+                                type: "integer"
+                              inconclusive:
+                                type: "boolean"
+                              min_ratio:
+                                type: "number"
+                              pass:
+                                type: "boolean"
+                              permutation_p_value:
+                                nullable: true
+                                type: "number"
+                              permutations:
+                                minimum: 0
+                                type: "integer"
+                              ratio:
+                                nullable: true
+                                type: "number"
+                              seed:
+                                type: "integer"
+                              treated_cost_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              treated_deliveries:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "pass"
+                              - "inconclusive"
+                              - "ratio"
+                              - "min_ratio"
+                              - "permutation_p_value"
+                              - "permutations"
+                              - "seed"
+                              - "treated_deliveries"
+                              - "control_deliveries"
+                              - "treated_cost_micro_usd"
+                              - "control_cost_micro_usd"
+                            type: "object"
+                          economics_permutations:
+                            minimum: 0
+                            type: "integer"
+                          economics_seed:
+                            type: "integer"
+                          failing_parts:
+                            description: "Every failing part (test_failed); empty otherwise."
+                            items:
+                              type: "string"
+                            type: "array"
+                          goodhart:
+                            nullable: true
+                            properties:
+                              arms:
+                                items:
+                                  properties:
+                                    arm:
+                                      enum:
+                                        - "control"
+                                        - "treated"
+                                      type: "string"
+                                    first_draft_cited_quotes_band:
+                                      additionalProperties:
+                                        minimum: 0
+                                        type: "integer"
+                                      type: "object"
+                                    first_draft_length_band:
+                                      additionalProperties:
+                                        minimum: 0
+                                        type: "integer"
+                                      type: "object"
+                                    repair_count:
+                                      additionalProperties:
+                                        minimum: 0
+                                        type: "integer"
+                                      type: "object"
+                                    stranger_usefulness:
+                                      additionalProperties:
+                                        minimum: 0
+                                        type: "integer"
+                                      type: "object"
+                                  required:
+                                    - "arm"
+                                    - "first_draft_length_band"
+                                    - "first_draft_cited_quotes_band"
+                                    - "stranger_usefulness"
+                                    - "repair_count"
+                                  type: "object"
+                                type: "array"
+                            required:
+                              - "arms"
+                            type: "object"
+                          incomplete_reasons:
+                            description: "Why it can never complete (test_incomplete); else empty."
+                            items:
+                              type: "string"
+                            type: "array"
+                          inputs_hash:
+                            type: "string"
+                          prereg_hash:
+                            type: "string"
+                          primary:
+                            nullable: true
+                            properties:
+                              alpha:
+                                type: "number"
+                              control_delivered:
+                                minimum: 0
+                                type: "integer"
+                              losses:
+                                minimum: 0
+                                type: "integer"
+                              p_value:
+                                type: "number"
+                              pairs_analysed:
+                                minimum: 0
+                                type: "integer"
+                              pass:
+                                type: "boolean"
+                              treated_delivered:
+                                minimum: 0
+                                type: "integer"
+                              wins:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "pass"
+                              - "p_value"
+                              - "alpha"
+                              - "wins"
+                              - "losses"
+                              - "treated_delivered"
+                              - "control_delivered"
+                              - "pairs_analysed"
+                            type: "object"
+                          progress:
+                            description: "The test completion-barrier counts (no per-arm outcome before the verdict)."
+                            properties:
+                              cap_stopped:
+                                type: "boolean"
+                              executions_complete:
+                                minimum: 0
+                                type: "integer"
+                              executions_cost_unsettled:
+                                minimum: 0
+                                type: "integer"
+                              executions_enrolled:
+                                minimum: 0
+                                type: "integer"
+                              executions_incomplete:
+                                minimum: 0
+                                type: "integer"
+                              executions_invalid:
+                                minimum: 0
+                                type: "integer"
+                              executions_pending_rows:
+                                minimum: 0
+                                type: "integer"
+                              holds_ambiguous:
+                                minimum: 0
+                                type: "integer"
+                              holds_reserved:
+                                minimum: 0
+                                type: "integer"
+                              judgements_recorded:
+                                minimum: 0
+                                type: "integer"
+                              judges_required:
+                                minimum: 0
+                                type: "integer"
+                              n:
+                                minimum: 0
+                                type: "integer"
+                              outcomes_recorded:
+                                minimum: 0
+                                type: "integer"
+                              pairs_complete:
+                                minimum: 0
+                                type: "integer"
+                              pairs_total:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "n"
+                              - "pairs_total"
+                              - "pairs_complete"
+                              - "executions_enrolled"
+                              - "outcomes_recorded"
+                              - "executions_complete"
+                              - "executions_incomplete"
+                              - "executions_pending_rows"
+                              - "executions_cost_unsettled"
+                              - "executions_invalid"
+                              - "holds_reserved"
+                              - "holds_ambiguous"
+                              - "judgements_recorded"
+                              - "judges_required"
+                              - "cap_stopped"
+                            type: "object"
+                          quality:
+                            nullable: true
+                            properties:
+                              min_delta:
+                                type: "number"
+                              pass:
+                                type: "boolean"
+                              per_judge:
+                                items:
+                                  properties:
+                                    clears:
+                                      type: "boolean"
+                                    control_deliveries:
+                                      minimum: 0
+                                      type: "integer"
+                                    control_publishable:
+                                      minimum: 0
+                                      type: "integer"
+                                    control_publishable_rate:
+                                      nullable: true
+                                      type: "number"
+                                    delta:
+                                      nullable: true
+                                      type: "number"
+                                    judge:
+                                      type: "string"
+                                    recorded:
+                                      type: "boolean"
+                                    serious_treated_defects:
+                                      minimum: 0
+                                      type: "integer"
+                                    treated_deliveries:
+                                      minimum: 0
+                                      type: "integer"
+                                    treated_publishable:
+                                      minimum: 0
+                                      type: "integer"
+                                    treated_publishable_rate:
+                                      nullable: true
+                                      type: "number"
+                                  required:
+                                    - "judge"
+                                    - "recorded"
+                                    - "treated_deliveries"
+                                    - "control_deliveries"
+                                    - "treated_publishable"
+                                    - "control_publishable"
+                                    - "treated_publishable_rate"
+                                    - "control_publishable_rate"
+                                    - "delta"
+                                    - "serious_treated_defects"
+                                    - "clears"
+                                  type: "object"
+                                type: "array"
+                            required:
+                              - "pass"
+                              - "min_delta"
+                              - "per_judge"
+                            type: "object"
+                          rule:
+                            properties:
+                              alpha:
+                                type: "number"
+                              economics_min_ratio:
+                                type: "number"
+                              economics_permutations:
+                                minimum: 0
+                                type: "integer"
+                              economics_seed:
+                                type: "integer"
+                              n:
+                                minimum: 0
+                                type: "integer"
+                              quality_min_delta:
+                                type: "number"
+                              version:
+                                type: "string"
+                            required:
+                              - "version"
+                              - "n"
+                              - "alpha"
+                              - "economics_min_ratio"
+                              - "economics_permutations"
+                              - "economics_seed"
+                              - "quality_min_delta"
+                            type: "object"
+                          rule_version:
+                            type: "string"
+                          verdict:
+                            enum:
+                              - "test_passed"
+                              - "test_failed"
+                              - "test_incomplete"
+                            type: "string"
+                        required:
+                          - "verdict"
+                          - "failing_parts"
+                          - "incomplete_reasons"
+                          - "primary"
+                          - "economics"
+                          - "quality"
+                          - "goodhart"
+                          - "claim_text"
+                          - "progress"
+                          - "rule_version"
+                          - "rule"
+                          - "economics_seed"
+                          - "economics_permutations"
+                          - "inputs_hash"
+                          - "candidate_hash"
+                          - "prereg_hash"
+                          - "created_at"
+                        type: "object"
+                    required:
+                      - "manifest_committed"
+                      - "manifest_hash"
+                      - "n"
+                      - "progress"
+                      - "executions"
+                      - "verdict"
+                    type: "object"
+                required:
+                  - "object"
+                  - "experiment_id"
+                  - "computed"
+                  - "experiment_state"
+                  - "test"
+                type: "object"
+          description: "The test after the evaluation."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          bearerAuth: []
+        -
+          sessionCookie: []
+      summary: "Evaluate the prospective test now (idempotent) and read it"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments/{id}/test/fund":
+    post:
+      description: "FUND the prospective `test` phase and OPEN it (`awaiting_test_funding → test_open`). Refuses unless the state is `awaiting_test_funding` and the test manifest is committed (`test_manifest_missing`); the cap must be positive and ≤ the preregistered parent cap’s REMAINING budget (`funding_exceeds_budget`); `approval` is 1–500 chars of the owner’s words + date, recorded in the audit event (never a body). It calls the ONE funding path and moves to `test_open` in the SAME transaction. A repeat with the same cap + approval converges (`created: false`); a different one is `already_funded`. OWNER SESSION only (`flywheel.experiment`); an api key is 403."
+      operationId: "fundFlywheelExperimentTest"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              additionalProperties: false
+              description: "Fund + open the prospective test phase — owner session only."
+              properties:
+                approval:
+                  description: "The owner’s approval — their words + the date (recorded in the audit, never a body)."
+                  maxLength: 500
+                  minLength: 1
+                  type: "string"
+                cap_micro_usd:
+                  description: "The test-phase cap (micro-USD) — must be ≤ the parent cap’s remaining budget."
+                  exclusiveMinimum: true
+                  minimum: 0
+                  type: "integer"
+              required:
+                - "cap_micro_usd"
+                - "approval"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "The funded + opened prospective test (now test_open)."
+                properties:
+                  cap_micro_usd:
+                    minimum: 0
+                    type: "integer"
+                  created:
+                    description: "False when the test was already funded with the same cap + approval (an idempotent repeat)."
+                    type: "boolean"
+                  experiment_id:
+                    type: "string"
+                  experiment_state:
+                    enum:
+                      - "admitted"
+                      - "refused"
+                      - "candidate_frozen"
+                      - "screening"
+                      - "screen_passed"
+                      - "screen_failed"
+                      - "screen_incomplete"
+                      - "awaiting_test_funding"
+                      - "test_open"
+                      - "test_passed"
+                      - "test_failed"
+                      - "test_incomplete"
+                      - "closed"
+                      - "expired"
+                      - "abandoned"
+                    type: "string"
+                  object:
+                    enum:
+                      - "flywheel_experiment_test_fund"
+                    type: "string"
+                required:
+                  - "object"
+                  - "experiment_id"
+                  - "created"
+                  - "cap_micro_usd"
+                  - "experiment_state"
+                type: "object"
+          description: "The funded + opened test (now test_open)."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Fund + open the prospective test phase"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments/{id}/test/judgements":
+    post:
+      description: "RECORD one PREREGISTERED blind judge’s per-item publishability verdict on the DELIVERED test outputs: `items: [{final_content_hash, publishable, serious_unsupported_claim}]` under the frozen `rubric_id`. Accepted only once every manifest pair has its two complete executions (`judging_not_open` before that) and only when the items EQUAL the test output manifest — every delivered final content (`judgement_manifest_mismatch`; `judgement_unknown_item` for an item outside it). One per judge — the same judgement converges, a different one is `judgement_conflict`; `judging_not_preregistered`, `judge_not_preregistered`, `rubric_mismatch` by name. Recording a judgement re-evaluates the test. OWNER SESSION only (`flywheel.experiment`); audited (ids / hashes only)."
+      operationId: "recordFlywheelExperimentTestJudgement"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              additionalProperties: false
+              description: "One per-item blind judgement — the judges run outside the platform."
+              properties:
+                items:
+                  description: "One item per DELIVERED final content — must equal the test output manifest."
+                  items:
+                    additionalProperties: false
+                    description: "One delivered output’s judgement (publishable + a serious-unsupported-claim flag)."
+                    properties:
+                      final_content_hash:
+                        maxLength: 200
+                        minLength: 1
+                        type: "string"
+                      publishable:
+                        type: "boolean"
+                      serious_unsupported_claim:
+                        type: "boolean"
+                    required:
+                      - "final_content_hash"
+                      - "publishable"
+                      - "serious_unsupported_claim"
+                    type: "object"
+                  maxItems: 2000
+                  minItems: 1
+                  type: "array"
+                judge:
+                  description: "One of the two preregistered test judge keys."
+                  maxLength: 100
+                  minLength: 1
+                  type: "string"
+                rubric_id:
+                  description: "Must be the frozen rubric id."
+                  maxLength: 200
+                  minLength: 1
+                  type: "string"
+              required:
+                - "judge"
+                - "rubric_id"
+                - "items"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "One recorded per-item test judgement."
+                properties:
+                  created:
+                    type: "boolean"
+                  experiment_id:
+                    type: "string"
+                  experiment_state:
+                    enum:
+                      - "admitted"
+                      - "refused"
+                      - "candidate_frozen"
+                      - "screening"
+                      - "screen_passed"
+                      - "screen_failed"
+                      - "screen_incomplete"
+                      - "awaiting_test_funding"
+                      - "test_open"
+                      - "test_passed"
+                      - "test_failed"
+                      - "test_incomplete"
+                      - "closed"
+                      - "expired"
+                      - "abandoned"
+                    type: "string"
+                  judge:
+                    type: "string"
+                  judgement_hash:
+                    type: "string"
+                  manifest_hash:
+                    type: "string"
+                  object:
+                    enum:
+                      - "flywheel_experiment_test_judgement"
+                    type: "string"
+                required:
+                  - "object"
+                  - "experiment_id"
+                  - "judge"
+                  - "created"
+                  - "judgement_hash"
+                  - "manifest_hash"
+                  - "experiment_state"
+                type: "object"
+          description: "The recorded per-item judgement."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Record one preregistered blind judge’s per-item test verdict"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments/{id}/test/manifest":
+    post:
+      description: "COMMIT, in state `awaiting_test_funding` and BEFORE any test enrolment, EXACTLY N fresh pair identities (N from the preregistration) with per-pair body-free eligibility facts (the idea key, the quote ids it draws on, the ideation run id). Refusals by name: `manifest_size` (the wrong count), `pair_duplicate`, `pair_not_fresh` (an idea key in the fit or screen families), `quote_overlap` (a quote id a fit or screen receipt already used). Content-addressed + immutable: a different second manifest is refused `manifest_conflict`; the same one converges (`created: false`). OWNER SESSION only (`flywheel.experiment`); audited (the manifest hash + N only, never a body)."
+      operationId: "commitFlywheelExperimentTestManifest"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              additionalProperties: false
+              description: "Commit the immutable, content-addressed test manifest — before any test enrolment."
+              properties:
+                pairs:
+                  description: "EXACTLY N pair identities (N from the preregistration; `manifest_size` otherwise)."
+                  items:
+                    additionalProperties: false
+                    description: "One committed test pair — ids only, never a body."
+                    properties:
+                      idea_key:
+                        description: "The fresh idea key — the test pair key."
+                        maxLength: 200
+                        minLength: 1
+                        type: "string"
+                      ideation_run_id:
+                        description: "The ideation run the fresh idea came from."
+                        maxLength: 200
+                        minLength: 1
+                        type: "string"
+                      quote_ids:
+                        description: "The quote ids the idea draws on (checked for fit/screen overlap)."
+                        items:
+                          maxLength: 200
+                          minLength: 1
+                          type: "string"
+                        maxItems: 500
+                        type: "array"
+                    required:
+                      - "idea_key"
+                      - "quote_ids"
+                      - "ideation_run_id"
+                    type: "object"
+                  maxItems: 1000
+                  minItems: 1
+                  type: "array"
+              required:
+                - "pairs"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "The committed test manifest."
+                properties:
+                  created:
+                    description: "False when the same manifest was already committed (an idempotent converge)."
+                    type: "boolean"
+                  experiment_id:
+                    type: "string"
+                  manifest_hash:
+                    type: "string"
+                  n:
+                    minimum: 0
+                    type: "integer"
+                  object:
+                    enum:
+                      - "flywheel_experiment_test_manifest"
+                    type: "string"
+                  pairs:
+                    items:
+                      additionalProperties: false
+                      description: "One committed test pair — ids only, never a body."
+                      properties:
+                        idea_key:
+                          description: "The fresh idea key — the test pair key."
+                          maxLength: 200
+                          minLength: 1
+                          type: "string"
+                        ideation_run_id:
+                          description: "The ideation run the fresh idea came from."
+                          maxLength: 200
+                          minLength: 1
+                          type: "string"
+                        quote_ids:
+                          description: "The quote ids the idea draws on (checked for fit/screen overlap)."
+                          items:
+                            maxLength: 200
+                            minLength: 1
+                            type: "string"
+                          maxItems: 500
+                          type: "array"
+                      required:
+                        - "idea_key"
+                        - "quote_ids"
+                        - "ideation_run_id"
+                      type: "object"
+                    type: "array"
+                required:
+                  - "object"
+                  - "experiment_id"
+                  - "created"
+                  - "n"
+                  - "manifest_hash"
+                  - "pairs"
+                type: "object"
+          description: "The committed test manifest."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Commit the content-addressed test manifest (before any test enrolment)"
       tags:
         - "Flywheel"
   "/v1/flywheel/grants":
