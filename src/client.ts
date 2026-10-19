@@ -97,7 +97,13 @@ import {
   type ClaimOracleJobsParams,
   type CreateHostedPromptParams,
   type EnableVerifiedMemoryParams,
+  type EnrolExperimentExecutionParams,
   type EvalRunList,
+  type ExperimentExecution,
+  type ExperimentExecutionOutcome,
+  type ExperimentExecutionOutcomeDryRun,
+  type ExperimentScreenEvaluation,
+  type ExperimentTestEvaluation,
   type HostedPromptList,
   type HostedPromptPointer,
   type HostedPromptProposal,
@@ -116,6 +122,7 @@ import {
   type OracleTestResult,
   type OracleVerdictsResult,
   type QualifyOracleParams,
+  type RecordExperimentOutcomeParams,
   type RegisterOracleParams,
   type SourceCheck,
   type SourceCheckGrade,
@@ -504,6 +511,68 @@ export interface SourceChecksResource {
   ) => Promise<SourceCheckGrade>;
 }
 
+/**
+ * Per-call options for {@link ExperimentsResource.outcome}: the request options, plus `dryRun` to
+ * run the same validation against the current rows and holds and return the dry-run answer
+ * (`?dry_run=true`) with nothing written.
+ */
+export interface ExperimentOutcomeOptions extends RequestOptions {
+  /** Validate-only: send `?dry_run=true`, return the dry-run shape, write nothing. */
+  dryRun?: boolean;
+}
+
+/**
+ * `ur.ur.flywheel.experiments`: the bounded-experiment RUN surface, for a runner holding a key with
+ * the `flywheel:experiment:run` scope. Enrol each execution before its first call, send the returned
+ * `execution_id` as the `x-ur-experiment-execution` header on every call of the run, then record the
+ * one terminal outcome (dry-run it first) and ask for the screen or test evaluation. The owner-session
+ * operations (holds, reconcile, judgements, acknowledge, test fund / manifest / judgements) are not on
+ * an api key and are not mapped here.
+ */
+export interface ExperimentsResource {
+  /**
+   * Enrol one execution slot of a candidate-frozen experiment (`POST …/executions`). The gateway —
+   * never the caller — decides the arm from the sealed assignment. Idempotent on the server: a repeat
+   * of the same `{ phase, pair_key, slot }` returns the same execution (`created: false`), so a resume
+   * safely re-enrols the identical tuple; the SDK never invents a new slot to work around a failure.
+   */
+  enrol: (
+    experimentId: string,
+    params: EnrolExperimentExecutionParams,
+    options?: RequestOptions,
+  ) => Promise<ExperimentExecution>;
+  /**
+   * Record the one terminal outcome of an enrolled execution (`POST …/executions/{id}/outcome`),
+   * body-free (ids, hashes and numbers only). Idempotent on the execution. With `{ dryRun: true }`
+   * the same validation runs against the current rows and holds and returns the dry-run answer with
+   * nothing written; the two response shapes are discriminated by `object`.
+   */
+  outcome: {
+    (
+      experimentId: string,
+      executionId: string,
+      params: RecordExperimentOutcomeParams,
+      options: ExperimentOutcomeOptions & { dryRun: true },
+    ): Promise<ExperimentExecutionOutcomeDryRun>;
+    (
+      experimentId: string,
+      executionId: string,
+      params: RecordExperimentOutcomeParams,
+      options?: ExperimentOutcomeOptions,
+    ): Promise<ExperimentExecutionOutcome>;
+  };
+  /** Evaluate the screen explicitly (`POST …/screen/evaluate`): counts before the verdict, the verdict after. Idempotent. */
+  evaluateScreen: (
+    experimentId: string,
+    options?: RequestOptions,
+  ) => Promise<ExperimentScreenEvaluation>;
+  /** Evaluate the prospective test explicitly (`POST …/test/evaluate`): counts before the decision, the decision after. Idempotent. */
+  evaluateTest: (
+    experimentId: string,
+    options?: RequestOptions,
+  ) => Promise<ExperimentTestEvaluation>;
+}
+
 /** `ur.ur.flywheel`: learning status and verdict-source health. */
 export interface FlywheelResource {
   /** Read usage, integration health and the learning block (`GET /v1/flywheel/status`). */
@@ -514,6 +583,8 @@ export interface FlywheelResource {
   sources: (options?: RequestOptions) => Promise<VerdictSources>;
   /** Planted-failure checks for verdict sources. */
   sourceChecks: SourceChecksResource;
+  /** The bounded-experiment run surface (enrol, outcome, screen/test evaluation). */
+  experiments: ExperimentsResource;
 }
 
 /** `ur.ur.imports`: history imports. */
@@ -891,6 +962,22 @@ export class UltraRouter {
               body: params,
               options: o,
             }),
+        },
+        experiments: {
+          enrol: this.enrolExperimentExecution.bind(this),
+          outcome: this.recordExperimentOutcome.bind(this),
+          evaluateScreen: (id, o = {}) =>
+            this.json<ExperimentScreenEvaluation>(
+              'POST',
+              `/v1/flywheel/experiments/${seg(id)}/screen/evaluate`,
+              { options: o },
+            ),
+          evaluateTest: (id, o = {}) =>
+            this.json<ExperimentTestEvaluation>(
+              'POST',
+              `/v1/flywheel/experiments/${seg(id)}/test/evaluate`,
+              { options: o },
+            ),
         },
       },
       imports: {
@@ -1558,6 +1645,53 @@ export class UltraRouter {
   private async flywheelCalibration(options: RequestOptions = {}): Promise<FlywheelCalibration> {
     const status = await this.flywheelStatus(options);
     return status.learning;
+  }
+
+  // ─────────────────────────────── bounded experiments (run surface) ───────────────────────────────
+
+  /** `POST /v1/flywheel/experiments/{id}/executions` (scope `flywheel:experiment:run`). */
+  private enrolExperimentExecution(
+    experimentId: string,
+    params: EnrolExperimentExecutionParams,
+    options: RequestOptions = {},
+  ): Promise<ExperimentExecution> {
+    return this.json<ExperimentExecution>(
+      'POST',
+      `/v1/flywheel/experiments/${seg(experimentId)}/executions`,
+      { body: params, options },
+    );
+  }
+
+  private recordExperimentOutcome(
+    experimentId: string,
+    executionId: string,
+    params: RecordExperimentOutcomeParams,
+    options: ExperimentOutcomeOptions & { dryRun: true },
+  ): Promise<ExperimentExecutionOutcomeDryRun>;
+  private recordExperimentOutcome(
+    experimentId: string,
+    executionId: string,
+    params: RecordExperimentOutcomeParams,
+    options?: ExperimentOutcomeOptions,
+  ): Promise<ExperimentExecutionOutcome>;
+  /**
+   * `POST /v1/flywheel/experiments/{id}/executions/{execution_id}/outcome` (scope
+   * `flywheel:experiment:run`). With `dryRun: true` the request carries `?dry_run=true` and resolves
+   * the dry-run shape; otherwise the recorded-outcome shape. The two are discriminated by `object`.
+   */
+  private recordExperimentOutcome(
+    experimentId: string,
+    executionId: string,
+    params: RecordExperimentOutcomeParams,
+    options: ExperimentOutcomeOptions = {},
+  ): Promise<ExperimentExecutionOutcome | ExperimentExecutionOutcomeDryRun> {
+    const { dryRun, ...requestOptions } = options;
+    const base = `/v1/flywheel/experiments/${seg(experimentId)}/executions/${seg(executionId)}/outcome`;
+    const path = dryRun === true ? `${base}?dry_run=true` : base;
+    return this.json<ExperimentExecutionOutcome | ExperimentExecutionOutcomeDryRun>('POST', path, {
+      body: params,
+      options: requestOptions,
+    });
   }
 
   // ─────────────────────────────── imports ───────────────────────────────

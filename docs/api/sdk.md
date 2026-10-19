@@ -1,6 +1,6 @@
 # API reference: `@ultrarouter/sdk`
 
-Generated from the TypeScript sources and their TSDoc by `scripts/gen-docs.mjs` (do not edit by hand). Version 0.0.1. 278 exports.
+Generated from the TypeScript sources and their TSDoc by `scripts/gen-docs.mjs` (do not edit by hand). Version 0.0.1. 288 exports.
 
 ```ts
 import UltraRouter, { /* named exports */ } from '@ultrarouter/sdk';
@@ -11,9 +11,9 @@ import UltraRouter, { /* named exports */ } from '@ultrarouter/sdk';
 - **Default export:** [`default`](#default)
 - **Classes:** [`FileOutcomeStore`](#fileoutcomestore), [`MemoryOutcomeStore`](#memoryoutcomestore), [`ModelUnpricedError`](#modelunpricederror), [`OutcomeQueue`](#outcomequeue), [`OutcomeStoreError`](#outcomestoreerror), [`PreflightCache`](#preflightcache), [`PromptVariablesMissingError`](#promptvariablesmissingerror), [`ReviewerQueue`](#reviewerqueue), [`UltraRouter`](#ultrarouter), [`UltraRouterError`](#ultraroutererror)
 - **Functions:** [`applyLearnedContext`](#applylearnedcontext), [`artifactListQueryString`](#artifactlistquerystring), [`bindArtifactKey`](#bindartifactkey), [`decidePreflightCache`](#decidepreflightcache), [`diffStats`](#diffstats), [`importListQueryString`](#importlistquerystring), [`isDefinitiveRejection`](#isdefinitiverejection), [`isGatewayErrorCode`](#isgatewayerrorcode), [`isRetryableStatus`](#isretryablestatus), [`isUltraRouterError`](#isultraroutererror), [`learnedPlacementIndex`](#learnedplacementindex), [`normalizeOutcomeTarget`](#normalizeoutcometarget), [`outcomeIdempotencyKey`](#outcomeidempotencykey), [`parseGrantHeader`](#parsegrantheader), [`parseMaxAgeSeconds`](#parsemaxageseconds), [`pendingQueryString`](#pendingquerystring), [`preflightCacheKey`](#preflightcachekey), [`preflightHasClusterKey`](#preflighthasclusterkey), [`renderHostedPromptResult`](#renderhostedpromptresult), [`renderPrompt`](#renderprompt), [`reviewerSignatureHeaders`](#reviewersignatureheaders), [`reviewerSignedPayload`](#reviewersignedpayload), [`reviewerVerdictAction`](#reviewerverdictaction), [`sha256Hex`](#sha256hex), [`signReviewerPayload`](#signreviewerpayload), [`ulid`](#ulid), [`withHeaderGrant`](#withheadergrant)
-- **Constants:** [`DEFAULT_MAX_RETRIES`](#default_max_retries), [`DEFAULT_PREFLIGHT_CACHE_MAX_ENTRIES`](#default_preflight_cache_max_entries), [`DEFAULT_TIMEOUT_MS`](#default_timeout_ms), [`EVENT_REJECTION_CODES`](#event_rejection_codes), [`GATEWAY_ERROR_CODES`](#gateway_error_codes), [`GATEWAY_ERROR_TAXONOMY`](#gateway_error_taxonomy), [`LEARNED_MESSAGE_ROLE`](#learned_message_role), [`ORACLE_SIGNATURE_HEADER`](#oracle_signature_header), [`ORACLE_TIMESTAMP_HEADER`](#oracle_timestamp_header), [`PREFLIGHT_DEFAULT_CONFIG_MAX_AGE_S`](#preflight_default_config_max_age_s), [`PREFLIGHT_DEFAULT_LIVE_MAX_AGE_S`](#preflight_default_live_max_age_s), [`PREFLIGHT_GRANT_HEADER`](#preflight_grant_header), [`PREFLIGHT_LIVE_MAX_AGE_HEADER`](#preflight_live_max_age_header), [`PROMPT_VARIABLES_MISSING_CODE`](#prompt_variables_missing_code), [`REVIEWER_SIGNATURE_HEADER`](#reviewer_signature_header), [`REVIEWER_TIMESTAMP_HEADER`](#reviewer_timestamp_header), [`VERSION`](#version)
-- **Interfaces:** [`ApiRequestInit`](#apirequestinit), [`ArtifactListQuery`](#artifactlistquery), [`ArtifactScope`](#artifactscope), [`ArtifactsResource`](#artifactsresource), [`AsOpenAI`](#asopenai), [`AutopilotCallType`](#autopilotcalltype), [`AutopilotCostProvenance`](#autopilotcostprovenance), [`AutopilotCoverage`](#autopilotcoverage), [`AutopilotStatus`](#autopilotstatus), [`BenchResource`](#benchresource), [`BenchRunParams`](#benchrunparams), [`CallType`](#calltype), [`CallTypeConfigBody`](#calltypeconfigbody), [`CallTypeConfigVersion`](#calltypeconfigversion), [`CallTypeListResponse`](#calltypelistresponse), [`CallTypesResource`](#calltypesresource), [`ChatChoice`](#chatchoice), [`ChatCompletion`](#chatcompletion), [`ChatCompletionChunk`](#chatcompletionchunk), [`ChatCompletionCreateParams`](#chatcompletioncreateparams), [`ChatCompletionsCreate`](#chatcompletionscreate), [`ChatContentPart`](#chatcontentpart), [`ChatMessage`](#chatmessage), [`ChatResource`](#chatresource), [`CompressionOptions`](#compressionoptions), [`CreateCallTypeParams`](#createcalltypeparams), [`CreateEmbeddingResponse`](#createembeddingresponse), [`DiffStats`](#diffstats), [`DurableEntry`](#durableentry), [`Embedding`](#embedding), [`EmbeddingCreateParams`](#embeddingcreateparams), [`EmbeddingsResource`](#embeddingsresource), [`EmbeddingUrBlock`](#embeddingurblock), [`Feedback`](#feedback), [`FeedbackEnvelope`](#feedbackenvelope), [`FeedbackParams`](#feedbackparams), [`FlywheelResource`](#flywheelresource), [`GatewayErrorEnvelope`](#gatewayerrorenvelope), [`GenerationOutcome`](#generationoutcome), [`GenerationStats`](#generationstats), [`HostedPromptsResource`](#hostedpromptsresource), [`HostedPromptVariable`](#hostedpromptvariable), [`ImportListQuery`](#importlistquery), [`ImportsResource`](#importsresource), [`LearnedMessage`](#learnedmessage), [`LearnedRecordOptions`](#learnedrecordoptions), [`LearnedSession`](#learnedsession), [`Model`](#model), [`ModelListQuery`](#modellistquery), [`ModelPricing`](#modelpricing), [`ModelsListResponse`](#modelslistresponse), [`ModelsResource`](#modelsresource), [`OpenAICompatConfig`](#openaicompatconfig), [`OracleSigningOptions`](#oraclesigningoptions), [`OraclesResource`](#oraclesresource), [`OutcomeFlushReport`](#outcomeflushreport), [`OutcomeQueueDeps`](#outcomequeuedeps), [`OutcomesResource`](#outcomesresource), [`OutcomeStore`](#outcomestore), [`PendingOutcomesQuery`](#pendingoutcomesquery), [`PreflightCacheEntry`](#preflightcacheentry), [`PreflightCacheOptions`](#preflightcacheoptions), [`PreflightRequestOptions`](#preflightrequestoptions), [`ProviderPreferences`](#providerpreferences), [`QueuedOutcome`](#queuedoutcome), [`QueuedReviewerEvent`](#queuedreviewerevent), [`ReasoningOptions`](#reasoningoptions), [`RenderablePrompt`](#renderableprompt), [`RequestOptions`](#requestoptions), [`ReviewerDeliveryOptions`](#reviewerdeliveryoptions), [`ReviewerFlushReport`](#reviewerflushreport), [`ReviewerQueueDeps`](#reviewerqueuedeps), [`ReviewerResource`](#reviewerresource), [`SegmentHint`](#segmenthint), [`SourceChecksResource`](#sourcechecksresource), [`UltraRouterDefaults`](#ultrarouterdefaults), [`UltraRouterOptions`](#ultrarouteroptions), [`UrCompressionBlock`](#urcompressionblock), [`UrNamespace`](#urnamespace), [`UrRequestOptions`](#urrequestoptions), [`UrResponseBlock`](#urresponseblock), [`UrRoutingBlock`](#urroutingblock), [`Usage`](#usage), [`VerifiedMemoryResource`](#verifiedmemoryresource)
-- **Types:** [`ActivateHostedPromptParams`](#activatehostedpromptparams), [`AnswerSourceCheckParams`](#answersourcecheckparams), [`ApiOperation`](#apioperation), [`ApiPath`](#apipath), [`ApiResponse`](#apiresponse), [`Artifact`](#artifact), [`ArtifactArchetype`](#artifactarchetype), [`ArtifactClaim`](#artifactclaim), [`ArtifactEnvelope`](#artifactenvelope), [`ArtifactListResponse`](#artifactlistresponse), [`ArtifactObjective`](#artifactobjective), [`ArtifactObjectiveMetric`](#artifactobjectivemetric), [`ArtifactObjectivePredicate`](#artifactobjectivepredicate), [`ArtifactType`](#artifacttype), [`ArtifactTypeEnvelope`](#artifacttypeenvelope), [`ArtifactTypeUpsertParams`](#artifacttypeupsertparams), [`AutopilotMode`](#autopilotmode), [`BatchOutcomeInput`](#batchoutcomeinput), [`BatchOutcomeResult`](#batchoutcomeresult), [`BatchOutcomesResponse`](#batchoutcomesresponse), [`BenchBaseline`](#benchbaseline), [`BenchCompareGate`](#benchcomparegate), [`BenchDatasetFreeze`](#benchdatasetfreeze), [`BenchExpectationInput`](#benchexpectationinput), [`BenchExpectations`](#benchexpectations), [`BenchFreezeParams`](#benchfreezeparams), [`BenchInitTag`](#benchinittag), [`BenchOutcomeInput`](#benchoutcomeinput), [`BenchOutcomes`](#benchoutcomes), [`BenchOutcomeTarget`](#benchoutcometarget), [`BenchReport`](#benchreport), [`BenchReportFormat`](#benchreportformat), [`BenchRun`](#benchrun), [`BenchRunMode`](#benchrunmode), [`BenchRunTrigger`](#benchruntrigger), [`BenchSelectionMode`](#benchselectionmode), [`BenchSuiteStatus`](#benchsuitestatus), [`BenchTag`](#benchtag), [`CallTypeImprovementReads`](#calltypeimprovementreads), [`CallTypeRecommendations`](#calltyperecommendations), [`ChatCompletionStream`](#chatcompletionstream), [`ChatRole`](#chatrole), [`ClaimInput`](#claiminput), [`ClaimOracleJobsParams`](#claimoraclejobsparams), [`CompressionMode`](#compressionmode), [`CompressionOption`](#compressionoption), [`CreateArtifactParams`](#createartifactparams), [`CreateHostedPromptParams`](#createhostedpromptparams), [`DeepReadonly`](#deepreadonly), [`EnableVerifiedMemoryParams`](#enableverifiedmemoryparams), [`EnqueueEvalParams`](#enqueueevalparams), [`EnqueueEvalResponse`](#enqueueevalresponse), [`EvalRunList`](#evalrunlist), [`FetchLike`](#fetchlike), [`FinalizedOutcomeEvent`](#finalizedoutcomeevent), [`FinalParams`](#finalparams), [`FinalResponse`](#finalresponse), [`FlywheelCalibration`](#flywheelcalibration), [`FlywheelStatus`](#flywheelstatus), [`FlywheelUsage`](#flywheelusage), [`GatewayErrorCode`](#gatewayerrorcode), [`HostedPromptList`](#hostedpromptlist), [`HostedPromptPointer`](#hostedpromptpointer), [`HostedPromptProposal`](#hostedpromptproposal), [`HostedPromptVersion`](#hostedpromptversion), [`HttpMethod`](#httpmethod), [`Import`](#import), [`ImportCapabilityReport`](#importcapabilityreport), [`ImportEnvelope`](#importenvelope), [`ImportListResponse`](#importlistresponse), [`ImportParams`](#importparams), [`ImprovementReads`](#improvementreads), [`IssueSourceCheckParams`](#issuesourcecheckparams), [`KeyInfo`](#keyinfo), [`LearnedContextDelivery`](#learnedcontextdelivery), [`ModelDetail`](#modeldetail), [`OpenAIConstructor`](#openaiconstructor), [`OperationId`](#operationid), [`OperationQuery`](#operationquery), [`OperationRequestBody`](#operationrequestbody), [`OperationResponse`](#operationresponse), [`Oracle`](#oracle), [`OracleJobClaim`](#oraclejobclaim), [`OracleQualification`](#oraclequalification), [`OracleRegistration`](#oracleregistration), [`OracleRevocation`](#oraclerevocation), [`OracleTestResult`](#oracletestresult), [`OracleVerdictsResult`](#oracleverdictsresult), [`OutcomeChannel`](#outcomechannel), [`OutcomeInput`](#outcomeinput), [`OutcomeReceipt`](#outcomereceipt), [`OutcomeResult`](#outcomeresult), [`OutcomeSender`](#outcomesender), [`OutcomeTarget`](#outcometarget), [`PendingClaim`](#pendingclaim), [`PendingClaimsResponse`](#pendingclaimsresponse), [`PreflightCacheDecision`](#preflightcachedecision), [`PreflightGrant`](#preflightgrant), [`PreflightKnowledge`](#preflightknowledge), [`PreflightParams`](#preflightparams), [`PreflightPrompt`](#preflightprompt), [`PreflightResponse`](#preflightresponse), [`PreflightRouting`](#preflightrouting), [`QualifyOracleParams`](#qualifyoracleparams), [`ReasoningEffort`](#reasoningeffort), [`RecordOutcomesResponse`](#recordoutcomesresponse), [`RegisterOracleParams`](#registeroracleparams), [`RenderPromptResult`](#renderpromptresult), [`ResponseFormat`](#responseformat), [`ReviewerBackfill`](#reviewerbackfill), [`ReviewerDecision`](#reviewerdecision), [`ReviewerEvent`](#reviewerevent), [`ReviewerEventResult`](#reviewereventresult), [`ReviewerEventsResponse`](#reviewereventsresponse), [`ReviewerFinal`](#reviewerfinal), [`ReviewerHealth`](#reviewerhealth), [`ReviewerRepairResult`](#reviewerrepairresult), [`ReviewerSender`](#reviewersender), [`ReviewerSetup`](#reviewersetup), [`ReviewerTestResult`](#reviewertestresult), [`ReviewerTestScenario`](#reviewertestscenario), [`RouterMode`](#routermode), [`SegmentHintKind`](#segmenthintkind), [`SelfImproveGuardrails`](#selfimproveguardrails), [`SourceCheck`](#sourcecheck), [`SourceCheckGrade`](#sourcecheckgrade), [`SubmitOracleVerdictsParams`](#submitoracleverdictsparams), [`SuccessBody`](#successbody), [`TestOracleParams`](#testoracleparams), [`UrBenchEcho`](#urbenchecho), [`UrContextModule`](#urcontextmodule), [`UrManifest`](#urmanifest), [`UrManifestEntry`](#urmanifestentry), [`UrManifestRange`](#urmanifestrange), [`UrVerifiedMemoryBlock`](#urverifiedmemoryblock), [`VerdictSources`](#verdictsources), [`VerifiedMemoryDisableResult`](#verifiedmemorydisableresult), [`VerifiedMemoryEnableResult`](#verifiedmemoryenableresult), [`VerifiedMemoryStatus`](#verifiedmemorystatus)
+- **Constants:** [`DEFAULT_MAX_RETRIES`](#default_max_retries), [`DEFAULT_PREFLIGHT_CACHE_MAX_ENTRIES`](#default_preflight_cache_max_entries), [`DEFAULT_TIMEOUT_MS`](#default_timeout_ms), [`EVENT_REJECTION_CODES`](#event_rejection_codes), [`EXPERIMENT_EXECUTION_HEADER`](#experiment_execution_header), [`GATEWAY_ERROR_CODES`](#gateway_error_codes), [`GATEWAY_ERROR_TAXONOMY`](#gateway_error_taxonomy), [`LEARNED_MESSAGE_ROLE`](#learned_message_role), [`ORACLE_SIGNATURE_HEADER`](#oracle_signature_header), [`ORACLE_TIMESTAMP_HEADER`](#oracle_timestamp_header), [`PREFLIGHT_DEFAULT_CONFIG_MAX_AGE_S`](#preflight_default_config_max_age_s), [`PREFLIGHT_DEFAULT_LIVE_MAX_AGE_S`](#preflight_default_live_max_age_s), [`PREFLIGHT_GRANT_HEADER`](#preflight_grant_header), [`PREFLIGHT_LIVE_MAX_AGE_HEADER`](#preflight_live_max_age_header), [`PROMPT_VARIABLES_MISSING_CODE`](#prompt_variables_missing_code), [`REVIEWER_SIGNATURE_HEADER`](#reviewer_signature_header), [`REVIEWER_TIMESTAMP_HEADER`](#reviewer_timestamp_header), [`VERSION`](#version)
+- **Interfaces:** [`ApiRequestInit`](#apirequestinit), [`ArtifactListQuery`](#artifactlistquery), [`ArtifactScope`](#artifactscope), [`ArtifactsResource`](#artifactsresource), [`AsOpenAI`](#asopenai), [`AutopilotCallType`](#autopilotcalltype), [`AutopilotCostProvenance`](#autopilotcostprovenance), [`AutopilotCoverage`](#autopilotcoverage), [`AutopilotStatus`](#autopilotstatus), [`BenchResource`](#benchresource), [`BenchRunParams`](#benchrunparams), [`CallType`](#calltype), [`CallTypeConfigBody`](#calltypeconfigbody), [`CallTypeConfigVersion`](#calltypeconfigversion), [`CallTypeListResponse`](#calltypelistresponse), [`CallTypesResource`](#calltypesresource), [`ChatChoice`](#chatchoice), [`ChatCompletion`](#chatcompletion), [`ChatCompletionChunk`](#chatcompletionchunk), [`ChatCompletionCreateParams`](#chatcompletioncreateparams), [`ChatCompletionsCreate`](#chatcompletionscreate), [`ChatContentPart`](#chatcontentpart), [`ChatMessage`](#chatmessage), [`ChatResource`](#chatresource), [`CompressionOptions`](#compressionoptions), [`CreateCallTypeParams`](#createcalltypeparams), [`CreateEmbeddingResponse`](#createembeddingresponse), [`DiffStats`](#diffstats), [`DurableEntry`](#durableentry), [`Embedding`](#embedding), [`EmbeddingCreateParams`](#embeddingcreateparams), [`EmbeddingsResource`](#embeddingsresource), [`EmbeddingUrBlock`](#embeddingurblock), [`ExperimentOutcomeOptions`](#experimentoutcomeoptions), [`ExperimentsResource`](#experimentsresource), [`Feedback`](#feedback), [`FeedbackEnvelope`](#feedbackenvelope), [`FeedbackParams`](#feedbackparams), [`FlywheelResource`](#flywheelresource), [`GatewayErrorEnvelope`](#gatewayerrorenvelope), [`GenerationOutcome`](#generationoutcome), [`GenerationStats`](#generationstats), [`HostedPromptsResource`](#hostedpromptsresource), [`HostedPromptVariable`](#hostedpromptvariable), [`ImportListQuery`](#importlistquery), [`ImportsResource`](#importsresource), [`LearnedMessage`](#learnedmessage), [`LearnedRecordOptions`](#learnedrecordoptions), [`LearnedSession`](#learnedsession), [`Model`](#model), [`ModelListQuery`](#modellistquery), [`ModelPricing`](#modelpricing), [`ModelsListResponse`](#modelslistresponse), [`ModelsResource`](#modelsresource), [`OpenAICompatConfig`](#openaicompatconfig), [`OracleSigningOptions`](#oraclesigningoptions), [`OraclesResource`](#oraclesresource), [`OutcomeFlushReport`](#outcomeflushreport), [`OutcomeQueueDeps`](#outcomequeuedeps), [`OutcomesResource`](#outcomesresource), [`OutcomeStore`](#outcomestore), [`PendingOutcomesQuery`](#pendingoutcomesquery), [`PreflightCacheEntry`](#preflightcacheentry), [`PreflightCacheOptions`](#preflightcacheoptions), [`PreflightRequestOptions`](#preflightrequestoptions), [`ProviderPreferences`](#providerpreferences), [`QueuedOutcome`](#queuedoutcome), [`QueuedReviewerEvent`](#queuedreviewerevent), [`ReasoningOptions`](#reasoningoptions), [`RenderablePrompt`](#renderableprompt), [`RequestOptions`](#requestoptions), [`ReviewerDeliveryOptions`](#reviewerdeliveryoptions), [`ReviewerFlushReport`](#reviewerflushreport), [`ReviewerQueueDeps`](#reviewerqueuedeps), [`ReviewerResource`](#reviewerresource), [`SegmentHint`](#segmenthint), [`SourceChecksResource`](#sourcechecksresource), [`UltraRouterDefaults`](#ultrarouterdefaults), [`UltraRouterOptions`](#ultrarouteroptions), [`UrCompressionBlock`](#urcompressionblock), [`UrNamespace`](#urnamespace), [`UrRequestOptions`](#urrequestoptions), [`UrResponseBlock`](#urresponseblock), [`UrRoutingBlock`](#urroutingblock), [`Usage`](#usage), [`VerifiedMemoryResource`](#verifiedmemoryresource)
+- **Types:** [`ActivateHostedPromptParams`](#activatehostedpromptparams), [`AnswerSourceCheckParams`](#answersourcecheckparams), [`ApiOperation`](#apioperation), [`ApiPath`](#apipath), [`ApiResponse`](#apiresponse), [`Artifact`](#artifact), [`ArtifactArchetype`](#artifactarchetype), [`ArtifactClaim`](#artifactclaim), [`ArtifactEnvelope`](#artifactenvelope), [`ArtifactListResponse`](#artifactlistresponse), [`ArtifactObjective`](#artifactobjective), [`ArtifactObjectiveMetric`](#artifactobjectivemetric), [`ArtifactObjectivePredicate`](#artifactobjectivepredicate), [`ArtifactType`](#artifacttype), [`ArtifactTypeEnvelope`](#artifacttypeenvelope), [`ArtifactTypeUpsertParams`](#artifacttypeupsertparams), [`AutopilotMode`](#autopilotmode), [`BatchOutcomeInput`](#batchoutcomeinput), [`BatchOutcomeResult`](#batchoutcomeresult), [`BatchOutcomesResponse`](#batchoutcomesresponse), [`BenchBaseline`](#benchbaseline), [`BenchCompareGate`](#benchcomparegate), [`BenchDatasetFreeze`](#benchdatasetfreeze), [`BenchExpectationInput`](#benchexpectationinput), [`BenchExpectations`](#benchexpectations), [`BenchFreezeParams`](#benchfreezeparams), [`BenchInitTag`](#benchinittag), [`BenchOutcomeInput`](#benchoutcomeinput), [`BenchOutcomes`](#benchoutcomes), [`BenchOutcomeTarget`](#benchoutcometarget), [`BenchReport`](#benchreport), [`BenchReportFormat`](#benchreportformat), [`BenchRun`](#benchrun), [`BenchRunMode`](#benchrunmode), [`BenchRunTrigger`](#benchruntrigger), [`BenchSelectionMode`](#benchselectionmode), [`BenchSuiteStatus`](#benchsuitestatus), [`BenchTag`](#benchtag), [`CallTypeImprovementReads`](#calltypeimprovementreads), [`CallTypeRecommendations`](#calltyperecommendations), [`ChatCompletionStream`](#chatcompletionstream), [`ChatRole`](#chatrole), [`ClaimInput`](#claiminput), [`ClaimOracleJobsParams`](#claimoraclejobsparams), [`CompressionMode`](#compressionmode), [`CompressionOption`](#compressionoption), [`CreateArtifactParams`](#createartifactparams), [`CreateHostedPromptParams`](#createhostedpromptparams), [`DeepReadonly`](#deepreadonly), [`EnableVerifiedMemoryParams`](#enableverifiedmemoryparams), [`EnqueueEvalParams`](#enqueueevalparams), [`EnqueueEvalResponse`](#enqueueevalresponse), [`EnrolExperimentExecutionParams`](#enrolexperimentexecutionparams), [`EvalRunList`](#evalrunlist), [`ExperimentExecution`](#experimentexecution), [`ExperimentExecutionOutcome`](#experimentexecutionoutcome), [`ExperimentExecutionOutcomeDryRun`](#experimentexecutionoutcomedryrun), [`ExperimentScreenEvaluation`](#experimentscreenevaluation), [`ExperimentTestEvaluation`](#experimenttestevaluation), [`FetchLike`](#fetchlike), [`FinalizedOutcomeEvent`](#finalizedoutcomeevent), [`FinalParams`](#finalparams), [`FinalResponse`](#finalresponse), [`FlywheelCalibration`](#flywheelcalibration), [`FlywheelStatus`](#flywheelstatus), [`FlywheelUsage`](#flywheelusage), [`GatewayErrorCode`](#gatewayerrorcode), [`HostedPromptList`](#hostedpromptlist), [`HostedPromptPointer`](#hostedpromptpointer), [`HostedPromptProposal`](#hostedpromptproposal), [`HostedPromptVersion`](#hostedpromptversion), [`HttpMethod`](#httpmethod), [`Import`](#import), [`ImportCapabilityReport`](#importcapabilityreport), [`ImportEnvelope`](#importenvelope), [`ImportListResponse`](#importlistresponse), [`ImportParams`](#importparams), [`ImprovementReads`](#improvementreads), [`IssueSourceCheckParams`](#issuesourcecheckparams), [`KeyInfo`](#keyinfo), [`LearnedContextDelivery`](#learnedcontextdelivery), [`ModelDetail`](#modeldetail), [`OpenAIConstructor`](#openaiconstructor), [`OperationId`](#operationid), [`OperationQuery`](#operationquery), [`OperationRequestBody`](#operationrequestbody), [`OperationResponse`](#operationresponse), [`Oracle`](#oracle), [`OracleJobClaim`](#oraclejobclaim), [`OracleQualification`](#oraclequalification), [`OracleRegistration`](#oracleregistration), [`OracleRevocation`](#oraclerevocation), [`OracleTestResult`](#oracletestresult), [`OracleVerdictsResult`](#oracleverdictsresult), [`OutcomeChannel`](#outcomechannel), [`OutcomeInput`](#outcomeinput), [`OutcomeReceipt`](#outcomereceipt), [`OutcomeResult`](#outcomeresult), [`OutcomeSender`](#outcomesender), [`OutcomeTarget`](#outcometarget), [`PendingClaim`](#pendingclaim), [`PendingClaimsResponse`](#pendingclaimsresponse), [`PreflightCacheDecision`](#preflightcachedecision), [`PreflightGrant`](#preflightgrant), [`PreflightKnowledge`](#preflightknowledge), [`PreflightParams`](#preflightparams), [`PreflightPrompt`](#preflightprompt), [`PreflightResponse`](#preflightresponse), [`PreflightRouting`](#preflightrouting), [`QualifyOracleParams`](#qualifyoracleparams), [`ReasoningEffort`](#reasoningeffort), [`RecordExperimentOutcomeParams`](#recordexperimentoutcomeparams), [`RecordOutcomesResponse`](#recordoutcomesresponse), [`RegisterOracleParams`](#registeroracleparams), [`RenderPromptResult`](#renderpromptresult), [`ResponseFormat`](#responseformat), [`ReviewerBackfill`](#reviewerbackfill), [`ReviewerDecision`](#reviewerdecision), [`ReviewerEvent`](#reviewerevent), [`ReviewerEventResult`](#reviewereventresult), [`ReviewerEventsResponse`](#reviewereventsresponse), [`ReviewerFinal`](#reviewerfinal), [`ReviewerHealth`](#reviewerhealth), [`ReviewerRepairResult`](#reviewerrepairresult), [`ReviewerSender`](#reviewersender), [`ReviewerSetup`](#reviewersetup), [`ReviewerTestResult`](#reviewertestresult), [`ReviewerTestScenario`](#reviewertestscenario), [`RouterMode`](#routermode), [`SegmentHintKind`](#segmenthintkind), [`SelfImproveGuardrails`](#selfimproveguardrails), [`SourceCheck`](#sourcecheck), [`SourceCheckGrade`](#sourcecheckgrade), [`SubmitOracleVerdictsParams`](#submitoracleverdictsparams), [`SuccessBody`](#successbody), [`TestOracleParams`](#testoracleparams), [`UrBenchEcho`](#urbenchecho), [`UrContextModule`](#urcontextmodule), [`UrManifest`](#urmanifest), [`UrManifestEntry`](#urmanifestentry), [`UrManifestRange`](#urmanifestrange), [`UrVerifiedMemoryBlock`](#urverifiedmemoryblock), [`VerdictSources`](#verdictsources), [`VerifiedMemoryDisableResult`](#verifiedmemorydisableresult), [`VerifiedMemoryEnableResult`](#verifiedmemoryenableresult), [`VerifiedMemoryStatus`](#verifiedmemorystatus)
 
 ## Default export
 
@@ -683,6 +683,16 @@ transport, a code this SDK does not know) leaves the event queued.
 
 ```ts signature
 const EVENT_REJECTION_CODES: readonly GatewayErrorCode[]
+```
+
+### EXPERIMENT_EXECUTION_HEADER
+
+const · `src/resources.ts`
+
+The request header every call of an enrolled execution carries (its `execution_id`).
+
+```ts signature
+const EXPERIMENT_EXECUTION_HEADER = 'x-ur-experiment-execution'
 ```
 
 ### GATEWAY_ERROR_CODES
@@ -1742,6 +1752,56 @@ interface EmbeddingUrBlock extends Omit<UrResponseBlock, 'compression' | 'routin
 | --- | --- |
 | `routing: Omit<UrRoutingBlock, 'mode'> & { mode: RouterMode \| (string & {}) }` | How the request was routed; `mode` is a [`RouterMode`](#routermode) value in practice, typed open. |
 
+### ExperimentOutcomeOptions
+
+interface · `src/client.ts`
+
+Per-call options for [`ExperimentsResource.outcome`](#experimentsresource): the request options, plus `dryRun` to
+run the same validation against the current rows and holds and return the dry-run answer
+(`?dry_run=true`) with nothing written.
+
+```ts signature
+interface ExperimentOutcomeOptions extends RequestOptions {
+    dryRun?: boolean;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `dryRun?: boolean` | Validate-only: send `?dry_run=true`, return the dry-run shape, write nothing. |
+
+### ExperimentsResource
+
+interface · `src/client.ts`
+
+`ur.ur.flywheel.experiments`: the bounded-experiment RUN surface, for a runner holding a key with
+the `flywheel:experiment:run` scope. Enrol each execution before its first call, send the returned
+`execution_id` as the `x-ur-experiment-execution` header on every call of the run, then record the
+one terminal outcome (dry-run it first) and ask for the screen or test evaluation. The owner-session
+operations (holds, reconcile, judgements, acknowledge, test fund / manifest / judgements) are not on
+an api key and are not mapped here.
+
+```ts signature
+interface ExperimentsResource {
+    enrol: (experimentId: string, params: EnrolExperimentExecutionParams, options?: RequestOptions) => Promise<ExperimentExecution>;
+    outcome: {
+        (experimentId: string, executionId: string, params: RecordExperimentOutcomeParams, options: ExperimentOutcomeOptions & {
+            dryRun: true;
+        }): Promise<ExperimentExecutionOutcomeDryRun>;
+        (experimentId: string, executionId: string, params: RecordExperimentOutcomeParams, options?: ExperimentOutcomeOptions): Promise<ExperimentExecutionOutcome>;
+    };
+    evaluateScreen: (experimentId: string, options?: RequestOptions) => Promise<ExperimentScreenEvaluation>;
+    evaluateTest: (experimentId: string, options?: RequestOptions) => Promise<ExperimentTestEvaluation>;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `enrol: ( experimentId: string, params: EnrolExperimentExecutionParams, options?: RequestOptions, ) => Promise<ExperimentExecution>` | Enrol one execution slot of a candidate-frozen experiment (`POST …/executions`). The gateway — never the caller — decides the arm from the sealed assignment. Idempotent on the server: a repeat of the same `{ phase, pair_key, slot }` returns the same execution (`created: false`), so a resume safely re-enrols the identical tuple; the SDK never invents a new slot to work around a failure. |
+| `outcome: { ( experimentId: string, executionId: string, params: RecordExperimentOutcomeParams, options: ExperimentOutcomeOptions & { dryRun: true }, ): Promise<ExperimentExecutionOutcomeDryRun>; ( experimentId: string, executionId: string, params: RecordExperimentOutcomeParams, options?: ExperimentOutcomeOptions, ): Promise<ExperimentExecutionOutcome>; }` | Record the one terminal outcome of an enrolled execution (`POST …/executions/{id}/outcome`), body-free (ids, hashes and numbers only). Idempotent on the execution. With `{ dryRun: true }` the same validation runs against the current rows and holds and returns the dry-run answer with nothing written; the two response shapes are discriminated by `object`. |
+| `evaluateScreen: ( experimentId: string, options?: RequestOptions, ) => Promise<ExperimentScreenEvaluation>` | Evaluate the screen explicitly (`POST …/screen/evaluate`): counts before the verdict, the verdict after. Idempotent. |
+| `evaluateTest: ( experimentId: string, options?: RequestOptions, ) => Promise<ExperimentTestEvaluation>` | Evaluate the prospective test explicitly (`POST …/test/evaluate`): counts before the decision, the decision after. Idempotent. |
+
 ### Feedback
 
 interface · `src/types.ts`
@@ -1819,6 +1879,7 @@ interface FlywheelResource {
     calibration: (options?: RequestOptions) => Promise<FlywheelCalibration>;
     sources: (options?: RequestOptions) => Promise<VerdictSources>;
     sourceChecks: SourceChecksResource;
+    experiments: ExperimentsResource;
 }
 ```
 
@@ -1828,6 +1889,7 @@ interface FlywheelResource {
 | `calibration: (options?: RequestOptions) => Promise<FlywheelCalibration>` | The `learning` block of [`FlywheelResource.status`](#flywheelresource): calibration availability as the gateway declares it. |
 | `sources: (options?: RequestOptions) => Promise<VerdictSources>` | List the workspace's verdict sources and whether each one counts toward readiness. |
 | `sourceChecks: SourceChecksResource` | Planted-failure checks for verdict sources. |
+| `experiments: ExperimentsResource` | The bounded-experiment run surface (enrol, outcome, screen/test evaluation). |
 
 ### GatewayErrorEnvelope
 
@@ -3586,6 +3648,16 @@ no-op (`enqueued: false` with a `reason`; a deduplicated trigger names `prior_ru
 type EnqueueEvalResponse = Schemas['EnqueueEvalResponse'];
 ```
 
+### EnrolExperimentExecutionParams
+
+type · `src/resources.ts`
+
+The body of `ur.flywheel.experiments.enrol(id, params)` (`{ phase, pair_key, slot }`).
+
+```ts signature
+type EnrolExperimentExecutionParams = OperationRequestBody<'enrolFlywheelExperimentExecution'>;
+```
+
 ### EvalRunList
 
 type · `src/resources.ts`
@@ -3594,6 +3666,63 @@ type · `src/resources.ts`
 
 ```ts signature
 type EvalRunList = Schemas['EvalRunListResponse'];
+```
+
+### ExperimentExecution
+
+type · `src/resources.ts`
+
+One enrolled experiment execution. `arm` is decided by the sealed assignment, never by the
+caller; send `execution_id` as the `x-ur-experiment-execution` header on every call of the run.
+
+```ts signature
+type ExperimentExecution = OperationResponse<'enrolFlywheelExperimentExecution'>;
+```
+
+### ExperimentExecutionOutcome
+
+type · `src/resources.ts`
+
+A recorded live-execution outcome (`object: 'flywheel_experiment_execution_outcome'`).
+
+```ts signature
+type ExperimentExecutionOutcome = Extract<ExperimentOutcomeResult, {
+    object: 'flywheel_experiment_execution_outcome';
+}>;
+```
+
+### ExperimentExecutionOutcomeDryRun
+
+type · `src/resources.ts`
+
+An outcome dry-run answer (`object: 'flywheel_experiment_execution_outcome_dry_run'`): the answer
+the record would give now — `status`, the named `refusal`, `missing_request_ids`,
+`unlisted_request_ids` and `open_holds` — with nothing written.
+
+```ts signature
+type ExperimentExecutionOutcomeDryRun = Extract<ExperimentOutcomeResult, {
+    object: 'flywheel_experiment_execution_outcome_dry_run';
+}>;
+```
+
+### ExperimentScreenEvaluation
+
+type · `src/resources.ts`
+
+The explicit screen re-evaluation (`POST …/screen/evaluate`): counts before the verdict, the verdict after.
+
+```ts signature
+type ExperimentScreenEvaluation = OperationResponse<'evaluateFlywheelExperimentScreen'>;
+```
+
+### ExperimentTestEvaluation
+
+type · `src/resources.ts`
+
+The explicit prospective-test re-evaluation (`POST …/test/evaluate`): counts before the decision, the decision after.
+
+```ts signature
+type ExperimentTestEvaluation = OperationResponse<'evaluateFlywheelExperimentTest'>;
 ```
 
 ### FetchLike
@@ -4175,6 +4304,16 @@ A reasoning effort level.
 
 ```ts signature
 type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high';
+```
+
+### RecordExperimentOutcomeParams
+
+type · `src/resources.ts`
+
+The body of `ur.flywheel.experiments.outcome(...)` — ids, hashes and numbers only, never a body.
+
+```ts signature
+type RecordExperimentOutcomeParams = OperationRequestBody<'recordFlywheelExperimentExecutionOutcome'>;
 ```
 
 ### RecordOutcomesResponse

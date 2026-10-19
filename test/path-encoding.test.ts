@@ -234,6 +234,44 @@ const TABLE: readonly Row[] = [
     pattern: '/v1/flywheel/oracles/{}/verdicts',
     invoke: (ur) => ur.ur.oracles.submitVerdicts(ADV, { verdicts: [] } as never, { secret: 's' }),
   },
+  {
+    label: 'experiments.enrol',
+    pattern: '/v1/flywheel/experiments/{}/executions',
+    invoke: (ur) =>
+      ur.ur.flywheel.experiments.enrol(ADV, { phase: 'screen', pair_key: 'p', slot: 0 }),
+  },
+  {
+    label: 'experiments.outcome',
+    pattern: '/v1/flywheel/experiments/{}/executions/{}/outcome',
+    invoke: (ur) =>
+      ur.ur.flywheel.experiments.outcome(ADV, ADV, {
+        terminal: 'delivered',
+        reason_codes: [],
+        reason_vocab: 'rv',
+        receipts: [
+          {
+            ordinal: 0,
+            stage: 'writer',
+            call_type: 'ct',
+            request_id: 'req_1',
+            extractor_version: 'ex',
+            numbers: {},
+          },
+        ],
+        final_content_hash: 'h',
+        request_ids: ['req_1'],
+      }),
+  },
+  {
+    label: 'experiments.evaluateScreen',
+    pattern: '/v1/flywheel/experiments/{}/screen/evaluate',
+    invoke: (ur) => ur.ur.flywheel.experiments.evaluateScreen(ADV),
+  },
+  {
+    label: 'experiments.evaluateTest',
+    pattern: '/v1/flywheel/experiments/{}/test/evaluate',
+    invoke: (ur) => ur.ur.flywheel.experiments.evaluateTest(ADV),
+  },
 ];
 
 /** The exact wire path a row must produce: its pattern with the encoded id spliced into every `{}` slot. */

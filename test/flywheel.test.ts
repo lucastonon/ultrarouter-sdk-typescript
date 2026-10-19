@@ -868,3 +868,242 @@ describe('ur.manifest request option', () => {
     expect(body.ur.manifest).toEqual(manifest);
   });
 });
+
+// ─────────────────────────────── bounded experiments (run surface) ───────────────────────────────
+
+function enrolledExecutionFixture(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    object: 'flywheel_experiment_execution',
+    execution_id: 'fxe_1',
+    experiment_id: 'fxp_1',
+    phase: 'screen',
+    pair_key: 'idea-a',
+    slot: 0,
+    arm: 'treated',
+    candidate_hash: 'cand_1',
+    assignment_version: 'asg_1',
+    created: true,
+    created_at: '2026-09-14T00:00:00Z',
+    ...over,
+  };
+}
+
+function outcomeCostFixture(): Record<string, unknown> {
+  return {
+    rows_measured_micro_usd: 0,
+    rows_unpriced: 0,
+    rows_unpriced_unresolved: 0,
+    rows: 1,
+    holds: 0,
+    settled_micro_usd: 0,
+    ambiguous_micro_usd: 0,
+    reserved_micro_usd: 0,
+    difference_micro_usd: 0,
+    unexplained_micro_usd: 0,
+    holds_reconciled: 0,
+    holds_released_after_dispatch: 0,
+    unlanded_holds: 0,
+    rowless_resolved_holds: 0,
+    complete: true,
+  };
+}
+
+function recordedOutcomeFixture(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    object: 'flywheel_experiment_execution_outcome',
+    experiment_id: 'fxp_1',
+    execution_id: 'fxe_1',
+    status: 'complete',
+    created: true,
+    outcome_hash: 'oh_1',
+    trusted_recorded: [],
+    missing_request_ids: [],
+    cost: outcomeCostFixture(),
+    experiment_state: 'screening',
+    ...over,
+  };
+}
+
+function dryRunOutcomeFixture(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    object: 'flywheel_experiment_execution_outcome_dry_run',
+    experiment_id: 'fxp_1',
+    execution_id: 'fxe_1',
+    status: 'complete',
+    refusal: null,
+    detail: null,
+    recorded_outcome: 'none',
+    outcome_hash: 'oh_1',
+    trusted_recorded: [],
+    missing_request_ids: [],
+    unlisted_request_ids: [],
+    open_holds: [],
+    ...over,
+  };
+}
+
+const sampleOutcomeParams = {
+  terminal: 'delivered' as const,
+  reason_codes: [],
+  reason_vocab: 'rv_1',
+  receipts: [
+    {
+      ordinal: 0,
+      stage: 'writer',
+      call_type: 'ct_writer',
+      request_id: 'req_1',
+      extractor_version: 'ex_1',
+      numbers: { post_length: 120 },
+    },
+  ],
+  final_content_hash: 'fch_1',
+  request_ids: ['req_1'],
+};
+
+function gatewayError(code: string, message: string, status: number): Response {
+  return jsonResponse(
+    { error: { code, message, request_id: 'req_err', retryable: false } },
+    status,
+  );
+}
+
+describe('ur.flywheel.experiments.* (bounded-experiment run surface)', () => {
+  it('enrol POSTs { phase, pair_key, slot } and returns the gateway-decided arm', async () => {
+    const { fetch, calls } = recorder(() => jsonResponse(enrolledExecutionFixture()));
+    const ur = client(fetch);
+    const execution = await ur.ur.flywheel.experiments.enrol('fxp_1', {
+      phase: 'screen',
+      pair_key: 'idea-a',
+      slot: 0,
+    });
+    const call = calls[0]!;
+    expect(call.method).toBe('POST');
+    expect(call.url).toBe('http://gw/v1/flywheel/experiments/fxp_1/executions');
+    expect(call.headers.authorization).toBe('Bearer ur_sk_test_flw');
+    expect(call.body).toEqual({ phase: 'screen', pair_key: 'idea-a', slot: 0 });
+    // The arm is the gateway's — the SDK never sends or chooses it.
+    expect((call.body as Record<string, unknown>).arm).toBeUndefined();
+    expect(execution.arm).toBe('treated');
+    expect(execution.execution_id).toBe('fxe_1');
+    expect(execution.created).toBe(true);
+  });
+
+  it('outcome records the terminal outcome (no dry_run query) and returns the recorded shape', async () => {
+    const { fetch, calls } = recorder(() => jsonResponse(recordedOutcomeFixture()));
+    const ur = client(fetch);
+    const result = await ur.ur.flywheel.experiments.outcome('fxp_1', 'fxe_1', sampleOutcomeParams);
+    const call = calls[0]!;
+    expect(call.method).toBe('POST');
+    expect(call.url).toBe('http://gw/v1/flywheel/experiments/fxp_1/executions/fxe_1/outcome');
+    expect(call.url).not.toContain('dry_run');
+    expect((call.body as { terminal: string }).terminal).toBe('delivered');
+    expect(result.object).toBe('flywheel_experiment_execution_outcome');
+    expect(result.status).toBe('complete');
+    expect(result.cost.complete).toBe(true);
+  });
+
+  it('outcome with dryRun sends ?dry_run=true and returns the dry-run shape', async () => {
+    const { fetch, calls } = recorder(() => jsonResponse(dryRunOutcomeFixture()));
+    const ur = client(fetch);
+    const result = await ur.ur.flywheel.experiments.outcome('fxp_1', 'fxe_1', sampleOutcomeParams, {
+      dryRun: true,
+    });
+    const call = calls[0]!;
+    expect(call.url).toBe(
+      'http://gw/v1/flywheel/experiments/fxp_1/executions/fxe_1/outcome?dry_run=true',
+    );
+    // The dry-run flag is a query parameter, never leaked into the body.
+    expect((call.body as Record<string, unknown>).dryRun).toBeUndefined();
+    expect((call.body as Record<string, unknown>).dry_run).toBeUndefined();
+    expect(result.object).toBe('flywheel_experiment_execution_outcome_dry_run');
+    expect(result.recorded_outcome).toBe('none');
+    expect(result.refusal).toBeNull();
+    expect(result.open_holds).toEqual([]);
+  });
+
+  it('evaluateScreen and evaluateTest POST to their routes with no body', async () => {
+    const { fetch, calls } = recorder((call) =>
+      jsonResponse(
+        call.url.endsWith('/screen/evaluate')
+          ? {
+              object: 'flywheel_experiment_screen_evaluation',
+              experiment_id: 'fxp_1',
+              computed: false,
+              experiment_state: 'screening',
+              screen: { progress: {}, executions: [] },
+            }
+          : {
+              object: 'flywheel_experiment_test_evaluation',
+              experiment_id: 'fxp_1',
+              computed: false,
+              experiment_state: 'test_open',
+              test: { progress: {}, executions: [] },
+            },
+      ),
+    );
+    const ur = client(fetch);
+    const screen = await ur.ur.flywheel.experiments.evaluateScreen('fxp_1');
+    expect(calls[0]!.method).toBe('POST');
+    expect(calls[0]!.url).toBe('http://gw/v1/flywheel/experiments/fxp_1/screen/evaluate');
+    expect(calls[0]!.body).toBeUndefined();
+    expect(screen.object).toBe('flywheel_experiment_screen_evaluation');
+
+    const test = await ur.ur.flywheel.experiments.evaluateTest('fxp_1');
+    expect(calls[1]!.url).toBe('http://gw/v1/flywheel/experiments/fxp_1/test/evaluate');
+    expect(calls[1]!.body).toBeUndefined();
+    expect(test.object).toBe('flywheel_experiment_test_evaluation');
+  });
+
+  it('surfaces a named refusal with its code on every run method (never swallowed)', async () => {
+    // enrol → experiment_not_live
+    const enrol = client(
+      recorder(() => gatewayError('conflict', 'experiment_not_live', 409)).fetch,
+    );
+    const enrolErr = await enrol.ur.flywheel.experiments
+      .enrol('fxp_1', { phase: 'screen', pair_key: 'p', slot: 0 })
+      .catch((e: unknown) => e);
+    expect(enrolErr).toBeInstanceOf(UltraRouterError);
+    expect((enrolErr as UltraRouterError).code).toBe('conflict');
+    expect((enrolErr as UltraRouterError).message).toContain('experiment_not_live');
+
+    // outcome → outcome_conflict
+    const outcome = client(
+      recorder(() =>
+        gatewayError('conflict', 'outcome_conflict: a different outcome is recorded', 409),
+      ).fetch,
+    );
+    const outcomeErr = await outcome.ur.flywheel.experiments
+      .outcome('fxp_1', 'fxe_1', sampleOutcomeParams)
+      .catch((e: unknown) => e);
+    expect(outcomeErr).toBeInstanceOf(UltraRouterError);
+    expect((outcomeErr as UltraRouterError).code).toBe('conflict');
+    expect((outcomeErr as UltraRouterError).message).toContain('outcome_conflict');
+
+    // a dry run of an unknown execution → the named refusal reaches the caller too
+    const dry = client(recorder(() => gatewayError('not_found', 'execution_unknown', 404)).fetch);
+    const dryErr = await dry.ur.flywheel.experiments
+      .outcome('fxp_1', 'fxe_missing', sampleOutcomeParams, { dryRun: true })
+      .catch((e: unknown) => e);
+    expect((dryErr as UltraRouterError).code).toBe('not_found');
+    expect((dryErr as UltraRouterError).message).toContain('execution_unknown');
+
+    // evaluateScreen / evaluateTest → experiment_not_found
+    const screen = client(
+      recorder(() => gatewayError('not_found', 'experiment_not_found', 404)).fetch,
+    );
+    const screenErr = await screen.ur.flywheel.experiments
+      .evaluateScreen('fxp_missing')
+      .catch((e: unknown) => e);
+    expect((screenErr as UltraRouterError).code).toBe('not_found');
+    expect((screenErr as UltraRouterError).message).toContain('experiment_not_found');
+
+    const testClient = client(
+      recorder(() => gatewayError('not_found', 'experiment_not_found', 404)).fetch,
+    );
+    const testErr = await testClient.ur.flywheel.experiments
+      .evaluateTest('fxp_missing')
+      .catch((e: unknown) => e);
+    expect((testErr as UltraRouterError).code).toBe('not_found');
+    expect((testErr as UltraRouterError).message).toContain('experiment_not_found');
+  });
+});

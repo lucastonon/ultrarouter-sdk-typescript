@@ -3731,12 +3731,99 @@ Rules the gateway enforces:
 Qualification probes and canaries look exactly like ordinary jobs; answer every job honestly. A
 canary answered `pass` is a false pass and permanently stops that version from counting.
 
+## Running a bounded experiment
+
+A bounded experiment is a preregistered, candidate-frozen comparison a workspace owner sets up: a
+fixed set of idea families (pairs), each with two slots that the gateway assigns to opposite arms
+(`control` and `treated`). A runner — a key with the `flywheel:experiment:run` scope (never implied
+by `gateway:invoke`) — drives each execution through `ur.flywheel.experiments`. The owner-session
+parts (funding a phase, holds and their reconciliation, judgements, acknowledgement) are not on an
+API key and are not part of this resource.
+
+The loop for one execution:
+
+1. **Enrol it before its first call.** Name the `phase` (`screen` or `test`), the `pair_key` and the
+   `slot` (`0` or `1`). The gateway — never you — decides the arm from its sealed assignment; a repeat
+   of the same `{ phase, pair_key, slot }` returns the same execution (`created: false`), so a resume
+   re-enrols the identical tuple safely. Never change the slot to work around a failure.
+2. **Send `x-ur-experiment-execution` on every call of the run.** The header value is the returned
+   `execution_id`; it rides every `POST /v1/messages` and `POST /v1/responses` the execution makes,
+   each with a fresh trace attempt. The constant `EXPERIMENT_EXECUTION_HEADER` is exported for it.
+3. **Dry-run, then record the one terminal outcome.** The outcome is body-free: ids, hashes and
+   numbers only. `{ dryRun: true }` runs the same validation against the current rows and holds and
+   returns the answer with nothing written; the recorded call writes it (idempotent on the execution).
+4. **Ask for the evaluation.** `evaluateScreen` / `evaluateTest` run the same exactly-once evaluation a
+   recorded outcome does, so facts that changed since (a row landing, a hold settling) are picked up.
+
+```ts
+import UltraRouter, { EXPERIMENT_EXECUTION_HEADER } from '@ultrarouter/sdk';
+
+const ur = new UltraRouter();
+
+async function runOneExecution(experimentId: string, pairKey: string, slot: 0 | 1): Promise<void> {
+  // 1. Enrol — the gateway decides the arm.
+  const execution = await ur.ur.flywheel.experiments.enrol(experimentId, {
+    phase: 'screen',
+    pair_key: pairKey,
+    slot,
+  });
+
+  // 2. Every call of this execution carries the execution id as a header, with a fresh trace attempt.
+  const headers = { [EXPERIMENT_EXECUTION_HEADER]: execution.execution_id };
+  // ...make the run's provider calls here, passing `headers` on each...
+  void headers;
+
+  // 3. Dry-run the outcome, then record it (ids, hashes and numbers only — never a body).
+  const outcome = {
+    terminal: 'delivered' as const,
+    reason_codes: [],
+    reason_vocab: 'ur.experiment.reasons.v1',
+    receipts: [
+      {
+        ordinal: 0,
+        stage: 'writer',
+        call_type: 'support-reply',
+        request_id: 'req_...',
+        extractor_version: 'ex.v1',
+        numbers: { post_length: 280 },
+      },
+    ],
+    final_content_hash: 'sha256:...',
+    request_ids: ['req_...'],
+  };
+  const dry = await ur.ur.flywheel.experiments.outcome(
+    experimentId,
+    execution.execution_id,
+    outcome,
+    { dryRun: true },
+  );
+  if (dry.status === 'refused') {
+    console.log('would refuse:', dry.refusal);
+    return;
+  }
+  await ur.ur.flywheel.experiments.outcome(experimentId, execution.execution_id, outcome);
+
+  // 4. Re-evaluate the screen (idempotent; the verdict is computed once, only at the barrier).
+  const screen = await ur.ur.flywheel.experiments.evaluateScreen(experimentId);
+  console.log(screen.experiment_state, screen.computed);
+}
+
+void runOneExecution;
+```
+
+Refusals are named in the error message and reach you on the typed `UltraRouterError`: branch on
+`err.code`, and read the specific reason (`experiment_not_live`, `phase_not_open`, `phase_unfunded`,
+`pair_not_in_manifest`, `outcome_conflict`, `receipt_missing:<stage>`, `membership_incomplete`, …) in
+`err.message`. The same reasons come back on an outcome dry run as its `refusal` field, so you can see
+what recording would do before you write anything.
+
 ## Related
 
 - [Outcomes and artifacts](./outcomes.md) — record the outcomes this page reports on
 - [Call types](./call-types.md) — evals, recommendations and verified memory
 - [History imports](./imports.md) — bring history in so reads have data sooner
 - API reference: [`FlywheelResource`](./api/sdk.md#flywheelresource),
+  [`ExperimentsResource`](./api/sdk.md#experimentsresource),
   [`OraclesResource`](./api/sdk.md#oraclesresource), [`OracleSigningOptions`](./api/sdk.md#oraclesigningoptions)
 
 <!-- file: docs/imports.md -->
@@ -6362,7 +6449,7 @@ illustrative.
 Every operation in the published OpenAPI document (`openapi/openapi.yaml`) and how this SDK reaches it. Generated by `scripts/gen-docs.mjs` from `scripts/lib/coverage-map.mjs`; `test/coverage-map.test.ts` keeps it complete.
 
 - 142 operations; 84 accept an API key (or no auth), 58 need a dashboard session.
-- 65 have a dedicated SDK method. Every API-key operation is also callable, fully typed, with [`ur.request()`](./typed-requests.md).
+- 69 have a dedicated SDK method. Every API-key operation is also callable, fully typed, with [`ur.request()`](./typed-requests.md).
 - Dashboard-session operations (workspace administration, consents, model policy, provider keys) are not callable with an API key; use the dashboard.
 - Every operation is exercised against the local mock gateway with schema validation in `test/mock-gateway.test.ts`; generic `ur.request()` behaviour is proven in `test/resources.test.ts`.
 
@@ -6470,15 +6557,15 @@ Every operation in the published OpenAPI document (`openapi/openapi.yaml`) and h
 | `GET /v1/flywheel/experiments/{id}` (getFlywheelExperiment) | dashboard session | dashboard only |  |  |
 | `POST /v1/flywheel/experiments/{id}/abandon` (abandonFlywheelExperiment) | dashboard session | dashboard only |  |  |
 | `POST /v1/flywheel/experiments/{id}/admit` (admitFlywheelExperiment) | dashboard session | dashboard only |  |  |
-| `POST /v1/flywheel/experiments/{id}/executions` (enrolFlywheelExperimentExecution) | API key | `ur.request('post', '/v1/flywheel/experiments/{id}/executions')` |  |  |
-| `POST /v1/flywheel/experiments/{id}/executions/{execution_id}/outcome` (recordFlywheelExperimentExecutionOutcome) | API key | `ur.request('post', '/v1/flywheel/experiments/{id}/executions/{execution_id}/outcome')` |  |  |
+| `POST /v1/flywheel/experiments/{id}/executions` (enrolFlywheelExperimentExecution) | API key | `ur.flywheel.experiments.enrol()` |  | `test/flywheel.test.ts`, `test/surface.test.ts` |
+| `POST /v1/flywheel/experiments/{id}/executions/{execution_id}/outcome` (recordFlywheelExperimentExecutionOutcome) | API key | `ur.flywheel.experiments.outcome()` |  | `test/flywheel.test.ts`, `test/surface.test.ts` |
 | `GET /v1/flywheel/experiments/{id}/holds` (listFlywheelExperimentHolds) | dashboard session | dashboard only |  |  |
 | `POST /v1/flywheel/experiments/{id}/holds/reconcile` (reconcileFlywheelExperimentHold) | dashboard session | dashboard only |  |  |
 | `POST /v1/flywheel/experiments/{id}/produce` (produceFlywheelExperimentCandidate) | dashboard session | dashboard only |  |  |
 | `POST /v1/flywheel/experiments/{id}/screen/acknowledge` (acknowledgeFlywheelExperimentScreen) | dashboard session | dashboard only |  |  |
-| `POST /v1/flywheel/experiments/{id}/screen/evaluate` (evaluateFlywheelExperimentScreen) | API key | `ur.request('post', '/v1/flywheel/experiments/{id}/screen/evaluate')` |  |  |
+| `POST /v1/flywheel/experiments/{id}/screen/evaluate` (evaluateFlywheelExperimentScreen) | API key | `ur.flywheel.experiments.evaluateScreen()` |  | `test/flywheel.test.ts`, `test/surface.test.ts` |
 | `POST /v1/flywheel/experiments/{id}/screen/judgements` (recordFlywheelExperimentScreenJudgement) | dashboard session | dashboard only |  |  |
-| `POST /v1/flywheel/experiments/{id}/test/evaluate` (evaluateFlywheelExperimentTest) | API key | `ur.request('post', '/v1/flywheel/experiments/{id}/test/evaluate')` |  |  |
+| `POST /v1/flywheel/experiments/{id}/test/evaluate` (evaluateFlywheelExperimentTest) | API key | `ur.flywheel.experiments.evaluateTest()` |  | `test/flywheel.test.ts`, `test/surface.test.ts` |
 | `POST /v1/flywheel/experiments/{id}/test/fund` (fundFlywheelExperimentTest) | dashboard session | dashboard only |  |  |
 | `POST /v1/flywheel/experiments/{id}/test/judgements` (recordFlywheelExperimentTestJudgement) | dashboard session | dashboard only |  |  |
 | `POST /v1/flywheel/experiments/{id}/test/manifest` (commitFlywheelExperimentTestManifest) | dashboard session | dashboard only |  |  |
@@ -6616,6 +6703,20 @@ contain breaking changes; they are always listed under **Changed** or **Removed*
 
 ### Added
 
+- The bounded-experiment RUN surface under `ur.flywheel.experiments`, for a key with the
+  `flywheel:experiment:run` scope: `enrol(experimentId, { phase, pair_key, slot })` enrols one
+  execution slot (the gateway decides the arm, never the caller; a repeat of the same tuple returns
+  the same execution, so a resume is safe), `outcome(experimentId, executionId, params)` records the
+  one body-free terminal outcome and takes `{ dryRun: true }` to send `?dry_run=true` and return the
+  dry-run answer with nothing written (the recorded and dry-run shapes are separate types,
+  `ExperimentExecutionOutcome` and `ExperimentExecutionOutcomeDryRun`, discriminated by `object`), and
+  `evaluateScreen` / `evaluateTest` run the screen / prospective-test evaluation explicitly. Named
+  refusals (`experiment_not_live`, `phase_not_open`, `outcome_conflict`, `receipt_missing:<stage>`, …)
+  reach the caller on the typed `UltraRouterError`. The `EXPERIMENT_EXECUTION_HEADER`
+  (`x-ur-experiment-execution`) constant is exported for the header every call of a run carries. The
+  owner-session operations (holds, reconcile, judgements, acknowledge, test fund / manifest) stay
+  unmapped — an API key cannot call them. New guide section: "Running a bounded experiment" in
+  `docs/learning.md`.
 - Native passthrough coverage for the two operations the gateway added: `createResponse`
   (`POST /v1/responses`, the OpenAI Responses API) and `createMessage` (`POST /v1/messages`, the
   Anthropic Messages API). Both are opaque passthrough surfaces with no dedicated method; they are

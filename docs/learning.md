@@ -247,10 +247,97 @@ Rules the gateway enforces:
 Qualification probes and canaries look exactly like ordinary jobs; answer every job honestly. A
 canary answered `pass` is a false pass and permanently stops that version from counting.
 
+## Running a bounded experiment
+
+A bounded experiment is a preregistered, candidate-frozen comparison a workspace owner sets up: a
+fixed set of idea families (pairs), each with two slots that the gateway assigns to opposite arms
+(`control` and `treated`). A runner — a key with the `flywheel:experiment:run` scope (never implied
+by `gateway:invoke`) — drives each execution through `ur.flywheel.experiments`. The owner-session
+parts (funding a phase, holds and their reconciliation, judgements, acknowledgement) are not on an
+API key and are not part of this resource.
+
+The loop for one execution:
+
+1. **Enrol it before its first call.** Name the `phase` (`screen` or `test`), the `pair_key` and the
+   `slot` (`0` or `1`). The gateway — never you — decides the arm from its sealed assignment; a repeat
+   of the same `{ phase, pair_key, slot }` returns the same execution (`created: false`), so a resume
+   re-enrols the identical tuple safely. Never change the slot to work around a failure.
+2. **Send `x-ur-experiment-execution` on every call of the run.** The header value is the returned
+   `execution_id`; it rides every `POST /v1/messages` and `POST /v1/responses` the execution makes,
+   each with a fresh trace attempt. The constant `EXPERIMENT_EXECUTION_HEADER` is exported for it.
+3. **Dry-run, then record the one terminal outcome.** The outcome is body-free: ids, hashes and
+   numbers only. `{ dryRun: true }` runs the same validation against the current rows and holds and
+   returns the answer with nothing written; the recorded call writes it (idempotent on the execution).
+4. **Ask for the evaluation.** `evaluateScreen` / `evaluateTest` run the same exactly-once evaluation a
+   recorded outcome does, so facts that changed since (a row landing, a hold settling) are picked up.
+
+```ts
+import UltraRouter, { EXPERIMENT_EXECUTION_HEADER } from '@ultrarouter/sdk';
+
+const ur = new UltraRouter();
+
+async function runOneExecution(experimentId: string, pairKey: string, slot: 0 | 1): Promise<void> {
+  // 1. Enrol — the gateway decides the arm.
+  const execution = await ur.ur.flywheel.experiments.enrol(experimentId, {
+    phase: 'screen',
+    pair_key: pairKey,
+    slot,
+  });
+
+  // 2. Every call of this execution carries the execution id as a header, with a fresh trace attempt.
+  const headers = { [EXPERIMENT_EXECUTION_HEADER]: execution.execution_id };
+  // ...make the run's provider calls here, passing `headers` on each...
+  void headers;
+
+  // 3. Dry-run the outcome, then record it (ids, hashes and numbers only — never a body).
+  const outcome = {
+    terminal: 'delivered' as const,
+    reason_codes: [],
+    reason_vocab: 'ur.experiment.reasons.v1',
+    receipts: [
+      {
+        ordinal: 0,
+        stage: 'writer',
+        call_type: 'support-reply',
+        request_id: 'req_...',
+        extractor_version: 'ex.v1',
+        numbers: { post_length: 280 },
+      },
+    ],
+    final_content_hash: 'sha256:...',
+    request_ids: ['req_...'],
+  };
+  const dry = await ur.ur.flywheel.experiments.outcome(
+    experimentId,
+    execution.execution_id,
+    outcome,
+    { dryRun: true },
+  );
+  if (dry.status === 'refused') {
+    console.log('would refuse:', dry.refusal);
+    return;
+  }
+  await ur.ur.flywheel.experiments.outcome(experimentId, execution.execution_id, outcome);
+
+  // 4. Re-evaluate the screen (idempotent; the verdict is computed once, only at the barrier).
+  const screen = await ur.ur.flywheel.experiments.evaluateScreen(experimentId);
+  console.log(screen.experiment_state, screen.computed);
+}
+
+void runOneExecution;
+```
+
+Refusals are named in the error message and reach you on the typed `UltraRouterError`: branch on
+`err.code`, and read the specific reason (`experiment_not_live`, `phase_not_open`, `phase_unfunded`,
+`pair_not_in_manifest`, `outcome_conflict`, `receipt_missing:<stage>`, `membership_incomplete`, …) in
+`err.message`. The same reasons come back on an outcome dry run as its `refusal` field, so you can see
+what recording would do before you write anything.
+
 ## Related
 
 - [Outcomes and artifacts](./outcomes.md) — record the outcomes this page reports on
 - [Call types](./call-types.md) — evals, recommendations and verified memory
 - [History imports](./imports.md) — bring history in so reads have data sooner
 - API reference: [`FlywheelResource`](./api/sdk.md#flywheelresource),
+  [`ExperimentsResource`](./api/sdk.md#experimentsresource),
   [`OraclesResource`](./api/sdk.md#oraclesresource), [`OracleSigningOptions`](./api/sdk.md#oraclesigningoptions)

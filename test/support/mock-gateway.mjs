@@ -773,6 +773,27 @@ export async function startMockGateway(options = {}) {
       );
     }
 
+    // ── bounded-experiment outcome dry run: the second oneOf branch (the generic sampler would
+    //    always pick the first, the recorded shape), so answer the dry-run shape explicitly ──
+    const outcomeMatch =
+      /^\/v1\/flywheel\/experiments\/([^/]+)\/executions\/([^/]+)\/outcome$/.exec(path);
+    if (outcomeMatch !== null && method === 'POST' && url.searchParams.get('dry_run') === 'true') {
+      return send(res, 200, {
+        object: 'flywheel_experiment_execution_outcome_dry_run',
+        experiment_id: decodeURIComponent(outcomeMatch[1] ?? ''),
+        execution_id: decodeURIComponent(outcomeMatch[2] ?? ''),
+        status: 'complete',
+        refusal: null,
+        detail: null,
+        recorded_outcome: 'none',
+        outcome_hash: sha(r.raw),
+        trusted_recorded: [],
+        missing_request_ids: [],
+        unlisted_request_ids: [],
+        open_holds: [],
+      });
+    }
+
     // ── everything else: a schema-generated sample for the matching operation ──
     const match = matchOperation(method, path);
     if (match === null) return send(res, 404, errorBody('not_found', `no route ${method} ${path}`));

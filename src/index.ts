@@ -27,6 +27,8 @@ export {
   type CallTypesResource,
   type ChatResource,
   type EmbeddingsResource,
+  type ExperimentOutcomeOptions,
+  type ExperimentsResource,
   type FlywheelResource,
   type HostedPromptsResource,
   type ImportsResource,

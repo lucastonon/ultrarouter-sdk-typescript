@@ -215,3 +215,50 @@ export const ORACLE_SIGNATURE_HEADER = 'x-ur-oracle-signature';
 
 /** The request header carrying the oracle signature timestamp (unix seconds). */
 export const ORACLE_TIMESTAMP_HEADER = 'x-ur-oracle-timestamp';
+
+// ─────────────────────────────── bounded experiments (run surface) ───────────────────────────────
+
+/** The body of `ur.flywheel.experiments.enrol(id, params)` (`{ phase, pair_key, slot }`). */
+export type EnrolExperimentExecutionParams =
+  OperationRequestBody<'enrolFlywheelExperimentExecution'>;
+
+/**
+ * One enrolled experiment execution. `arm` is decided by the sealed assignment, never by the
+ * caller; send `execution_id` as the `x-ur-experiment-execution` header on every call of the run.
+ */
+export type ExperimentExecution = OperationResponse<'enrolFlywheelExperimentExecution'>;
+
+/** The request header every call of an enrolled execution carries (its `execution_id`). */
+export const EXPERIMENT_EXECUTION_HEADER = 'x-ur-experiment-execution';
+
+/** The body of `ur.flywheel.experiments.outcome(...)` — ids, hashes and numbers only, never a body. */
+export type RecordExperimentOutcomeParams =
+  OperationRequestBody<'recordFlywheelExperimentExecutionOutcome'>;
+
+/**
+ * The `POST …/executions/{execution_id}/outcome` response. The gateway returns one of two shapes,
+ * discriminated by `object`: a recorded outcome, or — with `?dry_run=true` — the dry-run answer.
+ */
+type ExperimentOutcomeResult = OperationResponse<'recordFlywheelExperimentExecutionOutcome'>;
+
+/** A recorded live-execution outcome (`object: 'flywheel_experiment_execution_outcome'`). */
+export type ExperimentExecutionOutcome = Extract<
+  ExperimentOutcomeResult,
+  { object: 'flywheel_experiment_execution_outcome' }
+>;
+
+/**
+ * An outcome dry-run answer (`object: 'flywheel_experiment_execution_outcome_dry_run'`): the answer
+ * the record would give now — `status`, the named `refusal`, `missing_request_ids`,
+ * `unlisted_request_ids` and `open_holds` — with nothing written.
+ */
+export type ExperimentExecutionOutcomeDryRun = Extract<
+  ExperimentOutcomeResult,
+  { object: 'flywheel_experiment_execution_outcome_dry_run' }
+>;
+
+/** The explicit screen re-evaluation (`POST …/screen/evaluate`): counts before the verdict, the verdict after. */
+export type ExperimentScreenEvaluation = OperationResponse<'evaluateFlywheelExperimentScreen'>;
+
+/** The explicit prospective-test re-evaluation (`POST …/test/evaluate`): counts before the decision, the decision after. */
+export type ExperimentTestEvaluation = OperationResponse<'evaluateFlywheelExperimentTest'>;

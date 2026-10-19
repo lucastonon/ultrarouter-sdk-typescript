@@ -9,6 +9,20 @@ contain breaking changes; they are always listed under **Changed** or **Removed*
 
 ### Added
 
+- The bounded-experiment RUN surface under `ur.flywheel.experiments`, for a key with the
+  `flywheel:experiment:run` scope: `enrol(experimentId, { phase, pair_key, slot })` enrols one
+  execution slot (the gateway decides the arm, never the caller; a repeat of the same tuple returns
+  the same execution, so a resume is safe), `outcome(experimentId, executionId, params)` records the
+  one body-free terminal outcome and takes `{ dryRun: true }` to send `?dry_run=true` and return the
+  dry-run answer with nothing written (the recorded and dry-run shapes are separate types,
+  `ExperimentExecutionOutcome` and `ExperimentExecutionOutcomeDryRun`, discriminated by `object`), and
+  `evaluateScreen` / `evaluateTest` run the screen / prospective-test evaluation explicitly. Named
+  refusals (`experiment_not_live`, `phase_not_open`, `outcome_conflict`, `receipt_missing:<stage>`, …)
+  reach the caller on the typed `UltraRouterError`. The `EXPERIMENT_EXECUTION_HEADER`
+  (`x-ur-experiment-execution`) constant is exported for the header every call of a run carries. The
+  owner-session operations (holds, reconcile, judgements, acknowledge, test fund / manifest) stay
+  unmapped — an API key cannot call them. New guide section: "Running a bounded experiment" in
+  `docs/learning.md`.
 - Native passthrough coverage for the two operations the gateway added: `createResponse`
   (`POST /v1/responses`, the OpenAI Responses API) and `createMessage` (`POST /v1/messages`, the
   Anthropic Messages API). Both are opaque passthrough surfaces with no dedicated method; they are

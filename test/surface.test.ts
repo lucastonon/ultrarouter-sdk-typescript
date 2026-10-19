@@ -296,6 +296,51 @@ describe('ur.* resources', () => {
     expect(await ur.ur.improvementReads.list()).toBeTypeOf('object');
   });
 
+  it('ur.flywheel.experiments.* (enrol, outcome + dry run, evaluate)', async () => {
+    const execution = await ur.ur.flywheel.experiments.enrol('fxp_1', {
+      phase: 'screen',
+      pair_key: 'idea-a',
+      slot: 0,
+    });
+    expect(execution.object).toBe('flywheel_experiment_execution');
+    expect(last().path).toBe('/v1/flywheel/experiments/fxp_1/executions');
+    expect(last().body).toMatchObject({ phase: 'screen', pair_key: 'idea-a', slot: 0 });
+
+    const outcomeParams = {
+      terminal: 'delivered' as const,
+      reason_codes: [],
+      reason_vocab: 'rv_1',
+      receipts: [
+        {
+          ordinal: 0,
+          stage: 'writer',
+          call_type: 'ct_writer',
+          request_id: 'req_1',
+          extractor_version: 'ex_1',
+          numbers: { post_length: 120 },
+        },
+      ],
+      final_content_hash: 'fch_1',
+      request_ids: ['req_1'],
+    };
+    const recorded = await ur.ur.flywheel.experiments.outcome('fxp_1', 'fxe_1', outcomeParams);
+    expect(recorded.object).toBe('flywheel_experiment_execution_outcome');
+    expect(last().path).toBe('/v1/flywheel/experiments/fxp_1/executions/fxe_1/outcome');
+
+    const dry = await ur.ur.flywheel.experiments.outcome('fxp_1', 'fxe_1', outcomeParams, {
+      dryRun: true,
+    });
+    expect(dry.object).toBe('flywheel_experiment_execution_outcome_dry_run');
+    expect(gw.requests.at(-1)!.path).toBe(
+      '/v1/flywheel/experiments/fxp_1/executions/fxe_1/outcome',
+    );
+
+    expect((await ur.ur.flywheel.experiments.evaluateScreen('fxp_1')).object).toBeDefined();
+    expect(last().path).toBe('/v1/flywheel/experiments/fxp_1/screen/evaluate');
+    expect((await ur.ur.flywheel.experiments.evaluateTest('fxp_1')).object).toBeDefined();
+    expect(last().path).toBe('/v1/flywheel/experiments/fxp_1/test/evaluate');
+  });
+
   it('ur.oracles.* including the signed pull transport', async () => {
     const reg = await ur.ur.oracles.register({ kind: 'customer_ci', spec: {} } as never);
     expect(reg.secret).toBe(MOCK_ORACLE_SECRET);
