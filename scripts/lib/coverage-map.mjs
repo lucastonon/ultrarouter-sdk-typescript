@@ -318,6 +318,7 @@ export const COVERAGE = {
   confirmLearningPlan: { methods: [], tests: [] },
   reviewLearningPlan: { methods: [], tests: [] },
   listLearningPlans: { methods: [], tests: [] },
+  proposeLearningPlan: { methods: [], tests: [] },
   listPromptCandidates: { methods: [], tests: [] },
   decidePromptCandidate: { methods: [], tests: [] },
   // Workspace administration (dashboard session)

@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: fdc0222948dfd00b5c22105a42d057a447037b9b8f792e166238dccb5f88edf2
+# spec-sha256: f5372296721086b2324ca4982b96d96cb3fbd1e4621fce985604de0e161dc5f1
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -30510,7 +30510,7 @@ paths:
         - "Flywheel"
   "/v1/flywheel/plan/{id}/confirm":
     post:
-      description: "CONFIRM a proposed learning plan: mint the ConfirmedPlan objective version + compile its TriggerSpec + bump config_version, in one audited transaction. A PROPOSED objective never teaches, so this is a HUMAN step: SESSION + `flywheel.write` RBAC, NEVER an api key. The body carries only the customer's edits to the drafted bundle (value axis + decision policy). This is the SAME assembly the dashboard uses (one implementation). Fail-closed: a missing plan is 404; a re-derivation miss / no-measurable-signal is 409 with the coded reason. NEVER a body."
+      description: "CONFIRM a proposed learning plan: mint the ConfirmedPlan objective version + compile its TriggerSpec + bump config_version, in one audited transaction. A PROPOSED objective never teaches, so this is a HUMAN step: SESSION + `flywheel.write` RBAC, NEVER an api key. The body carries only the customer's edits to the drafted bundle (value axis + decision policy + the optional `objective_metric` the customer CHOOSES when nothing has been observed yet). This is the SAME assembly the dashboard uses (one implementation). The response echoes `objective_source` (`declared` | `observed` | `inferred`), server-derived. Fail-closed: a missing plan is 404; a re-derivation miss / no-measurable-signal (pass `objective_metric` to declare one) is 409 with the coded reason. NEVER a body."
       operationId: "confirmLearningPlan"
       parameters:
         -
@@ -30544,6 +30544,16 @@ paths:
                   type: "string"
                 label_field:
                   maxLength: 256
+                  type: "string"
+                objective_metric:
+                  description: "The objective metric (closed vocabulary)."
+                  enum:
+                    - "claim_resolution"
+                    - "oracle_delta"
+                    - "correction_rate"
+                    - "acceptance_rate"
+                    - "engagement_rate"
+                    - "task_success"
                   type: "string"
                 repair_policy:
                   additionalProperties: false
@@ -30634,6 +30644,12 @@ paths:
                     enum:
                       - "learning_plan_confirm"
                     type: "string"
+                  objective_source:
+                    enum:
+                      - "declared"
+                      - "observed"
+                      - "inferred"
+                    type: "string"
                   plan_id:
                     type: "string"
                   repair_policies:
@@ -30670,6 +30686,7 @@ paths:
                   - "artifact_type_version"
                   - "config_version"
                   - "capture_levels"
+                  - "objective_source"
                   - "decision_contract_ids"
                   - "repair_policies"
                 type: "object"
@@ -30871,6 +30888,98 @@ paths:
         -
           sessionCookie: []
       summary: "List the workspace proposals — find the plan ids to confirm"
+      tags:
+        - "Flywheel"
+    post:
+      description: "A member proposes a NAMED call type’s workflow so a workspace with traffic but NO outcome events has a proposal to confirm — discovery only proposes the spend-ranked recommendation, so most workflows never get a proposal row. The server re-derives the SAME draft the confirm route reads and selects the candidate(s) carrying the call type. SESSION + `flywheel.write` RBAC (owner / admin / developer), NEVER an api key. No model call, no paid analysis is authorised. Each named refusal writes nothing and LEADS the error `message` with its stable refusal token (the error envelope carries no separate details field): `call_type_not_found` (404); `unknown_workflow` (409, no candidate carries it); `ambiguous_workflow` (409, > 1 candidate and `workflow_id` absent / not one of them — the candidate ids are in the message); `proposal_pending` (409, the workflow already has a pending proposal — its id is in the message); `workflow_confirmed` (409, a confirmed plan changes only through discovery’s material-change path). One pending proposal per workflow bounds it. NEVER a body."
+      operationId: "proposeLearningPlan"
+      parameters:
+        -
+          description: "The workspace id (session path; or the X-UR-Workspace header)."
+          in: "query"
+          name: "workspace_id"
+          required: false
+          schema:
+            description: "The workspace id (session path; or the X-UR-Workspace header)."
+            type: "string"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              additionalProperties: false
+              description: "A member request to propose a named workflow’s learning plan (session-only)."
+              properties:
+                call_type_id:
+                  description: "The call type (`ct_…`) whose workflow to propose. The `wfc_…` id is derived server-side."
+                  maxLength: 128
+                  minLength: 1
+                  type: "string"
+                workflow_id:
+                  description: "The derived workflow (`wfc_…`) to disambiguate when the call type belongs to more than one candidate. Absent is fine when the call type belongs to exactly one."
+                  maxLength: 128
+                  minLength: 1
+                  type: "string"
+              required:
+                - "call_type_id"
+              type: "object"
+        required: true
+      responses:
+        "201":
+          content:
+            "application/json":
+              schema:
+                description: "The appended learning-plan proposal (the id to confirm + the reviewable binding scope)."
+                properties:
+                  call_type_bindings:
+                    items:
+                      description: "A derived call-type role binding on the proposed workflow."
+                      properties:
+                        call_type_id:
+                          type: "string"
+                        role:
+                          enum:
+                            - "intermediate"
+                            - "terminal"
+                            - "reviewer"
+                          type: "string"
+                      required:
+                        - "call_type_id"
+                        - "role"
+                      type: "object"
+                    type: "array"
+                  call_type_id:
+                    type: "string"
+                  object:
+                    enum:
+                      - "learning_plan_proposal"
+                    type: "string"
+                  plan_id:
+                    type: "string"
+                  version:
+                    exclusiveMinimum: true
+                    minimum: 0
+                    type: "integer"
+                  workflow_id:
+                    type: "string"
+                required:
+                  - "object"
+                  - "plan_id"
+                  - "workflow_id"
+                  - "call_type_id"
+                  - "version"
+                  - "call_type_bindings"
+                type: "object"
+          description: "The appended proposal (the id to confirm + the selected workflow’s complete bindings)."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Propose a named workflow’s learning plan (the history-first unblock)"
       tags:
         - "Flywheel"
   "/v1/flywheel/prompt-candidates":
