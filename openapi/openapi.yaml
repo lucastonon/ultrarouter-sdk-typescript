@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: 8fa18657f5f36da7a9692a9619e6dcf9b8026540fdb7658629a1dcca9efd8e59
+# spec-sha256: 044d39cfb473be0ce21c8d6a18460477f2146064defe2c114b39d730614a193f
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -7586,6 +7586,10 @@ components:
                 - "refused"
                 - "candidate_frozen"
                 - "screening"
+                - "screen_passed"
+                - "screen_failed"
+                - "screen_incomplete"
+                - "awaiting_test_funding"
                 - "closed"
                 - "expired"
                 - "abandoned"
@@ -10090,6 +10094,10 @@ components:
                 - "refused"
                 - "candidate_frozen"
                 - "screening"
+                - "screen_passed"
+                - "screen_failed"
+                - "screen_incomplete"
+                - "awaiting_test_funding"
                 - "closed"
                 - "expired"
                 - "abandoned"
@@ -17982,6 +17990,447 @@ paths:
                             - "remaining_micro_usd"
                             - "phases"
                           type: "object"
+                        screen:
+                          default: null
+                          description: "The screen: barrier counts (no peeking) and, once computed, the verdict."
+                          nullable: true
+                          properties:
+                            executions:
+                              items:
+                                description: "One enrolled screen execution — ids, arm and standing only."
+                                properties:
+                                  arm:
+                                    enum:
+                                      - "control"
+                                      - "treated"
+                                    type: "string"
+                                  execution_id:
+                                    type: "string"
+                                  pair_key:
+                                    type: "string"
+                                  slot:
+                                    maximum: 1
+                                    minimum: 0
+                                    type: "integer"
+                                  status:
+                                    description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                    enum:
+                                      - "no_outcome"
+                                      - "pending_rows"
+                                      - "cost_unsettled"
+                                      - "invalid"
+                                      - "complete"
+                                    type: "string"
+                                required:
+                                  - "execution_id"
+                                  - "pair_key"
+                                  - "slot"
+                                  - "arm"
+                                  - "status"
+                                type: "object"
+                              type: "array"
+                            progress:
+                              description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                              properties:
+                                cap_stopped:
+                                  description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                  type: "boolean"
+                                executions_complete:
+                                  minimum: 0
+                                  type: "integer"
+                                executions_cost_unsettled:
+                                  minimum: 0
+                                  type: "integer"
+                                executions_enrolled:
+                                  minimum: 0
+                                  type: "integer"
+                                executions_incomplete:
+                                  minimum: 0
+                                  type: "integer"
+                                executions_invalid:
+                                  minimum: 0
+                                  type: "integer"
+                                executions_pending_rows:
+                                  minimum: 0
+                                  type: "integer"
+                                holds_ambiguous:
+                                  minimum: 0
+                                  type: "integer"
+                                holds_reserved:
+                                  minimum: 0
+                                  type: "integer"
+                                judgements_recorded:
+                                  minimum: 0
+                                  type: "integer"
+                                judges_required:
+                                  minimum: 0
+                                  type: "integer"
+                                outcomes_recorded:
+                                  minimum: 0
+                                  type: "integer"
+                                pairs_complete:
+                                  minimum: 0
+                                  type: "integer"
+                                pairs_total:
+                                  minimum: 0
+                                  type: "integer"
+                              required:
+                                - "pairs_total"
+                                - "pairs_complete"
+                                - "executions_enrolled"
+                                - "outcomes_recorded"
+                                - "executions_complete"
+                                - "executions_incomplete"
+                                - "executions_pending_rows"
+                                - "executions_cost_unsettled"
+                                - "executions_invalid"
+                                - "holds_reserved"
+                                - "holds_ambiguous"
+                                - "judgements_recorded"
+                                - "judges_required"
+                                - "cap_stopped"
+                              type: "object"
+                            verdict:
+                              description: "Null until the completion barrier is met and the verdict is stored."
+                              nullable: true
+                              properties:
+                                candidate_hash:
+                                  type: "string"
+                                clauses:
+                                  description: "Every clause with its counts (empty when incomplete — nothing is analysed)."
+                                  items:
+                                    description: "One screen-rule clause and its counts."
+                                    properties:
+                                      clause:
+                                        enum:
+                                          - "a_feature_moved"
+                                          - "b_first_pass_rescue"
+                                          - "c_no_net_delivery_loss"
+                                          - "d_no_serious_treated_defect"
+                                          - "e_judges_no_degradation"
+                                        type: "string"
+                                      detail:
+                                        description: "The clause counts (each clause fills its own members; never a body)."
+                                        properties:
+                                          control_delivered:
+                                            type: "integer"
+                                          features:
+                                            description: "(a) each predicted feature, on the treated vs the control first drafts."
+                                            items:
+                                              properties:
+                                                attribute:
+                                                  type: "string"
+                                                control_first_drafts_with_value:
+                                                  type: "integer"
+                                                first_drafts_unmeasured:
+                                                  type: "integer"
+                                                focus_value:
+                                                  type: "string"
+                                                measurable:
+                                                  type: "boolean"
+                                                moved:
+                                                  type: "boolean"
+                                                reason:
+                                                  type: "string"
+                                                treated_first_drafts_with_value:
+                                                  type: "integer"
+                                              required:
+                                                - "attribute"
+                                                - "focus_value"
+                                                - "measurable"
+                                              type: "object"
+                                            type: "array"
+                                          min_margin:
+                                            type: "integer"
+                                          min_rescues:
+                                            type: "integer"
+                                          rescues:
+                                            type: "integer"
+                                          treated_delivered:
+                                            type: "integer"
+                                          treated_deliveries_judge_flagged:
+                                            type: "integer"
+                                          treated_deliveries_with_unsupported_claim:
+                                            type: "integer"
+                                          verdicts:
+                                            description: "(e) each preregistered judge’s verdict."
+                                            items:
+                                              properties:
+                                                judge:
+                                                  type: "string"
+                                                verdict:
+                                                  enum:
+                                                    - "no_evident_degradation"
+                                                    - "evident_degradation"
+                                                  nullable: true
+                                                  type: "string"
+                                              required:
+                                                - "judge"
+                                                - "verdict"
+                                              type: "object"
+                                            type: "array"
+                                        type: "object"
+                                      holds:
+                                        type: "boolean"
+                                    required:
+                                      - "clause"
+                                      - "holds"
+                                      - "detail"
+                                    type: "object"
+                                  type: "array"
+                                created_at:
+                                  type: "string"
+                                failing_clauses:
+                                  description: "Every failing clause (screen_fail); empty otherwise."
+                                  items:
+                                    type: "string"
+                                  type: "array"
+                                incomplete_reasons:
+                                  description: "Why the screen can never complete (screen_incomplete): cap_stop, candidate_withdrawn, outcome_invalid:<execution>:<refusal>, pair_arms_not_opposite:<pair>, judging_not_preregistered."
+                                  items:
+                                    type: "string"
+                                  type: "array"
+                                inputs:
+                                  description: "The verdict inputs: each execution’s identity, arm, standing, outcome hash and cost reconciliation, and each judgement’s hash."
+                                  properties:
+                                    candidate_withdrawn:
+                                      type: "boolean"
+                                    cap_stopped:
+                                      type: "boolean"
+                                    executions:
+                                      items:
+                                        properties:
+                                          arm:
+                                            enum:
+                                              - "control"
+                                              - "treated"
+                                            type: "string"
+                                          cost:
+                                            nullable: true
+                                            properties:
+                                              ambiguous_micro_usd:
+                                                type: "integer"
+                                              complete:
+                                                type: "boolean"
+                                              difference_micro_usd:
+                                                type: "integer"
+                                              holds:
+                                                minimum: 0
+                                                type: "integer"
+                                              reserved_micro_usd:
+                                                type: "integer"
+                                              rows:
+                                                minimum: 0
+                                                type: "integer"
+                                              rows_measured_micro_usd:
+                                                type: "integer"
+                                              rows_unpriced:
+                                                minimum: 0
+                                                type: "integer"
+                                              settled_micro_usd:
+                                                type: "integer"
+                                              unlanded_holds:
+                                                minimum: 0
+                                                type: "integer"
+                                            required:
+                                              - "rows_measured_micro_usd"
+                                              - "rows_unpriced"
+                                              - "rows"
+                                              - "holds"
+                                              - "settled_micro_usd"
+                                              - "ambiguous_micro_usd"
+                                              - "reserved_micro_usd"
+                                              - "difference_micro_usd"
+                                              - "unlanded_holds"
+                                              - "complete"
+                                            type: "object"
+                                          execution_id:
+                                            type: "string"
+                                          outcome_hash:
+                                            nullable: true
+                                            type: "string"
+                                          pair_key:
+                                            type: "string"
+                                          slot:
+                                            maximum: 1
+                                            minimum: 0
+                                            type: "integer"
+                                          state:
+                                            description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                            enum:
+                                              - "no_outcome"
+                                              - "pending_rows"
+                                              - "cost_unsettled"
+                                              - "invalid"
+                                              - "complete"
+                                            type: "string"
+                                        required:
+                                          - "execution_id"
+                                          - "pair_key"
+                                          - "slot"
+                                          - "arm"
+                                          - "state"
+                                          - "outcome_hash"
+                                          - "cost"
+                                        type: "object"
+                                      type: "array"
+                                    judgements:
+                                      items:
+                                        properties:
+                                          judge:
+                                            type: "string"
+                                          judgement_hash:
+                                            type: "string"
+                                        required:
+                                          - "judge"
+                                          - "judgement_hash"
+                                        type: "object"
+                                      type: "array"
+                                    observations:
+                                      items:
+                                        properties:
+                                          attribute:
+                                            type: "string"
+                                          focus_value:
+                                            type: "string"
+                                        required:
+                                          - "attribute"
+                                          - "focus_value"
+                                        type: "object"
+                                      type: "array"
+                                    pairs:
+                                      items:
+                                        type: "string"
+                                      type: "array"
+                                    phase_holds:
+                                      properties:
+                                        ambiguous:
+                                          minimum: 0
+                                          type: "integer"
+                                        reserved:
+                                          minimum: 0
+                                          type: "integer"
+                                      required:
+                                        - "reserved"
+                                        - "ambiguous"
+                                      type: "object"
+                                  required:
+                                    - "pairs"
+                                    - "observations"
+                                    - "phase_holds"
+                                    - "cap_stopped"
+                                    - "candidate_withdrawn"
+                                    - "executions"
+                                    - "judgements"
+                                  type: "object"
+                                inputs_hash:
+                                  type: "string"
+                                prereg_hash:
+                                  type: "string"
+                                progress:
+                                  description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                                  properties:
+                                    cap_stopped:
+                                      description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                      type: "boolean"
+                                    executions_complete:
+                                      minimum: 0
+                                      type: "integer"
+                                    executions_cost_unsettled:
+                                      minimum: 0
+                                      type: "integer"
+                                    executions_enrolled:
+                                      minimum: 0
+                                      type: "integer"
+                                    executions_incomplete:
+                                      minimum: 0
+                                      type: "integer"
+                                    executions_invalid:
+                                      minimum: 0
+                                      type: "integer"
+                                    executions_pending_rows:
+                                      minimum: 0
+                                      type: "integer"
+                                    holds_ambiguous:
+                                      minimum: 0
+                                      type: "integer"
+                                    holds_reserved:
+                                      minimum: 0
+                                      type: "integer"
+                                    judgements_recorded:
+                                      minimum: 0
+                                      type: "integer"
+                                    judges_required:
+                                      minimum: 0
+                                      type: "integer"
+                                    outcomes_recorded:
+                                      minimum: 0
+                                      type: "integer"
+                                    pairs_complete:
+                                      minimum: 0
+                                      type: "integer"
+                                    pairs_total:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "pairs_total"
+                                    - "pairs_complete"
+                                    - "executions_enrolled"
+                                    - "outcomes_recorded"
+                                    - "executions_complete"
+                                    - "executions_incomplete"
+                                    - "executions_pending_rows"
+                                    - "executions_cost_unsettled"
+                                    - "executions_invalid"
+                                    - "holds_reserved"
+                                    - "holds_ambiguous"
+                                    - "judgements_recorded"
+                                    - "judges_required"
+                                    - "cap_stopped"
+                                  type: "object"
+                                rule:
+                                  description: "The frozen rule the verdict applied."
+                                  properties:
+                                    feature_min_margin:
+                                      type: "integer"
+                                    min_first_pass_rescues:
+                                      type: "integer"
+                                    unsupported_claim_codes:
+                                      items:
+                                        type: "string"
+                                      type: "array"
+                                  required:
+                                    - "feature_min_margin"
+                                    - "min_first_pass_rescues"
+                                    - "unsupported_claim_codes"
+                                  type: "object"
+                                rule_version:
+                                  type: "string"
+                                verdict:
+                                  enum:
+                                    - "screen_pass"
+                                    - "screen_fail"
+                                    - "screen_incomplete"
+                                  type: "string"
+                              required:
+                                - "verdict"
+                                - "failing_clauses"
+                                - "incomplete_reasons"
+                                - "clauses"
+                                - "progress"
+                                - "rule_version"
+                                - "rule"
+                                - "inputs"
+                                - "inputs_hash"
+                                - "candidate_hash"
+                                - "prereg_hash"
+                                - "created_at"
+                              type: "object"
+                          required:
+                            - "progress"
+                            - "executions"
+                            - "verdict"
+                          type: "object"
                         situation_class:
                           type: "string"
                         state:
@@ -17990,6 +18439,10 @@ paths:
                             - "refused"
                             - "candidate_frozen"
                             - "screening"
+                            - "screen_passed"
+                            - "screen_failed"
+                            - "screen_incomplete"
+                            - "awaiting_test_funding"
                             - "closed"
                             - "expired"
                             - "abandoned"
@@ -18106,6 +18559,37 @@ paths:
                         type: "string"
                       minItems: 1
                       type: "array"
+                    screen_judging:
+                      additionalProperties: false
+                      description: "The two preregistered blind judges — absent, the screen can never pass."
+                      properties:
+                        judges:
+                          description: "Exactly two distinct blind-judge keys."
+                          items:
+                            maxLength: 100
+                            minLength: 1
+                            type: "string"
+                          type: "array"
+                        rubric_id:
+                          description: "The frozen rubric id the judges judge under."
+                          maxLength: 200
+                          minLength: 1
+                          type: "string"
+                      required:
+                        - "rubric_id"
+                        - "judges"
+                      type: "object"
+                    screen_rule:
+                      additionalProperties: false
+                      description: "The preregistered screen-rule numbers — may only tighten the defaults."
+                      properties:
+                        feature_min_margin:
+                          description: "Treated first drafts showing the predicted value minus control ones must be ≥ this (default 0)."
+                          type: "integer"
+                        min_first_pass_rescues:
+                          description: "Pairs where treated delivers first-pass and control does not must be ≥ this (default 1)."
+                          type: "integer"
+                      type: "object"
                     screen_subcap_micro_usd:
                       description: "≤ $2 (2_000_000 µUSD)."
                       exclusiveMinimum: true
@@ -18514,6 +18998,447 @@ paths:
                           - "remaining_micro_usd"
                           - "phases"
                         type: "object"
+                      screen:
+                        default: null
+                        description: "The screen: barrier counts (no peeking) and, once computed, the verdict."
+                        nullable: true
+                        properties:
+                          executions:
+                            items:
+                              description: "One enrolled screen execution — ids, arm and standing only."
+                              properties:
+                                arm:
+                                  enum:
+                                    - "control"
+                                    - "treated"
+                                  type: "string"
+                                execution_id:
+                                  type: "string"
+                                pair_key:
+                                  type: "string"
+                                slot:
+                                  maximum: 1
+                                  minimum: 0
+                                  type: "integer"
+                                status:
+                                  description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                  enum:
+                                    - "no_outcome"
+                                    - "pending_rows"
+                                    - "cost_unsettled"
+                                    - "invalid"
+                                    - "complete"
+                                  type: "string"
+                              required:
+                                - "execution_id"
+                                - "pair_key"
+                                - "slot"
+                                - "arm"
+                                - "status"
+                              type: "object"
+                            type: "array"
+                          progress:
+                            description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                            properties:
+                              cap_stopped:
+                                description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                type: "boolean"
+                              executions_complete:
+                                minimum: 0
+                                type: "integer"
+                              executions_cost_unsettled:
+                                minimum: 0
+                                type: "integer"
+                              executions_enrolled:
+                                minimum: 0
+                                type: "integer"
+                              executions_incomplete:
+                                minimum: 0
+                                type: "integer"
+                              executions_invalid:
+                                minimum: 0
+                                type: "integer"
+                              executions_pending_rows:
+                                minimum: 0
+                                type: "integer"
+                              holds_ambiguous:
+                                minimum: 0
+                                type: "integer"
+                              holds_reserved:
+                                minimum: 0
+                                type: "integer"
+                              judgements_recorded:
+                                minimum: 0
+                                type: "integer"
+                              judges_required:
+                                minimum: 0
+                                type: "integer"
+                              outcomes_recorded:
+                                minimum: 0
+                                type: "integer"
+                              pairs_complete:
+                                minimum: 0
+                                type: "integer"
+                              pairs_total:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "pairs_total"
+                              - "pairs_complete"
+                              - "executions_enrolled"
+                              - "outcomes_recorded"
+                              - "executions_complete"
+                              - "executions_incomplete"
+                              - "executions_pending_rows"
+                              - "executions_cost_unsettled"
+                              - "executions_invalid"
+                              - "holds_reserved"
+                              - "holds_ambiguous"
+                              - "judgements_recorded"
+                              - "judges_required"
+                              - "cap_stopped"
+                            type: "object"
+                          verdict:
+                            description: "Null until the completion barrier is met and the verdict is stored."
+                            nullable: true
+                            properties:
+                              candidate_hash:
+                                type: "string"
+                              clauses:
+                                description: "Every clause with its counts (empty when incomplete — nothing is analysed)."
+                                items:
+                                  description: "One screen-rule clause and its counts."
+                                  properties:
+                                    clause:
+                                      enum:
+                                        - "a_feature_moved"
+                                        - "b_first_pass_rescue"
+                                        - "c_no_net_delivery_loss"
+                                        - "d_no_serious_treated_defect"
+                                        - "e_judges_no_degradation"
+                                      type: "string"
+                                    detail:
+                                      description: "The clause counts (each clause fills its own members; never a body)."
+                                      properties:
+                                        control_delivered:
+                                          type: "integer"
+                                        features:
+                                          description: "(a) each predicted feature, on the treated vs the control first drafts."
+                                          items:
+                                            properties:
+                                              attribute:
+                                                type: "string"
+                                              control_first_drafts_with_value:
+                                                type: "integer"
+                                              first_drafts_unmeasured:
+                                                type: "integer"
+                                              focus_value:
+                                                type: "string"
+                                              measurable:
+                                                type: "boolean"
+                                              moved:
+                                                type: "boolean"
+                                              reason:
+                                                type: "string"
+                                              treated_first_drafts_with_value:
+                                                type: "integer"
+                                            required:
+                                              - "attribute"
+                                              - "focus_value"
+                                              - "measurable"
+                                            type: "object"
+                                          type: "array"
+                                        min_margin:
+                                          type: "integer"
+                                        min_rescues:
+                                          type: "integer"
+                                        rescues:
+                                          type: "integer"
+                                        treated_delivered:
+                                          type: "integer"
+                                        treated_deliveries_judge_flagged:
+                                          type: "integer"
+                                        treated_deliveries_with_unsupported_claim:
+                                          type: "integer"
+                                        verdicts:
+                                          description: "(e) each preregistered judge’s verdict."
+                                          items:
+                                            properties:
+                                              judge:
+                                                type: "string"
+                                              verdict:
+                                                enum:
+                                                  - "no_evident_degradation"
+                                                  - "evident_degradation"
+                                                nullable: true
+                                                type: "string"
+                                            required:
+                                              - "judge"
+                                              - "verdict"
+                                            type: "object"
+                                          type: "array"
+                                      type: "object"
+                                    holds:
+                                      type: "boolean"
+                                  required:
+                                    - "clause"
+                                    - "holds"
+                                    - "detail"
+                                  type: "object"
+                                type: "array"
+                              created_at:
+                                type: "string"
+                              failing_clauses:
+                                description: "Every failing clause (screen_fail); empty otherwise."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              incomplete_reasons:
+                                description: "Why the screen can never complete (screen_incomplete): cap_stop, candidate_withdrawn, outcome_invalid:<execution>:<refusal>, pair_arms_not_opposite:<pair>, judging_not_preregistered."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              inputs:
+                                description: "The verdict inputs: each execution’s identity, arm, standing, outcome hash and cost reconciliation, and each judgement’s hash."
+                                properties:
+                                  candidate_withdrawn:
+                                    type: "boolean"
+                                  cap_stopped:
+                                    type: "boolean"
+                                  executions:
+                                    items:
+                                      properties:
+                                        arm:
+                                          enum:
+                                            - "control"
+                                            - "treated"
+                                          type: "string"
+                                        cost:
+                                          nullable: true
+                                          properties:
+                                            ambiguous_micro_usd:
+                                              type: "integer"
+                                            complete:
+                                              type: "boolean"
+                                            difference_micro_usd:
+                                              type: "integer"
+                                            holds:
+                                              minimum: 0
+                                              type: "integer"
+                                            reserved_micro_usd:
+                                              type: "integer"
+                                            rows:
+                                              minimum: 0
+                                              type: "integer"
+                                            rows_measured_micro_usd:
+                                              type: "integer"
+                                            rows_unpriced:
+                                              minimum: 0
+                                              type: "integer"
+                                            settled_micro_usd:
+                                              type: "integer"
+                                            unlanded_holds:
+                                              minimum: 0
+                                              type: "integer"
+                                          required:
+                                            - "rows_measured_micro_usd"
+                                            - "rows_unpriced"
+                                            - "rows"
+                                            - "holds"
+                                            - "settled_micro_usd"
+                                            - "ambiguous_micro_usd"
+                                            - "reserved_micro_usd"
+                                            - "difference_micro_usd"
+                                            - "unlanded_holds"
+                                            - "complete"
+                                          type: "object"
+                                        execution_id:
+                                          type: "string"
+                                        outcome_hash:
+                                          nullable: true
+                                          type: "string"
+                                        pair_key:
+                                          type: "string"
+                                        slot:
+                                          maximum: 1
+                                          minimum: 0
+                                          type: "integer"
+                                        state:
+                                          description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                          enum:
+                                            - "no_outcome"
+                                            - "pending_rows"
+                                            - "cost_unsettled"
+                                            - "invalid"
+                                            - "complete"
+                                          type: "string"
+                                      required:
+                                        - "execution_id"
+                                        - "pair_key"
+                                        - "slot"
+                                        - "arm"
+                                        - "state"
+                                        - "outcome_hash"
+                                        - "cost"
+                                      type: "object"
+                                    type: "array"
+                                  judgements:
+                                    items:
+                                      properties:
+                                        judge:
+                                          type: "string"
+                                        judgement_hash:
+                                          type: "string"
+                                      required:
+                                        - "judge"
+                                        - "judgement_hash"
+                                      type: "object"
+                                    type: "array"
+                                  observations:
+                                    items:
+                                      properties:
+                                        attribute:
+                                          type: "string"
+                                        focus_value:
+                                          type: "string"
+                                      required:
+                                        - "attribute"
+                                        - "focus_value"
+                                      type: "object"
+                                    type: "array"
+                                  pairs:
+                                    items:
+                                      type: "string"
+                                    type: "array"
+                                  phase_holds:
+                                    properties:
+                                      ambiguous:
+                                        minimum: 0
+                                        type: "integer"
+                                      reserved:
+                                        minimum: 0
+                                        type: "integer"
+                                    required:
+                                      - "reserved"
+                                      - "ambiguous"
+                                    type: "object"
+                                required:
+                                  - "pairs"
+                                  - "observations"
+                                  - "phase_holds"
+                                  - "cap_stopped"
+                                  - "candidate_withdrawn"
+                                  - "executions"
+                                  - "judgements"
+                                type: "object"
+                              inputs_hash:
+                                type: "string"
+                              prereg_hash:
+                                type: "string"
+                              progress:
+                                description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                                properties:
+                                  cap_stopped:
+                                    description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                    type: "boolean"
+                                  executions_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_cost_unsettled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_enrolled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_incomplete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_invalid:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_pending_rows:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_ambiguous:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_reserved:
+                                    minimum: 0
+                                    type: "integer"
+                                  judgements_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  judges_required:
+                                    minimum: 0
+                                    type: "integer"
+                                  outcomes_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_total:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pairs_total"
+                                  - "pairs_complete"
+                                  - "executions_enrolled"
+                                  - "outcomes_recorded"
+                                  - "executions_complete"
+                                  - "executions_incomplete"
+                                  - "executions_pending_rows"
+                                  - "executions_cost_unsettled"
+                                  - "executions_invalid"
+                                  - "holds_reserved"
+                                  - "holds_ambiguous"
+                                  - "judgements_recorded"
+                                  - "judges_required"
+                                  - "cap_stopped"
+                                type: "object"
+                              rule:
+                                description: "The frozen rule the verdict applied."
+                                properties:
+                                  feature_min_margin:
+                                    type: "integer"
+                                  min_first_pass_rescues:
+                                    type: "integer"
+                                  unsupported_claim_codes:
+                                    items:
+                                      type: "string"
+                                    type: "array"
+                                required:
+                                  - "feature_min_margin"
+                                  - "min_first_pass_rescues"
+                                  - "unsupported_claim_codes"
+                                type: "object"
+                              rule_version:
+                                type: "string"
+                              verdict:
+                                enum:
+                                  - "screen_pass"
+                                  - "screen_fail"
+                                  - "screen_incomplete"
+                                type: "string"
+                            required:
+                              - "verdict"
+                              - "failing_clauses"
+                              - "incomplete_reasons"
+                              - "clauses"
+                              - "progress"
+                              - "rule_version"
+                              - "rule"
+                              - "inputs"
+                              - "inputs_hash"
+                              - "candidate_hash"
+                              - "prereg_hash"
+                              - "created_at"
+                            type: "object"
+                        required:
+                          - "progress"
+                          - "executions"
+                          - "verdict"
+                        type: "object"
                       situation_class:
                         type: "string"
                       state:
@@ -18522,6 +19447,10 @@ paths:
                           - "refused"
                           - "candidate_frozen"
                           - "screening"
+                          - "screen_passed"
+                          - "screen_failed"
+                          - "screen_incomplete"
+                          - "awaiting_test_funding"
                           - "closed"
                           - "expired"
                           - "abandoned"
@@ -18972,6 +19901,447 @@ paths:
                           - "remaining_micro_usd"
                           - "phases"
                         type: "object"
+                      screen:
+                        default: null
+                        description: "The screen: barrier counts (no peeking) and, once computed, the verdict."
+                        nullable: true
+                        properties:
+                          executions:
+                            items:
+                              description: "One enrolled screen execution — ids, arm and standing only."
+                              properties:
+                                arm:
+                                  enum:
+                                    - "control"
+                                    - "treated"
+                                  type: "string"
+                                execution_id:
+                                  type: "string"
+                                pair_key:
+                                  type: "string"
+                                slot:
+                                  maximum: 1
+                                  minimum: 0
+                                  type: "integer"
+                                status:
+                                  description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                  enum:
+                                    - "no_outcome"
+                                    - "pending_rows"
+                                    - "cost_unsettled"
+                                    - "invalid"
+                                    - "complete"
+                                  type: "string"
+                              required:
+                                - "execution_id"
+                                - "pair_key"
+                                - "slot"
+                                - "arm"
+                                - "status"
+                              type: "object"
+                            type: "array"
+                          progress:
+                            description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                            properties:
+                              cap_stopped:
+                                description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                type: "boolean"
+                              executions_complete:
+                                minimum: 0
+                                type: "integer"
+                              executions_cost_unsettled:
+                                minimum: 0
+                                type: "integer"
+                              executions_enrolled:
+                                minimum: 0
+                                type: "integer"
+                              executions_incomplete:
+                                minimum: 0
+                                type: "integer"
+                              executions_invalid:
+                                minimum: 0
+                                type: "integer"
+                              executions_pending_rows:
+                                minimum: 0
+                                type: "integer"
+                              holds_ambiguous:
+                                minimum: 0
+                                type: "integer"
+                              holds_reserved:
+                                minimum: 0
+                                type: "integer"
+                              judgements_recorded:
+                                minimum: 0
+                                type: "integer"
+                              judges_required:
+                                minimum: 0
+                                type: "integer"
+                              outcomes_recorded:
+                                minimum: 0
+                                type: "integer"
+                              pairs_complete:
+                                minimum: 0
+                                type: "integer"
+                              pairs_total:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "pairs_total"
+                              - "pairs_complete"
+                              - "executions_enrolled"
+                              - "outcomes_recorded"
+                              - "executions_complete"
+                              - "executions_incomplete"
+                              - "executions_pending_rows"
+                              - "executions_cost_unsettled"
+                              - "executions_invalid"
+                              - "holds_reserved"
+                              - "holds_ambiguous"
+                              - "judgements_recorded"
+                              - "judges_required"
+                              - "cap_stopped"
+                            type: "object"
+                          verdict:
+                            description: "Null until the completion barrier is met and the verdict is stored."
+                            nullable: true
+                            properties:
+                              candidate_hash:
+                                type: "string"
+                              clauses:
+                                description: "Every clause with its counts (empty when incomplete — nothing is analysed)."
+                                items:
+                                  description: "One screen-rule clause and its counts."
+                                  properties:
+                                    clause:
+                                      enum:
+                                        - "a_feature_moved"
+                                        - "b_first_pass_rescue"
+                                        - "c_no_net_delivery_loss"
+                                        - "d_no_serious_treated_defect"
+                                        - "e_judges_no_degradation"
+                                      type: "string"
+                                    detail:
+                                      description: "The clause counts (each clause fills its own members; never a body)."
+                                      properties:
+                                        control_delivered:
+                                          type: "integer"
+                                        features:
+                                          description: "(a) each predicted feature, on the treated vs the control first drafts."
+                                          items:
+                                            properties:
+                                              attribute:
+                                                type: "string"
+                                              control_first_drafts_with_value:
+                                                type: "integer"
+                                              first_drafts_unmeasured:
+                                                type: "integer"
+                                              focus_value:
+                                                type: "string"
+                                              measurable:
+                                                type: "boolean"
+                                              moved:
+                                                type: "boolean"
+                                              reason:
+                                                type: "string"
+                                              treated_first_drafts_with_value:
+                                                type: "integer"
+                                            required:
+                                              - "attribute"
+                                              - "focus_value"
+                                              - "measurable"
+                                            type: "object"
+                                          type: "array"
+                                        min_margin:
+                                          type: "integer"
+                                        min_rescues:
+                                          type: "integer"
+                                        rescues:
+                                          type: "integer"
+                                        treated_delivered:
+                                          type: "integer"
+                                        treated_deliveries_judge_flagged:
+                                          type: "integer"
+                                        treated_deliveries_with_unsupported_claim:
+                                          type: "integer"
+                                        verdicts:
+                                          description: "(e) each preregistered judge’s verdict."
+                                          items:
+                                            properties:
+                                              judge:
+                                                type: "string"
+                                              verdict:
+                                                enum:
+                                                  - "no_evident_degradation"
+                                                  - "evident_degradation"
+                                                nullable: true
+                                                type: "string"
+                                            required:
+                                              - "judge"
+                                              - "verdict"
+                                            type: "object"
+                                          type: "array"
+                                      type: "object"
+                                    holds:
+                                      type: "boolean"
+                                  required:
+                                    - "clause"
+                                    - "holds"
+                                    - "detail"
+                                  type: "object"
+                                type: "array"
+                              created_at:
+                                type: "string"
+                              failing_clauses:
+                                description: "Every failing clause (screen_fail); empty otherwise."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              incomplete_reasons:
+                                description: "Why the screen can never complete (screen_incomplete): cap_stop, candidate_withdrawn, outcome_invalid:<execution>:<refusal>, pair_arms_not_opposite:<pair>, judging_not_preregistered."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              inputs:
+                                description: "The verdict inputs: each execution’s identity, arm, standing, outcome hash and cost reconciliation, and each judgement’s hash."
+                                properties:
+                                  candidate_withdrawn:
+                                    type: "boolean"
+                                  cap_stopped:
+                                    type: "boolean"
+                                  executions:
+                                    items:
+                                      properties:
+                                        arm:
+                                          enum:
+                                            - "control"
+                                            - "treated"
+                                          type: "string"
+                                        cost:
+                                          nullable: true
+                                          properties:
+                                            ambiguous_micro_usd:
+                                              type: "integer"
+                                            complete:
+                                              type: "boolean"
+                                            difference_micro_usd:
+                                              type: "integer"
+                                            holds:
+                                              minimum: 0
+                                              type: "integer"
+                                            reserved_micro_usd:
+                                              type: "integer"
+                                            rows:
+                                              minimum: 0
+                                              type: "integer"
+                                            rows_measured_micro_usd:
+                                              type: "integer"
+                                            rows_unpriced:
+                                              minimum: 0
+                                              type: "integer"
+                                            settled_micro_usd:
+                                              type: "integer"
+                                            unlanded_holds:
+                                              minimum: 0
+                                              type: "integer"
+                                          required:
+                                            - "rows_measured_micro_usd"
+                                            - "rows_unpriced"
+                                            - "rows"
+                                            - "holds"
+                                            - "settled_micro_usd"
+                                            - "ambiguous_micro_usd"
+                                            - "reserved_micro_usd"
+                                            - "difference_micro_usd"
+                                            - "unlanded_holds"
+                                            - "complete"
+                                          type: "object"
+                                        execution_id:
+                                          type: "string"
+                                        outcome_hash:
+                                          nullable: true
+                                          type: "string"
+                                        pair_key:
+                                          type: "string"
+                                        slot:
+                                          maximum: 1
+                                          minimum: 0
+                                          type: "integer"
+                                        state:
+                                          description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                          enum:
+                                            - "no_outcome"
+                                            - "pending_rows"
+                                            - "cost_unsettled"
+                                            - "invalid"
+                                            - "complete"
+                                          type: "string"
+                                      required:
+                                        - "execution_id"
+                                        - "pair_key"
+                                        - "slot"
+                                        - "arm"
+                                        - "state"
+                                        - "outcome_hash"
+                                        - "cost"
+                                      type: "object"
+                                    type: "array"
+                                  judgements:
+                                    items:
+                                      properties:
+                                        judge:
+                                          type: "string"
+                                        judgement_hash:
+                                          type: "string"
+                                      required:
+                                        - "judge"
+                                        - "judgement_hash"
+                                      type: "object"
+                                    type: "array"
+                                  observations:
+                                    items:
+                                      properties:
+                                        attribute:
+                                          type: "string"
+                                        focus_value:
+                                          type: "string"
+                                      required:
+                                        - "attribute"
+                                        - "focus_value"
+                                      type: "object"
+                                    type: "array"
+                                  pairs:
+                                    items:
+                                      type: "string"
+                                    type: "array"
+                                  phase_holds:
+                                    properties:
+                                      ambiguous:
+                                        minimum: 0
+                                        type: "integer"
+                                      reserved:
+                                        minimum: 0
+                                        type: "integer"
+                                    required:
+                                      - "reserved"
+                                      - "ambiguous"
+                                    type: "object"
+                                required:
+                                  - "pairs"
+                                  - "observations"
+                                  - "phase_holds"
+                                  - "cap_stopped"
+                                  - "candidate_withdrawn"
+                                  - "executions"
+                                  - "judgements"
+                                type: "object"
+                              inputs_hash:
+                                type: "string"
+                              prereg_hash:
+                                type: "string"
+                              progress:
+                                description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                                properties:
+                                  cap_stopped:
+                                    description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                    type: "boolean"
+                                  executions_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_cost_unsettled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_enrolled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_incomplete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_invalid:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_pending_rows:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_ambiguous:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_reserved:
+                                    minimum: 0
+                                    type: "integer"
+                                  judgements_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  judges_required:
+                                    minimum: 0
+                                    type: "integer"
+                                  outcomes_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_total:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pairs_total"
+                                  - "pairs_complete"
+                                  - "executions_enrolled"
+                                  - "outcomes_recorded"
+                                  - "executions_complete"
+                                  - "executions_incomplete"
+                                  - "executions_pending_rows"
+                                  - "executions_cost_unsettled"
+                                  - "executions_invalid"
+                                  - "holds_reserved"
+                                  - "holds_ambiguous"
+                                  - "judgements_recorded"
+                                  - "judges_required"
+                                  - "cap_stopped"
+                                type: "object"
+                              rule:
+                                description: "The frozen rule the verdict applied."
+                                properties:
+                                  feature_min_margin:
+                                    type: "integer"
+                                  min_first_pass_rescues:
+                                    type: "integer"
+                                  unsupported_claim_codes:
+                                    items:
+                                      type: "string"
+                                    type: "array"
+                                required:
+                                  - "feature_min_margin"
+                                  - "min_first_pass_rescues"
+                                  - "unsupported_claim_codes"
+                                type: "object"
+                              rule_version:
+                                type: "string"
+                              verdict:
+                                enum:
+                                  - "screen_pass"
+                                  - "screen_fail"
+                                  - "screen_incomplete"
+                                type: "string"
+                            required:
+                              - "verdict"
+                              - "failing_clauses"
+                              - "incomplete_reasons"
+                              - "clauses"
+                              - "progress"
+                              - "rule_version"
+                              - "rule"
+                              - "inputs"
+                              - "inputs_hash"
+                              - "candidate_hash"
+                              - "prereg_hash"
+                              - "created_at"
+                            type: "object"
+                        required:
+                          - "progress"
+                          - "executions"
+                          - "verdict"
+                        type: "object"
                       situation_class:
                         type: "string"
                       state:
@@ -18980,6 +20350,10 @@ paths:
                           - "refused"
                           - "candidate_frozen"
                           - "screening"
+                          - "screen_passed"
+                          - "screen_failed"
+                          - "screen_incomplete"
+                          - "awaiting_test_funding"
                           - "closed"
                           - "expired"
                           - "abandoned"
@@ -19422,6 +20796,447 @@ paths:
                           - "remaining_micro_usd"
                           - "phases"
                         type: "object"
+                      screen:
+                        default: null
+                        description: "The screen: barrier counts (no peeking) and, once computed, the verdict."
+                        nullable: true
+                        properties:
+                          executions:
+                            items:
+                              description: "One enrolled screen execution — ids, arm and standing only."
+                              properties:
+                                arm:
+                                  enum:
+                                    - "control"
+                                    - "treated"
+                                  type: "string"
+                                execution_id:
+                                  type: "string"
+                                pair_key:
+                                  type: "string"
+                                slot:
+                                  maximum: 1
+                                  minimum: 0
+                                  type: "integer"
+                                status:
+                                  description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                  enum:
+                                    - "no_outcome"
+                                    - "pending_rows"
+                                    - "cost_unsettled"
+                                    - "invalid"
+                                    - "complete"
+                                  type: "string"
+                              required:
+                                - "execution_id"
+                                - "pair_key"
+                                - "slot"
+                                - "arm"
+                                - "status"
+                              type: "object"
+                            type: "array"
+                          progress:
+                            description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                            properties:
+                              cap_stopped:
+                                description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                type: "boolean"
+                              executions_complete:
+                                minimum: 0
+                                type: "integer"
+                              executions_cost_unsettled:
+                                minimum: 0
+                                type: "integer"
+                              executions_enrolled:
+                                minimum: 0
+                                type: "integer"
+                              executions_incomplete:
+                                minimum: 0
+                                type: "integer"
+                              executions_invalid:
+                                minimum: 0
+                                type: "integer"
+                              executions_pending_rows:
+                                minimum: 0
+                                type: "integer"
+                              holds_ambiguous:
+                                minimum: 0
+                                type: "integer"
+                              holds_reserved:
+                                minimum: 0
+                                type: "integer"
+                              judgements_recorded:
+                                minimum: 0
+                                type: "integer"
+                              judges_required:
+                                minimum: 0
+                                type: "integer"
+                              outcomes_recorded:
+                                minimum: 0
+                                type: "integer"
+                              pairs_complete:
+                                minimum: 0
+                                type: "integer"
+                              pairs_total:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "pairs_total"
+                              - "pairs_complete"
+                              - "executions_enrolled"
+                              - "outcomes_recorded"
+                              - "executions_complete"
+                              - "executions_incomplete"
+                              - "executions_pending_rows"
+                              - "executions_cost_unsettled"
+                              - "executions_invalid"
+                              - "holds_reserved"
+                              - "holds_ambiguous"
+                              - "judgements_recorded"
+                              - "judges_required"
+                              - "cap_stopped"
+                            type: "object"
+                          verdict:
+                            description: "Null until the completion barrier is met and the verdict is stored."
+                            nullable: true
+                            properties:
+                              candidate_hash:
+                                type: "string"
+                              clauses:
+                                description: "Every clause with its counts (empty when incomplete — nothing is analysed)."
+                                items:
+                                  description: "One screen-rule clause and its counts."
+                                  properties:
+                                    clause:
+                                      enum:
+                                        - "a_feature_moved"
+                                        - "b_first_pass_rescue"
+                                        - "c_no_net_delivery_loss"
+                                        - "d_no_serious_treated_defect"
+                                        - "e_judges_no_degradation"
+                                      type: "string"
+                                    detail:
+                                      description: "The clause counts (each clause fills its own members; never a body)."
+                                      properties:
+                                        control_delivered:
+                                          type: "integer"
+                                        features:
+                                          description: "(a) each predicted feature, on the treated vs the control first drafts."
+                                          items:
+                                            properties:
+                                              attribute:
+                                                type: "string"
+                                              control_first_drafts_with_value:
+                                                type: "integer"
+                                              first_drafts_unmeasured:
+                                                type: "integer"
+                                              focus_value:
+                                                type: "string"
+                                              measurable:
+                                                type: "boolean"
+                                              moved:
+                                                type: "boolean"
+                                              reason:
+                                                type: "string"
+                                              treated_first_drafts_with_value:
+                                                type: "integer"
+                                            required:
+                                              - "attribute"
+                                              - "focus_value"
+                                              - "measurable"
+                                            type: "object"
+                                          type: "array"
+                                        min_margin:
+                                          type: "integer"
+                                        min_rescues:
+                                          type: "integer"
+                                        rescues:
+                                          type: "integer"
+                                        treated_delivered:
+                                          type: "integer"
+                                        treated_deliveries_judge_flagged:
+                                          type: "integer"
+                                        treated_deliveries_with_unsupported_claim:
+                                          type: "integer"
+                                        verdicts:
+                                          description: "(e) each preregistered judge’s verdict."
+                                          items:
+                                            properties:
+                                              judge:
+                                                type: "string"
+                                              verdict:
+                                                enum:
+                                                  - "no_evident_degradation"
+                                                  - "evident_degradation"
+                                                nullable: true
+                                                type: "string"
+                                            required:
+                                              - "judge"
+                                              - "verdict"
+                                            type: "object"
+                                          type: "array"
+                                      type: "object"
+                                    holds:
+                                      type: "boolean"
+                                  required:
+                                    - "clause"
+                                    - "holds"
+                                    - "detail"
+                                  type: "object"
+                                type: "array"
+                              created_at:
+                                type: "string"
+                              failing_clauses:
+                                description: "Every failing clause (screen_fail); empty otherwise."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              incomplete_reasons:
+                                description: "Why the screen can never complete (screen_incomplete): cap_stop, candidate_withdrawn, outcome_invalid:<execution>:<refusal>, pair_arms_not_opposite:<pair>, judging_not_preregistered."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              inputs:
+                                description: "The verdict inputs: each execution’s identity, arm, standing, outcome hash and cost reconciliation, and each judgement’s hash."
+                                properties:
+                                  candidate_withdrawn:
+                                    type: "boolean"
+                                  cap_stopped:
+                                    type: "boolean"
+                                  executions:
+                                    items:
+                                      properties:
+                                        arm:
+                                          enum:
+                                            - "control"
+                                            - "treated"
+                                          type: "string"
+                                        cost:
+                                          nullable: true
+                                          properties:
+                                            ambiguous_micro_usd:
+                                              type: "integer"
+                                            complete:
+                                              type: "boolean"
+                                            difference_micro_usd:
+                                              type: "integer"
+                                            holds:
+                                              minimum: 0
+                                              type: "integer"
+                                            reserved_micro_usd:
+                                              type: "integer"
+                                            rows:
+                                              minimum: 0
+                                              type: "integer"
+                                            rows_measured_micro_usd:
+                                              type: "integer"
+                                            rows_unpriced:
+                                              minimum: 0
+                                              type: "integer"
+                                            settled_micro_usd:
+                                              type: "integer"
+                                            unlanded_holds:
+                                              minimum: 0
+                                              type: "integer"
+                                          required:
+                                            - "rows_measured_micro_usd"
+                                            - "rows_unpriced"
+                                            - "rows"
+                                            - "holds"
+                                            - "settled_micro_usd"
+                                            - "ambiguous_micro_usd"
+                                            - "reserved_micro_usd"
+                                            - "difference_micro_usd"
+                                            - "unlanded_holds"
+                                            - "complete"
+                                          type: "object"
+                                        execution_id:
+                                          type: "string"
+                                        outcome_hash:
+                                          nullable: true
+                                          type: "string"
+                                        pair_key:
+                                          type: "string"
+                                        slot:
+                                          maximum: 1
+                                          minimum: 0
+                                          type: "integer"
+                                        state:
+                                          description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                          enum:
+                                            - "no_outcome"
+                                            - "pending_rows"
+                                            - "cost_unsettled"
+                                            - "invalid"
+                                            - "complete"
+                                          type: "string"
+                                      required:
+                                        - "execution_id"
+                                        - "pair_key"
+                                        - "slot"
+                                        - "arm"
+                                        - "state"
+                                        - "outcome_hash"
+                                        - "cost"
+                                      type: "object"
+                                    type: "array"
+                                  judgements:
+                                    items:
+                                      properties:
+                                        judge:
+                                          type: "string"
+                                        judgement_hash:
+                                          type: "string"
+                                      required:
+                                        - "judge"
+                                        - "judgement_hash"
+                                      type: "object"
+                                    type: "array"
+                                  observations:
+                                    items:
+                                      properties:
+                                        attribute:
+                                          type: "string"
+                                        focus_value:
+                                          type: "string"
+                                      required:
+                                        - "attribute"
+                                        - "focus_value"
+                                      type: "object"
+                                    type: "array"
+                                  pairs:
+                                    items:
+                                      type: "string"
+                                    type: "array"
+                                  phase_holds:
+                                    properties:
+                                      ambiguous:
+                                        minimum: 0
+                                        type: "integer"
+                                      reserved:
+                                        minimum: 0
+                                        type: "integer"
+                                    required:
+                                      - "reserved"
+                                      - "ambiguous"
+                                    type: "object"
+                                required:
+                                  - "pairs"
+                                  - "observations"
+                                  - "phase_holds"
+                                  - "cap_stopped"
+                                  - "candidate_withdrawn"
+                                  - "executions"
+                                  - "judgements"
+                                type: "object"
+                              inputs_hash:
+                                type: "string"
+                              prereg_hash:
+                                type: "string"
+                              progress:
+                                description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                                properties:
+                                  cap_stopped:
+                                    description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                    type: "boolean"
+                                  executions_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_cost_unsettled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_enrolled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_incomplete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_invalid:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_pending_rows:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_ambiguous:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_reserved:
+                                    minimum: 0
+                                    type: "integer"
+                                  judgements_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  judges_required:
+                                    minimum: 0
+                                    type: "integer"
+                                  outcomes_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_total:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pairs_total"
+                                  - "pairs_complete"
+                                  - "executions_enrolled"
+                                  - "outcomes_recorded"
+                                  - "executions_complete"
+                                  - "executions_incomplete"
+                                  - "executions_pending_rows"
+                                  - "executions_cost_unsettled"
+                                  - "executions_invalid"
+                                  - "holds_reserved"
+                                  - "holds_ambiguous"
+                                  - "judgements_recorded"
+                                  - "judges_required"
+                                  - "cap_stopped"
+                                type: "object"
+                              rule:
+                                description: "The frozen rule the verdict applied."
+                                properties:
+                                  feature_min_margin:
+                                    type: "integer"
+                                  min_first_pass_rescues:
+                                    type: "integer"
+                                  unsupported_claim_codes:
+                                    items:
+                                      type: "string"
+                                    type: "array"
+                                required:
+                                  - "feature_min_margin"
+                                  - "min_first_pass_rescues"
+                                  - "unsupported_claim_codes"
+                                type: "object"
+                              rule_version:
+                                type: "string"
+                              verdict:
+                                enum:
+                                  - "screen_pass"
+                                  - "screen_fail"
+                                  - "screen_incomplete"
+                                type: "string"
+                            required:
+                              - "verdict"
+                              - "failing_clauses"
+                              - "incomplete_reasons"
+                              - "clauses"
+                              - "progress"
+                              - "rule_version"
+                              - "rule"
+                              - "inputs"
+                              - "inputs_hash"
+                              - "candidate_hash"
+                              - "prereg_hash"
+                              - "created_at"
+                            type: "object"
+                        required:
+                          - "progress"
+                          - "executions"
+                          - "verdict"
+                        type: "object"
                       situation_class:
                         type: "string"
                       state:
@@ -19430,6 +21245,10 @@ paths:
                           - "refused"
                           - "candidate_frozen"
                           - "screening"
+                          - "screen_passed"
+                          - "screen_failed"
+                          - "screen_incomplete"
+                          - "awaiting_test_funding"
                           - "closed"
                           - "expired"
                           - "abandoned"
@@ -19872,6 +21691,447 @@ paths:
                           - "remaining_micro_usd"
                           - "phases"
                         type: "object"
+                      screen:
+                        default: null
+                        description: "The screen: barrier counts (no peeking) and, once computed, the verdict."
+                        nullable: true
+                        properties:
+                          executions:
+                            items:
+                              description: "One enrolled screen execution — ids, arm and standing only."
+                              properties:
+                                arm:
+                                  enum:
+                                    - "control"
+                                    - "treated"
+                                  type: "string"
+                                execution_id:
+                                  type: "string"
+                                pair_key:
+                                  type: "string"
+                                slot:
+                                  maximum: 1
+                                  minimum: 0
+                                  type: "integer"
+                                status:
+                                  description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                  enum:
+                                    - "no_outcome"
+                                    - "pending_rows"
+                                    - "cost_unsettled"
+                                    - "invalid"
+                                    - "complete"
+                                  type: "string"
+                              required:
+                                - "execution_id"
+                                - "pair_key"
+                                - "slot"
+                                - "arm"
+                                - "status"
+                              type: "object"
+                            type: "array"
+                          progress:
+                            description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                            properties:
+                              cap_stopped:
+                                description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                type: "boolean"
+                              executions_complete:
+                                minimum: 0
+                                type: "integer"
+                              executions_cost_unsettled:
+                                minimum: 0
+                                type: "integer"
+                              executions_enrolled:
+                                minimum: 0
+                                type: "integer"
+                              executions_incomplete:
+                                minimum: 0
+                                type: "integer"
+                              executions_invalid:
+                                minimum: 0
+                                type: "integer"
+                              executions_pending_rows:
+                                minimum: 0
+                                type: "integer"
+                              holds_ambiguous:
+                                minimum: 0
+                                type: "integer"
+                              holds_reserved:
+                                minimum: 0
+                                type: "integer"
+                              judgements_recorded:
+                                minimum: 0
+                                type: "integer"
+                              judges_required:
+                                minimum: 0
+                                type: "integer"
+                              outcomes_recorded:
+                                minimum: 0
+                                type: "integer"
+                              pairs_complete:
+                                minimum: 0
+                                type: "integer"
+                              pairs_total:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "pairs_total"
+                              - "pairs_complete"
+                              - "executions_enrolled"
+                              - "outcomes_recorded"
+                              - "executions_complete"
+                              - "executions_incomplete"
+                              - "executions_pending_rows"
+                              - "executions_cost_unsettled"
+                              - "executions_invalid"
+                              - "holds_reserved"
+                              - "holds_ambiguous"
+                              - "judgements_recorded"
+                              - "judges_required"
+                              - "cap_stopped"
+                            type: "object"
+                          verdict:
+                            description: "Null until the completion barrier is met and the verdict is stored."
+                            nullable: true
+                            properties:
+                              candidate_hash:
+                                type: "string"
+                              clauses:
+                                description: "Every clause with its counts (empty when incomplete — nothing is analysed)."
+                                items:
+                                  description: "One screen-rule clause and its counts."
+                                  properties:
+                                    clause:
+                                      enum:
+                                        - "a_feature_moved"
+                                        - "b_first_pass_rescue"
+                                        - "c_no_net_delivery_loss"
+                                        - "d_no_serious_treated_defect"
+                                        - "e_judges_no_degradation"
+                                      type: "string"
+                                    detail:
+                                      description: "The clause counts (each clause fills its own members; never a body)."
+                                      properties:
+                                        control_delivered:
+                                          type: "integer"
+                                        features:
+                                          description: "(a) each predicted feature, on the treated vs the control first drafts."
+                                          items:
+                                            properties:
+                                              attribute:
+                                                type: "string"
+                                              control_first_drafts_with_value:
+                                                type: "integer"
+                                              first_drafts_unmeasured:
+                                                type: "integer"
+                                              focus_value:
+                                                type: "string"
+                                              measurable:
+                                                type: "boolean"
+                                              moved:
+                                                type: "boolean"
+                                              reason:
+                                                type: "string"
+                                              treated_first_drafts_with_value:
+                                                type: "integer"
+                                            required:
+                                              - "attribute"
+                                              - "focus_value"
+                                              - "measurable"
+                                            type: "object"
+                                          type: "array"
+                                        min_margin:
+                                          type: "integer"
+                                        min_rescues:
+                                          type: "integer"
+                                        rescues:
+                                          type: "integer"
+                                        treated_delivered:
+                                          type: "integer"
+                                        treated_deliveries_judge_flagged:
+                                          type: "integer"
+                                        treated_deliveries_with_unsupported_claim:
+                                          type: "integer"
+                                        verdicts:
+                                          description: "(e) each preregistered judge’s verdict."
+                                          items:
+                                            properties:
+                                              judge:
+                                                type: "string"
+                                              verdict:
+                                                enum:
+                                                  - "no_evident_degradation"
+                                                  - "evident_degradation"
+                                                nullable: true
+                                                type: "string"
+                                            required:
+                                              - "judge"
+                                              - "verdict"
+                                            type: "object"
+                                          type: "array"
+                                      type: "object"
+                                    holds:
+                                      type: "boolean"
+                                  required:
+                                    - "clause"
+                                    - "holds"
+                                    - "detail"
+                                  type: "object"
+                                type: "array"
+                              created_at:
+                                type: "string"
+                              failing_clauses:
+                                description: "Every failing clause (screen_fail); empty otherwise."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              incomplete_reasons:
+                                description: "Why the screen can never complete (screen_incomplete): cap_stop, candidate_withdrawn, outcome_invalid:<execution>:<refusal>, pair_arms_not_opposite:<pair>, judging_not_preregistered."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              inputs:
+                                description: "The verdict inputs: each execution’s identity, arm, standing, outcome hash and cost reconciliation, and each judgement’s hash."
+                                properties:
+                                  candidate_withdrawn:
+                                    type: "boolean"
+                                  cap_stopped:
+                                    type: "boolean"
+                                  executions:
+                                    items:
+                                      properties:
+                                        arm:
+                                          enum:
+                                            - "control"
+                                            - "treated"
+                                          type: "string"
+                                        cost:
+                                          nullable: true
+                                          properties:
+                                            ambiguous_micro_usd:
+                                              type: "integer"
+                                            complete:
+                                              type: "boolean"
+                                            difference_micro_usd:
+                                              type: "integer"
+                                            holds:
+                                              minimum: 0
+                                              type: "integer"
+                                            reserved_micro_usd:
+                                              type: "integer"
+                                            rows:
+                                              minimum: 0
+                                              type: "integer"
+                                            rows_measured_micro_usd:
+                                              type: "integer"
+                                            rows_unpriced:
+                                              minimum: 0
+                                              type: "integer"
+                                            settled_micro_usd:
+                                              type: "integer"
+                                            unlanded_holds:
+                                              minimum: 0
+                                              type: "integer"
+                                          required:
+                                            - "rows_measured_micro_usd"
+                                            - "rows_unpriced"
+                                            - "rows"
+                                            - "holds"
+                                            - "settled_micro_usd"
+                                            - "ambiguous_micro_usd"
+                                            - "reserved_micro_usd"
+                                            - "difference_micro_usd"
+                                            - "unlanded_holds"
+                                            - "complete"
+                                          type: "object"
+                                        execution_id:
+                                          type: "string"
+                                        outcome_hash:
+                                          nullable: true
+                                          type: "string"
+                                        pair_key:
+                                          type: "string"
+                                        slot:
+                                          maximum: 1
+                                          minimum: 0
+                                          type: "integer"
+                                        state:
+                                          description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                          enum:
+                                            - "no_outcome"
+                                            - "pending_rows"
+                                            - "cost_unsettled"
+                                            - "invalid"
+                                            - "complete"
+                                          type: "string"
+                                      required:
+                                        - "execution_id"
+                                        - "pair_key"
+                                        - "slot"
+                                        - "arm"
+                                        - "state"
+                                        - "outcome_hash"
+                                        - "cost"
+                                      type: "object"
+                                    type: "array"
+                                  judgements:
+                                    items:
+                                      properties:
+                                        judge:
+                                          type: "string"
+                                        judgement_hash:
+                                          type: "string"
+                                      required:
+                                        - "judge"
+                                        - "judgement_hash"
+                                      type: "object"
+                                    type: "array"
+                                  observations:
+                                    items:
+                                      properties:
+                                        attribute:
+                                          type: "string"
+                                        focus_value:
+                                          type: "string"
+                                      required:
+                                        - "attribute"
+                                        - "focus_value"
+                                      type: "object"
+                                    type: "array"
+                                  pairs:
+                                    items:
+                                      type: "string"
+                                    type: "array"
+                                  phase_holds:
+                                    properties:
+                                      ambiguous:
+                                        minimum: 0
+                                        type: "integer"
+                                      reserved:
+                                        minimum: 0
+                                        type: "integer"
+                                    required:
+                                      - "reserved"
+                                      - "ambiguous"
+                                    type: "object"
+                                required:
+                                  - "pairs"
+                                  - "observations"
+                                  - "phase_holds"
+                                  - "cap_stopped"
+                                  - "candidate_withdrawn"
+                                  - "executions"
+                                  - "judgements"
+                                type: "object"
+                              inputs_hash:
+                                type: "string"
+                              prereg_hash:
+                                type: "string"
+                              progress:
+                                description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                                properties:
+                                  cap_stopped:
+                                    description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                    type: "boolean"
+                                  executions_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_cost_unsettled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_enrolled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_incomplete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_invalid:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_pending_rows:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_ambiguous:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_reserved:
+                                    minimum: 0
+                                    type: "integer"
+                                  judgements_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  judges_required:
+                                    minimum: 0
+                                    type: "integer"
+                                  outcomes_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_total:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pairs_total"
+                                  - "pairs_complete"
+                                  - "executions_enrolled"
+                                  - "outcomes_recorded"
+                                  - "executions_complete"
+                                  - "executions_incomplete"
+                                  - "executions_pending_rows"
+                                  - "executions_cost_unsettled"
+                                  - "executions_invalid"
+                                  - "holds_reserved"
+                                  - "holds_ambiguous"
+                                  - "judgements_recorded"
+                                  - "judges_required"
+                                  - "cap_stopped"
+                                type: "object"
+                              rule:
+                                description: "The frozen rule the verdict applied."
+                                properties:
+                                  feature_min_margin:
+                                    type: "integer"
+                                  min_first_pass_rescues:
+                                    type: "integer"
+                                  unsupported_claim_codes:
+                                    items:
+                                      type: "string"
+                                    type: "array"
+                                required:
+                                  - "feature_min_margin"
+                                  - "min_first_pass_rescues"
+                                  - "unsupported_claim_codes"
+                                type: "object"
+                              rule_version:
+                                type: "string"
+                              verdict:
+                                enum:
+                                  - "screen_pass"
+                                  - "screen_fail"
+                                  - "screen_incomplete"
+                                type: "string"
+                            required:
+                              - "verdict"
+                              - "failing_clauses"
+                              - "incomplete_reasons"
+                              - "clauses"
+                              - "progress"
+                              - "rule_version"
+                              - "rule"
+                              - "inputs"
+                              - "inputs_hash"
+                              - "candidate_hash"
+                              - "prereg_hash"
+                              - "created_at"
+                            type: "object"
+                        required:
+                          - "progress"
+                          - "executions"
+                          - "verdict"
+                        type: "object"
                       situation_class:
                         type: "string"
                       state:
@@ -19880,6 +22140,10 @@ paths:
                           - "refused"
                           - "candidate_frozen"
                           - "screening"
+                          - "screen_passed"
+                          - "screen_failed"
+                          - "screen_incomplete"
+                          - "awaiting_test_funding"
                           - "closed"
                           - "expired"
                           - "abandoned"
@@ -20043,6 +22307,267 @@ paths:
       summary: "Enrol one execution slot of a candidate-frozen experiment (the gateway decides the arm)"
       tags:
         - "Flywheel"
+  "/v1/flywheel/experiments/{id}/executions/{execution_id}/outcome":
+    post:
+      description: "RECORD the ONE terminal outcome of an enrolled execution: `terminal` (delivered | held), its typed `reason_codes` under the frozen `reason_vocab`, one body-free `receipts[]` entry per member call (the workflow-import receipt shape, stamped with its `extractor_version`), the `final_content_hash` and EVERY gateway request id the execution made (`request_ids`). NO bodies. Idempotent on the execution: the same payload converges (`created: false`); a different one is refused `outcome_conflict`. The platform validates it against the experiment’s FROZEN verifier and its OWN rows, refusing by name: `request_not_bound` (a listed request is not a call of this execution), `membership_incomplete` (a call of the execution is not listed), `verifier_mismatch:<gate>` (the receipts do not reproduce the recorded terminal; codes the verifier cannot reconstruct are returned as `trusted_recorded`), `receipt_extractor_mismatch`, `receipt_request_mismatch`, `reason_vocab_mismatch`, `reason_code_unregistered` (and `execution_unknown`, `experiment_not_live`, `phase_not_open`). An outcome posted before the last call’s row lands is accepted as `pending_rows` and completes when the rows land. Each execution’s cost is reconciled (measured rows vs settled and ambiguous holds); an ambiguous or pending one is incomplete. Recording an outcome re-evaluates the screen: the verdict is computed exactly once, only when every preregistered screen pair is complete and no hold of the phase is reserved or ambiguous. A live experiment outcome is never an imported row. Auth: an api key with `flywheel:experiment:run`, OR the owner session (`flywheel.experiment`). Audited (ids / hashes only). Requires API-key scope: flywheel:experiment:run."
+      operationId: "recordFlywheelExperimentExecutionOutcome"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+        -
+          description: "Path parameter `execution_id`."
+          in: "path"
+          name: "execution_id"
+          required: true
+          schema:
+            description: "Path parameter `execution_id`."
+            type: "string"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              additionalProperties: false
+              description: "One live execution outcome — ids, hashes and numbers only, never a body."
+              properties:
+                final_content_hash:
+                  description: "The hash of the final content (the delivered post, or the last draft when held)."
+                  maxLength: 200
+                  minLength: 1
+                  type: "string"
+                reason_codes:
+                  description: "The typed reason codes (empty for a clean delivery)."
+                  items:
+                    maxLength: 200
+                    minLength: 1
+                    type: "string"
+                  maxItems: 50
+                  type: "array"
+                reason_vocab:
+                  description: "The reason vocabulary id — must be the frozen verifier’s."
+                  maxLength: 100
+                  minLength: 1
+                  type: "string"
+                receipts:
+                  items:
+                    additionalProperties: false
+                    description: "One member-call receipt — numbers, hashes and ids only, never a body."
+                    properties:
+                      call_type:
+                        maxLength: 200
+                        minLength: 1
+                        type: "string"
+                      extractor_version:
+                        description: "The receipt-extraction recipe version — must be the experiment verifier’s."
+                        maxLength: 100
+                        minLength: 1
+                        type: "string"
+                      numbers:
+                        additionalProperties:
+                          type: "number"
+                        description: "The stage-aware body-free numbers (e.g. `post_length`, `line_count`, `distinct`, `usefulness`)."
+                        type: "object"
+                      ordinal:
+                        description: "The call’s position in the execution."
+                        minimum: 0
+                        type: "integer"
+                      parsed_hash:
+                        maxLength: 200
+                        nullable: true
+                        type: "string"
+                      quote_ids:
+                        items:
+                          maxLength: 200
+                          type: "string"
+                        maxItems: 500
+                        type: "array"
+                      request_id:
+                        description: "The gateway request id of this member call (must be listed in `request_ids`)."
+                        maxLength: 200
+                        minLength: 1
+                        type: "string"
+                      response_hash:
+                        maxLength: 200
+                        nullable: true
+                        type: "string"
+                      response_len:
+                        minimum: 0
+                        type: "integer"
+                      stage:
+                        description: "The stage (as the call declared it in `X-UR-Trace`)."
+                        maxLength: 200
+                        minLength: 1
+                        type: "string"
+                      system_hash:
+                        maxLength: 200
+                        nullable: true
+                        type: "string"
+                      system_len:
+                        minimum: 0
+                        type: "integer"
+                      user_hash:
+                        maxLength: 200
+                        nullable: true
+                        type: "string"
+                      user_len:
+                        minimum: 0
+                        type: "integer"
+                    required:
+                      - "ordinal"
+                      - "stage"
+                      - "call_type"
+                      - "request_id"
+                      - "extractor_version"
+                      - "numbers"
+                    type: "object"
+                  maxItems: 200
+                  minItems: 1
+                  type: "array"
+                request_ids:
+                  description: "Every gateway request id the execution made — members and failed attempts alike."
+                  items:
+                    maxLength: 200
+                    minLength: 1
+                    type: "string"
+                  maxItems: 500
+                  minItems: 1
+                  type: "array"
+                terminal:
+                  enum:
+                    - "delivered"
+                    - "held"
+                  type: "string"
+              required:
+                - "terminal"
+                - "reason_codes"
+                - "reason_vocab"
+                - "receipts"
+                - "final_content_hash"
+                - "request_ids"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "One recorded live execution outcome."
+                properties:
+                  cost:
+                    description: "The execution’s cost reconciliation — an ambiguous or pending one is incomplete."
+                    properties:
+                      ambiguous_micro_usd:
+                        type: "integer"
+                      complete:
+                        description: "True only when every hold is settled and every call’s row has landed."
+                        type: "boolean"
+                      difference_micro_usd:
+                        description: "rows_measured − settled — non-zero while a hold is unsettled or ambiguous."
+                        type: "integer"
+                      holds:
+                        minimum: 0
+                        type: "integer"
+                      reserved_micro_usd:
+                        type: "integer"
+                      rows:
+                        minimum: 0
+                        type: "integer"
+                      rows_measured_micro_usd:
+                        type: "integer"
+                      rows_unpriced:
+                        minimum: 0
+                        type: "integer"
+                      settled_micro_usd:
+                        type: "integer"
+                      unlanded_holds:
+                        minimum: 0
+                        type: "integer"
+                    required:
+                      - "rows_measured_micro_usd"
+                      - "rows_unpriced"
+                      - "rows"
+                      - "holds"
+                      - "settled_micro_usd"
+                      - "ambiguous_micro_usd"
+                      - "reserved_micro_usd"
+                      - "difference_micro_usd"
+                      - "unlanded_holds"
+                      - "complete"
+                    type: "object"
+                  created:
+                    description: "False when the same outcome was already recorded (an idempotent repeat)."
+                    type: "boolean"
+                  execution_id:
+                    type: "string"
+                  experiment_id:
+                    type: "string"
+                  experiment_state:
+                    enum:
+                      - "admitted"
+                      - "refused"
+                      - "candidate_frozen"
+                      - "screening"
+                      - "screen_passed"
+                      - "screen_failed"
+                      - "screen_incomplete"
+                      - "awaiting_test_funding"
+                      - "closed"
+                      - "expired"
+                      - "abandoned"
+                    type: "string"
+                  missing_request_ids:
+                    items:
+                      type: "string"
+                    type: "array"
+                  object:
+                    enum:
+                      - "flywheel_experiment_execution_outcome"
+                    type: "string"
+                  outcome_hash:
+                    type: "string"
+                  status:
+                    description: "pending_rows: a call’s row has not landed yet — it completes when the rows land."
+                    enum:
+                      - "complete"
+                      - "pending_rows"
+                    type: "string"
+                  trusted_recorded:
+                    description: "Reason codes the verifier cannot reconstruct — listed, never silently passed."
+                    items:
+                      type: "string"
+                    type: "array"
+                required:
+                  - "object"
+                  - "experiment_id"
+                  - "execution_id"
+                  - "status"
+                  - "created"
+                  - "outcome_hash"
+                  - "trusted_recorded"
+                  - "missing_request_ids"
+                  - "cost"
+                  - "experiment_state"
+                type: "object"
+          description: "The recorded outcome — `complete` or `pending_rows` — with its cost reconciliation."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          bearerAuth: []
+        -
+          sessionCookie: []
+      summary: "Record the one terminal outcome of an enrolled execution (no bodies)"
+      tags:
+        - "Flywheel"
   "/v1/flywheel/experiments/{id}/produce":
     post:
       description: "LAUNCH the ONE structured-candidate production attempt for an admitted experiment: the worker reads the FROZEN fit split, optionally runs ONE outcome-blind teacher call (reserved + settled through the experiment budget), and freezes AT MOST ONE candidate (at most two first-draft observations) or ABSTAINS by name. One attempt per experiment (a claim prevents a second). Read the candidate back on `GET /v1/flywheel/experiments/{id}` (`candidate`). OWNER SESSION only (`flywheel.experiment`); audited (ids/hashes/counts — never the pack text). NEVER a body."
@@ -20088,6 +22613,1005 @@ paths:
         -
           sessionCookie: []
       summary: "Launch the one structured-candidate production attempt"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments/{id}/screen/acknowledge":
+    post:
+      description: "ACKNOWLEDGE a passed screen: the owner has read it, and the experiment moves `screen_passed → awaiting_test_funding`. This opens nothing, funds nothing and adopts nothing — a screen pass proves nothing prospectively. Any other state is refused `illegal_transition` (409). OWNER SESSION only (`flywheel.experiment`); audited."
+      operationId: "acknowledgeFlywheelExperimentScreen"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "One bounded experiment."
+                properties:
+                  experiment:
+                    description: "A bounded experiment — ids / hashes / counts / state only, never a body."
+                    properties:
+                      admission:
+                        description: "The frozen admission verdict — admitted + the rules applied + the evidence (the owner receipt)."
+                        nullable: true
+                        properties:
+                          admitted:
+                            type: "boolean"
+                          applied:
+                            description: "The frozen thresholds the admission applied."
+                            properties:
+                              budget_cap_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              expiry_days:
+                                minimum: 0
+                                type: "integer"
+                              min_contrast_ideas:
+                                minimum: 0
+                                type: "integer"
+                              min_delivered_fit:
+                                minimum: 0
+                                type: "integer"
+                              min_held_fit:
+                                minimum: 0
+                                type: "integer"
+                              min_resolved_fit:
+                                minimum: 0
+                                type: "integer"
+                              screen_subcap_micro_usd:
+                                minimum: 0
+                                type: "integer"
+                              verifier_version:
+                                type: "string"
+                            required:
+                              - "verifier_version"
+                              - "min_resolved_fit"
+                              - "min_delivered_fit"
+                              - "min_held_fit"
+                              - "min_contrast_ideas"
+                              - "budget_cap_micro_usd"
+                              - "screen_subcap_micro_usd"
+                              - "expiry_days"
+                            type: "object"
+                          evidence:
+                            description: "The mechanical evidence the admission weighed (verifier verdict + the fit-split counts)."
+                            properties:
+                              contrast_ideas_fit:
+                                minimum: 0
+                                type: "integer"
+                              delivered_fit:
+                                minimum: 0
+                                type: "integer"
+                              held_fit:
+                                minimum: 0
+                                type: "integer"
+                              resolved_fit_executions:
+                                minimum: 0
+                                type: "integer"
+                              verifier_refusals:
+                                items:
+                                  type: "string"
+                                type: "array"
+                              verifier_version:
+                                type: "string"
+                            required:
+                              - "verifier_version"
+                              - "verifier_refusals"
+                              - "resolved_fit_executions"
+                              - "delivered_fit"
+                              - "held_fit"
+                              - "contrast_ideas_fit"
+                            type: "object"
+                          refusals:
+                            description: "Every failing admission rule, by name (empty ⇒ admitted)."
+                            items:
+                              type: "string"
+                            type: "array"
+                        required:
+                          - "admitted"
+                          - "refusals"
+                          - "applied"
+                          - "evidence"
+                        type: "object"
+                      benchmarkable:
+                        enum:
+                          - false
+                        type: "boolean"
+                      budget:
+                        description: "The experiment budget caps + running spend (micro-USD)."
+                        properties:
+                          cap_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          screen_subcap_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          spend_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "cap_micro_usd"
+                          - "screen_subcap_micro_usd"
+                          - "spend_micro_usd"
+                        type: "object"
+                      call_type_id:
+                        type: "string"
+                      candidate:
+                        default: null
+                        description: "The frozen structured candidate (counts only), or a named abstention."
+                        nullable: true
+                        properties:
+                          abstention_reason:
+                            nullable: true
+                            type: "string"
+                          candidate_hash:
+                            nullable: true
+                            type: "string"
+                          cited_execution_ids:
+                            items:
+                              type: "string"
+                            type: "array"
+                          drops:
+                            items:
+                              properties:
+                                attribute:
+                                  type: "string"
+                                focus_value:
+                                  type: "string"
+                                reason:
+                                  type: "string"
+                              required:
+                                - "attribute"
+                                - "focus_value"
+                                - "reason"
+                              type: "object"
+                            type: "array"
+                          label_counts:
+                            additionalProperties:
+                              additionalProperties:
+                                minimum: 0
+                                type: "integer"
+                              type: "object"
+                            type: "object"
+                          labels_requested:
+                            type: "boolean"
+                          observations:
+                            items:
+                              description: "One structured candidate observation — counts + cited ids only, never a body."
+                              properties:
+                                attribute:
+                                  type: "string"
+                                attribute_label:
+                                  type: "string"
+                                comparison_label:
+                                  type: "string"
+                                drafts:
+                                  minimum: 0
+                                  type: "integer"
+                                evidence_ids:
+                                  items:
+                                    type: "string"
+                                  type: "array"
+                                first_pass_focus:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                first_pass_rest:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                focus_value:
+                                  type: "string"
+                                ideas:
+                                  minimum: 0
+                                  type: "integer"
+                                matched_idea_support:
+                                  minimum: 0
+                                  type: "integer"
+                                terminal_focus:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                terminal_rest:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                within_idea:
+                                  properties:
+                                    losses:
+                                      minimum: 0
+                                      type: "integer"
+                                    ties:
+                                      minimum: 0
+                                      type: "integer"
+                                    wins:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "wins"
+                                    - "losses"
+                                    - "ties"
+                                  type: "object"
+                              required:
+                                - "attribute"
+                                - "attribute_label"
+                                - "focus_value"
+                                - "comparison_label"
+                                - "ideas"
+                                - "drafts"
+                                - "first_pass_focus"
+                                - "first_pass_rest"
+                                - "terminal_focus"
+                                - "terminal_rest"
+                                - "within_idea"
+                                - "matched_idea_support"
+                                - "evidence_ids"
+                              type: "object"
+                            type: "array"
+                          pack_text:
+                            description: "The rendered reference text — owner session only; never in an audit diff or a log."
+                            nullable: true
+                            type: "string"
+                          state:
+                            enum:
+                              - "producing"
+                              - "frozen"
+                              - "abstained"
+                              - "invalidated"
+                            type: "string"
+                          teacher_calls:
+                            minimum: 0
+                            type: "integer"
+                          token_estimate:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "state"
+                          - "labels_requested"
+                          - "teacher_calls"
+                          - "abstention_reason"
+                          - "candidate_hash"
+                          - "token_estimate"
+                          - "observations"
+                          - "cited_execution_ids"
+                          - "label_counts"
+                          - "drops"
+                          - "pack_text"
+                        type: "object"
+                      candidate_hash:
+                        nullable: true
+                        type: "string"
+                      created_at:
+                        type: "string"
+                      created_by_user_id:
+                        type: "string"
+                      expires_at:
+                        nullable: true
+                        type: "string"
+                      id:
+                        type: "string"
+                      import_id:
+                        nullable: true
+                        type: "string"
+                      lever_key:
+                        type: "string"
+                      object:
+                        enum:
+                          - "flywheel_experiment"
+                        type: "string"
+                      prereg_hash:
+                        type: "string"
+                      reservations:
+                        default: null
+                        description: "The atomic per-call reservation ledger: the experiment total + each phase (micro-USD)."
+                        nullable: true
+                        properties:
+                          ambiguous_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          phases:
+                            items:
+                              description: "One phase of the atomic reservation ledger (micro-USD)."
+                              properties:
+                                ambiguous_micro_usd:
+                                  description: "Reserve held for an interrupted/unknown-outcome call, still counted against the cap."
+                                  minimum: 0
+                                  type: "integer"
+                                cap_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                funded:
+                                  description: "Whether the phase has a funded cap (the prospective-test phase starts unfunded)."
+                                  type: "boolean"
+                                phase:
+                                  enum:
+                                    - "screen"
+                                    - "test"
+                                  type: "string"
+                                remaining_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                reserved_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                                spent_micro_usd:
+                                  minimum: 0
+                                  type: "integer"
+                              required:
+                                - "phase"
+                                - "funded"
+                                - "cap_micro_usd"
+                                - "reserved_micro_usd"
+                                - "spent_micro_usd"
+                                - "ambiguous_micro_usd"
+                                - "remaining_micro_usd"
+                              type: "object"
+                            type: "array"
+                          remaining_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          reserved_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                          spent_micro_usd:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "reserved_micro_usd"
+                          - "spent_micro_usd"
+                          - "ambiguous_micro_usd"
+                          - "remaining_micro_usd"
+                          - "phases"
+                        type: "object"
+                      screen:
+                        default: null
+                        description: "The screen: barrier counts (no peeking) and, once computed, the verdict."
+                        nullable: true
+                        properties:
+                          executions:
+                            items:
+                              description: "One enrolled screen execution — ids, arm and standing only."
+                              properties:
+                                arm:
+                                  enum:
+                                    - "control"
+                                    - "treated"
+                                  type: "string"
+                                execution_id:
+                                  type: "string"
+                                pair_key:
+                                  type: "string"
+                                slot:
+                                  maximum: 1
+                                  minimum: 0
+                                  type: "integer"
+                                status:
+                                  description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                  enum:
+                                    - "no_outcome"
+                                    - "pending_rows"
+                                    - "cost_unsettled"
+                                    - "invalid"
+                                    - "complete"
+                                  type: "string"
+                              required:
+                                - "execution_id"
+                                - "pair_key"
+                                - "slot"
+                                - "arm"
+                                - "status"
+                              type: "object"
+                            type: "array"
+                          progress:
+                            description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                            properties:
+                              cap_stopped:
+                                description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                type: "boolean"
+                              executions_complete:
+                                minimum: 0
+                                type: "integer"
+                              executions_cost_unsettled:
+                                minimum: 0
+                                type: "integer"
+                              executions_enrolled:
+                                minimum: 0
+                                type: "integer"
+                              executions_incomplete:
+                                minimum: 0
+                                type: "integer"
+                              executions_invalid:
+                                minimum: 0
+                                type: "integer"
+                              executions_pending_rows:
+                                minimum: 0
+                                type: "integer"
+                              holds_ambiguous:
+                                minimum: 0
+                                type: "integer"
+                              holds_reserved:
+                                minimum: 0
+                                type: "integer"
+                              judgements_recorded:
+                                minimum: 0
+                                type: "integer"
+                              judges_required:
+                                minimum: 0
+                                type: "integer"
+                              outcomes_recorded:
+                                minimum: 0
+                                type: "integer"
+                              pairs_complete:
+                                minimum: 0
+                                type: "integer"
+                              pairs_total:
+                                minimum: 0
+                                type: "integer"
+                            required:
+                              - "pairs_total"
+                              - "pairs_complete"
+                              - "executions_enrolled"
+                              - "outcomes_recorded"
+                              - "executions_complete"
+                              - "executions_incomplete"
+                              - "executions_pending_rows"
+                              - "executions_cost_unsettled"
+                              - "executions_invalid"
+                              - "holds_reserved"
+                              - "holds_ambiguous"
+                              - "judgements_recorded"
+                              - "judges_required"
+                              - "cap_stopped"
+                            type: "object"
+                          verdict:
+                            description: "Null until the completion barrier is met and the verdict is stored."
+                            nullable: true
+                            properties:
+                              candidate_hash:
+                                type: "string"
+                              clauses:
+                                description: "Every clause with its counts (empty when incomplete — nothing is analysed)."
+                                items:
+                                  description: "One screen-rule clause and its counts."
+                                  properties:
+                                    clause:
+                                      enum:
+                                        - "a_feature_moved"
+                                        - "b_first_pass_rescue"
+                                        - "c_no_net_delivery_loss"
+                                        - "d_no_serious_treated_defect"
+                                        - "e_judges_no_degradation"
+                                      type: "string"
+                                    detail:
+                                      description: "The clause counts (each clause fills its own members; never a body)."
+                                      properties:
+                                        control_delivered:
+                                          type: "integer"
+                                        features:
+                                          description: "(a) each predicted feature, on the treated vs the control first drafts."
+                                          items:
+                                            properties:
+                                              attribute:
+                                                type: "string"
+                                              control_first_drafts_with_value:
+                                                type: "integer"
+                                              first_drafts_unmeasured:
+                                                type: "integer"
+                                              focus_value:
+                                                type: "string"
+                                              measurable:
+                                                type: "boolean"
+                                              moved:
+                                                type: "boolean"
+                                              reason:
+                                                type: "string"
+                                              treated_first_drafts_with_value:
+                                                type: "integer"
+                                            required:
+                                              - "attribute"
+                                              - "focus_value"
+                                              - "measurable"
+                                            type: "object"
+                                          type: "array"
+                                        min_margin:
+                                          type: "integer"
+                                        min_rescues:
+                                          type: "integer"
+                                        rescues:
+                                          type: "integer"
+                                        treated_delivered:
+                                          type: "integer"
+                                        treated_deliveries_judge_flagged:
+                                          type: "integer"
+                                        treated_deliveries_with_unsupported_claim:
+                                          type: "integer"
+                                        verdicts:
+                                          description: "(e) each preregistered judge’s verdict."
+                                          items:
+                                            properties:
+                                              judge:
+                                                type: "string"
+                                              verdict:
+                                                enum:
+                                                  - "no_evident_degradation"
+                                                  - "evident_degradation"
+                                                nullable: true
+                                                type: "string"
+                                            required:
+                                              - "judge"
+                                              - "verdict"
+                                            type: "object"
+                                          type: "array"
+                                      type: "object"
+                                    holds:
+                                      type: "boolean"
+                                  required:
+                                    - "clause"
+                                    - "holds"
+                                    - "detail"
+                                  type: "object"
+                                type: "array"
+                              created_at:
+                                type: "string"
+                              failing_clauses:
+                                description: "Every failing clause (screen_fail); empty otherwise."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              incomplete_reasons:
+                                description: "Why the screen can never complete (screen_incomplete): cap_stop, candidate_withdrawn, outcome_invalid:<execution>:<refusal>, pair_arms_not_opposite:<pair>, judging_not_preregistered."
+                                items:
+                                  type: "string"
+                                type: "array"
+                              inputs:
+                                description: "The verdict inputs: each execution’s identity, arm, standing, outcome hash and cost reconciliation, and each judgement’s hash."
+                                properties:
+                                  candidate_withdrawn:
+                                    type: "boolean"
+                                  cap_stopped:
+                                    type: "boolean"
+                                  executions:
+                                    items:
+                                      properties:
+                                        arm:
+                                          enum:
+                                            - "control"
+                                            - "treated"
+                                          type: "string"
+                                        cost:
+                                          nullable: true
+                                          properties:
+                                            ambiguous_micro_usd:
+                                              type: "integer"
+                                            complete:
+                                              type: "boolean"
+                                            difference_micro_usd:
+                                              type: "integer"
+                                            holds:
+                                              minimum: 0
+                                              type: "integer"
+                                            reserved_micro_usd:
+                                              type: "integer"
+                                            rows:
+                                              minimum: 0
+                                              type: "integer"
+                                            rows_measured_micro_usd:
+                                              type: "integer"
+                                            rows_unpriced:
+                                              minimum: 0
+                                              type: "integer"
+                                            settled_micro_usd:
+                                              type: "integer"
+                                            unlanded_holds:
+                                              minimum: 0
+                                              type: "integer"
+                                          required:
+                                            - "rows_measured_micro_usd"
+                                            - "rows_unpriced"
+                                            - "rows"
+                                            - "holds"
+                                            - "settled_micro_usd"
+                                            - "ambiguous_micro_usd"
+                                            - "reserved_micro_usd"
+                                            - "difference_micro_usd"
+                                            - "unlanded_holds"
+                                            - "complete"
+                                          type: "object"
+                                        execution_id:
+                                          type: "string"
+                                        outcome_hash:
+                                          nullable: true
+                                          type: "string"
+                                        pair_key:
+                                          type: "string"
+                                        slot:
+                                          maximum: 1
+                                          minimum: 0
+                                          type: "integer"
+                                        state:
+                                          description: "no_outcome: none recorded yet; pending_rows: recorded, a call’s row has not landed; cost_unsettled: a hold is still reserved or ambiguous; invalid: the recorded outcome fails now that its rows landed; complete."
+                                          enum:
+                                            - "no_outcome"
+                                            - "pending_rows"
+                                            - "cost_unsettled"
+                                            - "invalid"
+                                            - "complete"
+                                          type: "string"
+                                      required:
+                                        - "execution_id"
+                                        - "pair_key"
+                                        - "slot"
+                                        - "arm"
+                                        - "state"
+                                        - "outcome_hash"
+                                        - "cost"
+                                      type: "object"
+                                    type: "array"
+                                  judgements:
+                                    items:
+                                      properties:
+                                        judge:
+                                          type: "string"
+                                        judgement_hash:
+                                          type: "string"
+                                      required:
+                                        - "judge"
+                                        - "judgement_hash"
+                                      type: "object"
+                                    type: "array"
+                                  observations:
+                                    items:
+                                      properties:
+                                        attribute:
+                                          type: "string"
+                                        focus_value:
+                                          type: "string"
+                                      required:
+                                        - "attribute"
+                                        - "focus_value"
+                                      type: "object"
+                                    type: "array"
+                                  pairs:
+                                    items:
+                                      type: "string"
+                                    type: "array"
+                                  phase_holds:
+                                    properties:
+                                      ambiguous:
+                                        minimum: 0
+                                        type: "integer"
+                                      reserved:
+                                        minimum: 0
+                                        type: "integer"
+                                    required:
+                                      - "reserved"
+                                      - "ambiguous"
+                                    type: "object"
+                                required:
+                                  - "pairs"
+                                  - "observations"
+                                  - "phase_holds"
+                                  - "cap_stopped"
+                                  - "candidate_withdrawn"
+                                  - "executions"
+                                  - "judgements"
+                                type: "object"
+                              inputs_hash:
+                                type: "string"
+                              prereg_hash:
+                                type: "string"
+                              progress:
+                                description: "The screen completion-barrier counts (complete / incomplete only — no per-arm outcome)."
+                                properties:
+                                  cap_stopped:
+                                    description: "True once a call of the phase was refused for want of money — incomplete forever."
+                                    type: "boolean"
+                                  executions_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_cost_unsettled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_enrolled:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_incomplete:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_invalid:
+                                    minimum: 0
+                                    type: "integer"
+                                  executions_pending_rows:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_ambiguous:
+                                    minimum: 0
+                                    type: "integer"
+                                  holds_reserved:
+                                    minimum: 0
+                                    type: "integer"
+                                  judgements_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  judges_required:
+                                    minimum: 0
+                                    type: "integer"
+                                  outcomes_recorded:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_complete:
+                                    minimum: 0
+                                    type: "integer"
+                                  pairs_total:
+                                    minimum: 0
+                                    type: "integer"
+                                required:
+                                  - "pairs_total"
+                                  - "pairs_complete"
+                                  - "executions_enrolled"
+                                  - "outcomes_recorded"
+                                  - "executions_complete"
+                                  - "executions_incomplete"
+                                  - "executions_pending_rows"
+                                  - "executions_cost_unsettled"
+                                  - "executions_invalid"
+                                  - "holds_reserved"
+                                  - "holds_ambiguous"
+                                  - "judgements_recorded"
+                                  - "judges_required"
+                                  - "cap_stopped"
+                                type: "object"
+                              rule:
+                                description: "The frozen rule the verdict applied."
+                                properties:
+                                  feature_min_margin:
+                                    type: "integer"
+                                  min_first_pass_rescues:
+                                    type: "integer"
+                                  unsupported_claim_codes:
+                                    items:
+                                      type: "string"
+                                    type: "array"
+                                required:
+                                  - "feature_min_margin"
+                                  - "min_first_pass_rescues"
+                                  - "unsupported_claim_codes"
+                                type: "object"
+                              rule_version:
+                                type: "string"
+                              verdict:
+                                enum:
+                                  - "screen_pass"
+                                  - "screen_fail"
+                                  - "screen_incomplete"
+                                type: "string"
+                            required:
+                              - "verdict"
+                              - "failing_clauses"
+                              - "incomplete_reasons"
+                              - "clauses"
+                              - "progress"
+                              - "rule_version"
+                              - "rule"
+                              - "inputs"
+                              - "inputs_hash"
+                              - "candidate_hash"
+                              - "prereg_hash"
+                              - "created_at"
+                            type: "object"
+                        required:
+                          - "progress"
+                          - "executions"
+                          - "verdict"
+                        type: "object"
+                      situation_class:
+                        type: "string"
+                      state:
+                        enum:
+                          - "admitted"
+                          - "refused"
+                          - "candidate_frozen"
+                          - "screening"
+                          - "screen_passed"
+                          - "screen_failed"
+                          - "screen_incomplete"
+                          - "awaiting_test_funding"
+                          - "closed"
+                          - "expired"
+                          - "abandoned"
+                        type: "string"
+                      updated_at:
+                        type: "string"
+                      verifier_version:
+                        type: "string"
+                      workspace_id:
+                        type: "string"
+                    required:
+                      - "id"
+                      - "state"
+                      - "admission"
+                      - "prereg_hash"
+                      - "verifier_version"
+                      - "budget"
+                      - "expires_at"
+                      - "benchmarkable"
+                      - "object"
+                      - "workspace_id"
+                      - "call_type_id"
+                      - "situation_class"
+                      - "lever_key"
+                      - "candidate_hash"
+                      - "import_id"
+                      - "created_by_user_id"
+                      - "created_at"
+                      - "updated_at"
+                    type: "object"
+                  object:
+                    enum:
+                      - "flywheel_experiment_envelope"
+                    type: "string"
+                required:
+                  - "object"
+                  - "experiment"
+                type: "object"
+          description: "The experiment, now awaiting test funding."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Acknowledge a passed screen — the experiment then awaits test funding"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments/{id}/screen/judgements":
+    post:
+      description: "RECORD one PREREGISTERED blind judge’s verdict on the screen’s final outputs (the judges run outside the platform): `verdict` (no_evident_degradation | evident_degradation) under the frozen `rubric_id`, and the final-content hashes it flags as a serious defect. One per judge — the same judgement converges, a different one is refused `judgement_conflict`. Refusals by name: `judging_not_preregistered`, `judge_not_preregistered`, `rubric_mismatch`, `judgement_unknown_item` (a flagged hash is not a recorded screen outcome). Recording a judgement re-evaluates the screen (the verdict needs both judges). OWNER SESSION only (`flywheel.experiment`); audited (ids / hashes only)."
+      operationId: "recordFlywheelExperimentScreenJudgement"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              additionalProperties: false
+              description: "One blind judgement — the judges run outside the platform."
+              properties:
+                judge:
+                  description: "One of the two preregistered judge keys."
+                  maxLength: 100
+                  minLength: 1
+                  type: "string"
+                rubric_id:
+                  description: "Must be the frozen rubric id."
+                  maxLength: 200
+                  minLength: 1
+                  type: "string"
+                serious_defects:
+                  description: "Final-content hashes of recorded screen outcomes the judge flags as a serious defect."
+                  items:
+                    maxLength: 200
+                    minLength: 1
+                    type: "string"
+                  maxItems: 500
+                  type: "array"
+                verdict:
+                  enum:
+                    - "no_evident_degradation"
+                    - "evident_degradation"
+                  type: "string"
+              required:
+                - "judge"
+                - "rubric_id"
+                - "verdict"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "One recorded blind judgement."
+                properties:
+                  created:
+                    description: "False when the same judgement was already recorded (an idempotent repeat)."
+                    type: "boolean"
+                  experiment_id:
+                    type: "string"
+                  experiment_state:
+                    enum:
+                      - "admitted"
+                      - "refused"
+                      - "candidate_frozen"
+                      - "screening"
+                      - "screen_passed"
+                      - "screen_failed"
+                      - "screen_incomplete"
+                      - "awaiting_test_funding"
+                      - "closed"
+                      - "expired"
+                      - "abandoned"
+                    type: "string"
+                  judge:
+                    type: "string"
+                  judgement_hash:
+                    type: "string"
+                  object:
+                    enum:
+                      - "flywheel_experiment_screen_judgement"
+                    type: "string"
+                required:
+                  - "object"
+                  - "experiment_id"
+                  - "judge"
+                  - "created"
+                  - "judgement_hash"
+                  - "experiment_state"
+                type: "object"
+          description: "The recorded judgement."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Record one preregistered blind judge’s screen verdict"
       tags:
         - "Flywheel"
   "/v1/flywheel/grants":
