@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: c5fdd0db4b7f2135c479581d74e11f02da4581ea4536c0e3ac0d531f9a698f90
+# spec-sha256: 8fa18657f5f36da7a9692a9619e6dcf9b8026540fdb7658629a1dcca9efd8e59
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -17719,6 +17719,184 @@ paths:
                           type: "object"
                         call_type_id:
                           type: "string"
+                        candidate:
+                          default: null
+                          description: "The frozen structured candidate (counts only), or a named abstention."
+                          nullable: true
+                          properties:
+                            abstention_reason:
+                              nullable: true
+                              type: "string"
+                            candidate_hash:
+                              nullable: true
+                              type: "string"
+                            cited_execution_ids:
+                              items:
+                                type: "string"
+                              type: "array"
+                            drops:
+                              items:
+                                properties:
+                                  attribute:
+                                    type: "string"
+                                  focus_value:
+                                    type: "string"
+                                  reason:
+                                    type: "string"
+                                required:
+                                  - "attribute"
+                                  - "focus_value"
+                                  - "reason"
+                                type: "object"
+                              type: "array"
+                            label_counts:
+                              additionalProperties:
+                                additionalProperties:
+                                  minimum: 0
+                                  type: "integer"
+                                type: "object"
+                              type: "object"
+                            labels_requested:
+                              type: "boolean"
+                            observations:
+                              items:
+                                description: "One structured candidate observation — counts + cited ids only, never a body."
+                                properties:
+                                  attribute:
+                                    type: "string"
+                                  attribute_label:
+                                    type: "string"
+                                  comparison_label:
+                                    type: "string"
+                                  drafts:
+                                    minimum: 0
+                                    type: "integer"
+                                  evidence_ids:
+                                    items:
+                                      type: "string"
+                                    type: "array"
+                                  first_pass_focus:
+                                    description: "A counts-only fraction num/den."
+                                    properties:
+                                      den:
+                                        minimum: 0
+                                        type: "integer"
+                                      num:
+                                        minimum: 0
+                                        type: "integer"
+                                    required:
+                                      - "num"
+                                      - "den"
+                                    type: "object"
+                                  first_pass_rest:
+                                    description: "A counts-only fraction num/den."
+                                    properties:
+                                      den:
+                                        minimum: 0
+                                        type: "integer"
+                                      num:
+                                        minimum: 0
+                                        type: "integer"
+                                    required:
+                                      - "num"
+                                      - "den"
+                                    type: "object"
+                                  focus_value:
+                                    type: "string"
+                                  ideas:
+                                    minimum: 0
+                                    type: "integer"
+                                  matched_idea_support:
+                                    minimum: 0
+                                    type: "integer"
+                                  terminal_focus:
+                                    description: "A counts-only fraction num/den."
+                                    properties:
+                                      den:
+                                        minimum: 0
+                                        type: "integer"
+                                      num:
+                                        minimum: 0
+                                        type: "integer"
+                                    required:
+                                      - "num"
+                                      - "den"
+                                    type: "object"
+                                  terminal_rest:
+                                    description: "A counts-only fraction num/den."
+                                    properties:
+                                      den:
+                                        minimum: 0
+                                        type: "integer"
+                                      num:
+                                        minimum: 0
+                                        type: "integer"
+                                    required:
+                                      - "num"
+                                      - "den"
+                                    type: "object"
+                                  within_idea:
+                                    properties:
+                                      losses:
+                                        minimum: 0
+                                        type: "integer"
+                                      ties:
+                                        minimum: 0
+                                        type: "integer"
+                                      wins:
+                                        minimum: 0
+                                        type: "integer"
+                                    required:
+                                      - "wins"
+                                      - "losses"
+                                      - "ties"
+                                    type: "object"
+                                required:
+                                  - "attribute"
+                                  - "attribute_label"
+                                  - "focus_value"
+                                  - "comparison_label"
+                                  - "ideas"
+                                  - "drafts"
+                                  - "first_pass_focus"
+                                  - "first_pass_rest"
+                                  - "terminal_focus"
+                                  - "terminal_rest"
+                                  - "within_idea"
+                                  - "matched_idea_support"
+                                  - "evidence_ids"
+                                type: "object"
+                              type: "array"
+                            pack_text:
+                              description: "The rendered reference text — owner session only; never in an audit diff or a log."
+                              nullable: true
+                              type: "string"
+                            state:
+                              enum:
+                                - "producing"
+                                - "frozen"
+                                - "abstained"
+                                - "invalidated"
+                              type: "string"
+                            teacher_calls:
+                              minimum: 0
+                              type: "integer"
+                            token_estimate:
+                              minimum: 0
+                              type: "integer"
+                          required:
+                            - "state"
+                            - "labels_requested"
+                            - "teacher_calls"
+                            - "abstention_reason"
+                            - "candidate_hash"
+                            - "token_estimate"
+                            - "observations"
+                            - "cited_execution_ids"
+                            - "label_counts"
+                            - "drops"
+                            - "pack_text"
+                          type: "object"
                         candidate_hash:
                           nullable: true
                           type: "string"
@@ -17903,6 +18081,9 @@ paths:
                         type: "string"
                       minItems: 1
                       type: "array"
+                    labels:
+                      description: "Whether the producer's optional semantic teacher is preregistered ON (default off, structural-only)."
+                      type: "boolean"
                     min_contrast_ideas:
                       exclusiveMinimum: true
                       minimum: 0
@@ -18070,6 +18251,184 @@ paths:
                         type: "object"
                       call_type_id:
                         type: "string"
+                      candidate:
+                        default: null
+                        description: "The frozen structured candidate (counts only), or a named abstention."
+                        nullable: true
+                        properties:
+                          abstention_reason:
+                            nullable: true
+                            type: "string"
+                          candidate_hash:
+                            nullable: true
+                            type: "string"
+                          cited_execution_ids:
+                            items:
+                              type: "string"
+                            type: "array"
+                          drops:
+                            items:
+                              properties:
+                                attribute:
+                                  type: "string"
+                                focus_value:
+                                  type: "string"
+                                reason:
+                                  type: "string"
+                              required:
+                                - "attribute"
+                                - "focus_value"
+                                - "reason"
+                              type: "object"
+                            type: "array"
+                          label_counts:
+                            additionalProperties:
+                              additionalProperties:
+                                minimum: 0
+                                type: "integer"
+                              type: "object"
+                            type: "object"
+                          labels_requested:
+                            type: "boolean"
+                          observations:
+                            items:
+                              description: "One structured candidate observation — counts + cited ids only, never a body."
+                              properties:
+                                attribute:
+                                  type: "string"
+                                attribute_label:
+                                  type: "string"
+                                comparison_label:
+                                  type: "string"
+                                drafts:
+                                  minimum: 0
+                                  type: "integer"
+                                evidence_ids:
+                                  items:
+                                    type: "string"
+                                  type: "array"
+                                first_pass_focus:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                first_pass_rest:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                focus_value:
+                                  type: "string"
+                                ideas:
+                                  minimum: 0
+                                  type: "integer"
+                                matched_idea_support:
+                                  minimum: 0
+                                  type: "integer"
+                                terminal_focus:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                terminal_rest:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                within_idea:
+                                  properties:
+                                    losses:
+                                      minimum: 0
+                                      type: "integer"
+                                    ties:
+                                      minimum: 0
+                                      type: "integer"
+                                    wins:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "wins"
+                                    - "losses"
+                                    - "ties"
+                                  type: "object"
+                              required:
+                                - "attribute"
+                                - "attribute_label"
+                                - "focus_value"
+                                - "comparison_label"
+                                - "ideas"
+                                - "drafts"
+                                - "first_pass_focus"
+                                - "first_pass_rest"
+                                - "terminal_focus"
+                                - "terminal_rest"
+                                - "within_idea"
+                                - "matched_idea_support"
+                                - "evidence_ids"
+                              type: "object"
+                            type: "array"
+                          pack_text:
+                            description: "The rendered reference text — owner session only; never in an audit diff or a log."
+                            nullable: true
+                            type: "string"
+                          state:
+                            enum:
+                              - "producing"
+                              - "frozen"
+                              - "abstained"
+                              - "invalidated"
+                            type: "string"
+                          teacher_calls:
+                            minimum: 0
+                            type: "integer"
+                          token_estimate:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "state"
+                          - "labels_requested"
+                          - "teacher_calls"
+                          - "abstention_reason"
+                          - "candidate_hash"
+                          - "token_estimate"
+                          - "observations"
+                          - "cited_execution_ids"
+                          - "label_counts"
+                          - "drops"
+                          - "pack_text"
+                        type: "object"
                       candidate_hash:
                         nullable: true
                         type: "string"
@@ -18350,6 +18709,184 @@ paths:
                         type: "object"
                       call_type_id:
                         type: "string"
+                      candidate:
+                        default: null
+                        description: "The frozen structured candidate (counts only), or a named abstention."
+                        nullable: true
+                        properties:
+                          abstention_reason:
+                            nullable: true
+                            type: "string"
+                          candidate_hash:
+                            nullable: true
+                            type: "string"
+                          cited_execution_ids:
+                            items:
+                              type: "string"
+                            type: "array"
+                          drops:
+                            items:
+                              properties:
+                                attribute:
+                                  type: "string"
+                                focus_value:
+                                  type: "string"
+                                reason:
+                                  type: "string"
+                              required:
+                                - "attribute"
+                                - "focus_value"
+                                - "reason"
+                              type: "object"
+                            type: "array"
+                          label_counts:
+                            additionalProperties:
+                              additionalProperties:
+                                minimum: 0
+                                type: "integer"
+                              type: "object"
+                            type: "object"
+                          labels_requested:
+                            type: "boolean"
+                          observations:
+                            items:
+                              description: "One structured candidate observation — counts + cited ids only, never a body."
+                              properties:
+                                attribute:
+                                  type: "string"
+                                attribute_label:
+                                  type: "string"
+                                comparison_label:
+                                  type: "string"
+                                drafts:
+                                  minimum: 0
+                                  type: "integer"
+                                evidence_ids:
+                                  items:
+                                    type: "string"
+                                  type: "array"
+                                first_pass_focus:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                first_pass_rest:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                focus_value:
+                                  type: "string"
+                                ideas:
+                                  minimum: 0
+                                  type: "integer"
+                                matched_idea_support:
+                                  minimum: 0
+                                  type: "integer"
+                                terminal_focus:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                terminal_rest:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                within_idea:
+                                  properties:
+                                    losses:
+                                      minimum: 0
+                                      type: "integer"
+                                    ties:
+                                      minimum: 0
+                                      type: "integer"
+                                    wins:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "wins"
+                                    - "losses"
+                                    - "ties"
+                                  type: "object"
+                              required:
+                                - "attribute"
+                                - "attribute_label"
+                                - "focus_value"
+                                - "comparison_label"
+                                - "ideas"
+                                - "drafts"
+                                - "first_pass_focus"
+                                - "first_pass_rest"
+                                - "terminal_focus"
+                                - "terminal_rest"
+                                - "within_idea"
+                                - "matched_idea_support"
+                                - "evidence_ids"
+                              type: "object"
+                            type: "array"
+                          pack_text:
+                            description: "The rendered reference text — owner session only; never in an audit diff or a log."
+                            nullable: true
+                            type: "string"
+                          state:
+                            enum:
+                              - "producing"
+                              - "frozen"
+                              - "abstained"
+                              - "invalidated"
+                            type: "string"
+                          teacher_calls:
+                            minimum: 0
+                            type: "integer"
+                          token_estimate:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "state"
+                          - "labels_requested"
+                          - "teacher_calls"
+                          - "abstention_reason"
+                          - "candidate_hash"
+                          - "token_estimate"
+                          - "observations"
+                          - "cited_execution_ids"
+                          - "label_counts"
+                          - "drops"
+                          - "pack_text"
+                        type: "object"
                       candidate_hash:
                         nullable: true
                         type: "string"
@@ -18622,6 +19159,184 @@ paths:
                         type: "object"
                       call_type_id:
                         type: "string"
+                      candidate:
+                        default: null
+                        description: "The frozen structured candidate (counts only), or a named abstention."
+                        nullable: true
+                        properties:
+                          abstention_reason:
+                            nullable: true
+                            type: "string"
+                          candidate_hash:
+                            nullable: true
+                            type: "string"
+                          cited_execution_ids:
+                            items:
+                              type: "string"
+                            type: "array"
+                          drops:
+                            items:
+                              properties:
+                                attribute:
+                                  type: "string"
+                                focus_value:
+                                  type: "string"
+                                reason:
+                                  type: "string"
+                              required:
+                                - "attribute"
+                                - "focus_value"
+                                - "reason"
+                              type: "object"
+                            type: "array"
+                          label_counts:
+                            additionalProperties:
+                              additionalProperties:
+                                minimum: 0
+                                type: "integer"
+                              type: "object"
+                            type: "object"
+                          labels_requested:
+                            type: "boolean"
+                          observations:
+                            items:
+                              description: "One structured candidate observation — counts + cited ids only, never a body."
+                              properties:
+                                attribute:
+                                  type: "string"
+                                attribute_label:
+                                  type: "string"
+                                comparison_label:
+                                  type: "string"
+                                drafts:
+                                  minimum: 0
+                                  type: "integer"
+                                evidence_ids:
+                                  items:
+                                    type: "string"
+                                  type: "array"
+                                first_pass_focus:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                first_pass_rest:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                focus_value:
+                                  type: "string"
+                                ideas:
+                                  minimum: 0
+                                  type: "integer"
+                                matched_idea_support:
+                                  minimum: 0
+                                  type: "integer"
+                                terminal_focus:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                terminal_rest:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                within_idea:
+                                  properties:
+                                    losses:
+                                      minimum: 0
+                                      type: "integer"
+                                    ties:
+                                      minimum: 0
+                                      type: "integer"
+                                    wins:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "wins"
+                                    - "losses"
+                                    - "ties"
+                                  type: "object"
+                              required:
+                                - "attribute"
+                                - "attribute_label"
+                                - "focus_value"
+                                - "comparison_label"
+                                - "ideas"
+                                - "drafts"
+                                - "first_pass_focus"
+                                - "first_pass_rest"
+                                - "terminal_focus"
+                                - "terminal_rest"
+                                - "within_idea"
+                                - "matched_idea_support"
+                                - "evidence_ids"
+                              type: "object"
+                            type: "array"
+                          pack_text:
+                            description: "The rendered reference text — owner session only; never in an audit diff or a log."
+                            nullable: true
+                            type: "string"
+                          state:
+                            enum:
+                              - "producing"
+                              - "frozen"
+                              - "abstained"
+                              - "invalidated"
+                            type: "string"
+                          teacher_calls:
+                            minimum: 0
+                            type: "integer"
+                          token_estimate:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "state"
+                          - "labels_requested"
+                          - "teacher_calls"
+                          - "abstention_reason"
+                          - "candidate_hash"
+                          - "token_estimate"
+                          - "observations"
+                          - "cited_execution_ids"
+                          - "label_counts"
+                          - "drops"
+                          - "pack_text"
+                        type: "object"
                       candidate_hash:
                         nullable: true
                         type: "string"
@@ -18894,6 +19609,184 @@ paths:
                         type: "object"
                       call_type_id:
                         type: "string"
+                      candidate:
+                        default: null
+                        description: "The frozen structured candidate (counts only), or a named abstention."
+                        nullable: true
+                        properties:
+                          abstention_reason:
+                            nullable: true
+                            type: "string"
+                          candidate_hash:
+                            nullable: true
+                            type: "string"
+                          cited_execution_ids:
+                            items:
+                              type: "string"
+                            type: "array"
+                          drops:
+                            items:
+                              properties:
+                                attribute:
+                                  type: "string"
+                                focus_value:
+                                  type: "string"
+                                reason:
+                                  type: "string"
+                              required:
+                                - "attribute"
+                                - "focus_value"
+                                - "reason"
+                              type: "object"
+                            type: "array"
+                          label_counts:
+                            additionalProperties:
+                              additionalProperties:
+                                minimum: 0
+                                type: "integer"
+                              type: "object"
+                            type: "object"
+                          labels_requested:
+                            type: "boolean"
+                          observations:
+                            items:
+                              description: "One structured candidate observation — counts + cited ids only, never a body."
+                              properties:
+                                attribute:
+                                  type: "string"
+                                attribute_label:
+                                  type: "string"
+                                comparison_label:
+                                  type: "string"
+                                drafts:
+                                  minimum: 0
+                                  type: "integer"
+                                evidence_ids:
+                                  items:
+                                    type: "string"
+                                  type: "array"
+                                first_pass_focus:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                first_pass_rest:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                focus_value:
+                                  type: "string"
+                                ideas:
+                                  minimum: 0
+                                  type: "integer"
+                                matched_idea_support:
+                                  minimum: 0
+                                  type: "integer"
+                                terminal_focus:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                terminal_rest:
+                                  description: "A counts-only fraction num/den."
+                                  properties:
+                                    den:
+                                      minimum: 0
+                                      type: "integer"
+                                    num:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "num"
+                                    - "den"
+                                  type: "object"
+                                within_idea:
+                                  properties:
+                                    losses:
+                                      minimum: 0
+                                      type: "integer"
+                                    ties:
+                                      minimum: 0
+                                      type: "integer"
+                                    wins:
+                                      minimum: 0
+                                      type: "integer"
+                                  required:
+                                    - "wins"
+                                    - "losses"
+                                    - "ties"
+                                  type: "object"
+                              required:
+                                - "attribute"
+                                - "attribute_label"
+                                - "focus_value"
+                                - "comparison_label"
+                                - "ideas"
+                                - "drafts"
+                                - "first_pass_focus"
+                                - "first_pass_rest"
+                                - "terminal_focus"
+                                - "terminal_rest"
+                                - "within_idea"
+                                - "matched_idea_support"
+                                - "evidence_ids"
+                              type: "object"
+                            type: "array"
+                          pack_text:
+                            description: "The rendered reference text — owner session only; never in an audit diff or a log."
+                            nullable: true
+                            type: "string"
+                          state:
+                            enum:
+                              - "producing"
+                              - "frozen"
+                              - "abstained"
+                              - "invalidated"
+                            type: "string"
+                          teacher_calls:
+                            minimum: 0
+                            type: "integer"
+                          token_estimate:
+                            minimum: 0
+                            type: "integer"
+                        required:
+                          - "state"
+                          - "labels_requested"
+                          - "teacher_calls"
+                          - "abstention_reason"
+                          - "candidate_hash"
+                          - "token_estimate"
+                          - "observations"
+                          - "cited_execution_ids"
+                          - "label_counts"
+                          - "drops"
+                          - "pack_text"
+                        type: "object"
                       candidate_hash:
                         nullable: true
                         type: "string"
@@ -19036,6 +19929,165 @@ paths:
         -
           sessionCookie: []
       summary: "Re-affirm an admitted experiment against the current evidence"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments/{id}/executions":
+    post:
+      description: "ENROL one execution slot of an experiment whose candidate is frozen: name the `phase`, the `pair_key` (one idea family frozen in the preregistration’s screen or test split) and the `slot` (0 or 1). The gateway — never the caller — decides the ARM from the experiment’s sealed assignment: a keyed hash of the frozen preregistration hash and the pair picks which slot is treated, so the two slots of a pair always get opposite arms. A repeat of the same `{phase, pair_key, slot}` returns the SAME execution (`created: false`). Send the returned `execution_id` as the `X-UR-Experiment-Execution` header on EVERY call of the execution (on `POST /v1/messages` and `POST /v1/responses`). Refusals are named in the error message: `experiment_not_live`, `candidate_not_frozen`, `phase_not_open`, `phase_unfunded`, `pair_not_in_manifest`, `slot_invalid` (and `experiment_not_found`). Auth: an api key with `flywheel:experiment:run` (never implied by `gateway:invoke`), OR the owner session (`flywheel.experiment`). Audited on creation (ids only). NEVER a body. Requires API-key scope: flywheel:experiment:run."
+      operationId: "enrolFlywheelExperimentExecution"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              additionalProperties: false
+              description: "Enrol one execution slot — the gateway decides the arm."
+              properties:
+                pair_key:
+                  description: "The pair — one idea family frozen in the preregistration's screen or test split."
+                  maxLength: 200
+                  minLength: 1
+                  type: "string"
+                phase:
+                  description: "The fundable phase the execution runs in: `screen` (the historical screen pairs) or `test`."
+                  enum:
+                    - "screen"
+                    - "test"
+                  type: "string"
+                slot:
+                  description: "One of the pair’s two slots: 0 or 1 (anything else is refused `slot_invalid`)."
+                  type: "number"
+              required:
+                - "phase"
+                - "pair_key"
+                - "slot"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "One enrolled experiment execution — ids / arm / hashes only."
+                properties:
+                  arm:
+                    description: "Decided by the sealed assignment — never by the caller."
+                    enum:
+                      - "control"
+                      - "treated"
+                    type: "string"
+                  assignment_version:
+                    description: "The sealed assignment rule version."
+                    type: "string"
+                  candidate_hash:
+                    description: "The frozen candidate this execution is bound to (every call re-checks it)."
+                    type: "string"
+                  created:
+                    description: "False when the same {phase, pair_key, slot} was already enrolled (idempotent)."
+                    type: "boolean"
+                  created_at:
+                    type: "string"
+                  execution_id:
+                    description: "Send as the `X-UR-Experiment-Execution` header on every call of this execution."
+                    type: "string"
+                  experiment_id:
+                    type: "string"
+                  object:
+                    enum:
+                      - "flywheel_experiment_execution"
+                    type: "string"
+                  pair_key:
+                    type: "string"
+                  phase:
+                    enum:
+                      - "screen"
+                      - "test"
+                    type: "string"
+                  slot:
+                    maximum: 1
+                    minimum: 0
+                    type: "integer"
+                required:
+                  - "object"
+                  - "execution_id"
+                  - "experiment_id"
+                  - "phase"
+                  - "pair_key"
+                  - "slot"
+                  - "arm"
+                  - "candidate_hash"
+                  - "assignment_version"
+                  - "created"
+                  - "created_at"
+                type: "object"
+          description: "The enrolled execution (its id + the arm the sealed assignment gave the slot)."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          bearerAuth: []
+        -
+          sessionCookie: []
+      summary: "Enrol one execution slot of a candidate-frozen experiment (the gateway decides the arm)"
+      tags:
+        - "Flywheel"
+  "/v1/flywheel/experiments/{id}/produce":
+    post:
+      description: "LAUNCH the ONE structured-candidate production attempt for an admitted experiment: the worker reads the FROZEN fit split, optionally runs ONE outcome-blind teacher call (reserved + settled through the experiment budget), and freezes AT MOST ONE candidate (at most two first-draft observations) or ABSTAINS by name. One attempt per experiment (a claim prevents a second). Read the candidate back on `GET /v1/flywheel/experiments/{id}` (`candidate`). OWNER SESSION only (`flywheel.experiment`); audited (ids/hashes/counts — never the pack text). NEVER a body."
+      operationId: "produceFlywheelExperimentCandidate"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      responses:
+        "202":
+          content:
+            "application/json":
+              schema:
+                description: "The structured-candidate production attempt was launched."
+                properties:
+                  enqueued:
+                    description: "True when the production attempt was enqueued."
+                    type: "boolean"
+                  experiment_id:
+                    type: "string"
+                  object:
+                    enum:
+                      - "flywheel_experiment_produce"
+                    type: "string"
+                required:
+                  - "object"
+                  - "experiment_id"
+                  - "enqueued"
+                type: "object"
+          description: "The production attempt was launched (the candidate is produced asynchronously)."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Launch the one structured-candidate production attempt"
       tags:
         - "Flywheel"
   "/v1/flywheel/grants":
@@ -22819,7 +23871,7 @@ paths:
         - "Keys"
   "/v1/messages":
     post:
-      description: "Native passthrough for the Anthropic Messages API: point the official `@anthropic-ai/sdk` at ultrarouter by changing only the base URL and the key. The ur key is accepted via `Authorization: Bearer` OR `x-api-key` (the Anthropic SDK style); the body is FORWARDED VERBATIM to Anthropic and the response is returned UNTOUCHED — the gateway only meters, caps and captures. `stream:true` forwards the upstream SSE bytes verbatim. The ur extensions ride request headers (`X-UR-Call-Type`, `X-UR-Timeout-Ms` clamped 1 s–600 s (default 300 s), `X-UR-Trace`); the response carries `X-UR-Request-Id` and (non-streaming) `X-UR-Cost-Micro-USD`. An allowlist of request headers (`anthropic-version`, `anthropic-beta`, `idempotency-key`) is forwarded upstream; the caller's own key headers are never forwarded. Upstream errors pass through with their status and body; gateway failures (auth, caps, timeout) use the normalized error envelope. Requires API-key scope: gateway:invoke."
+      description: "Native passthrough for the Anthropic Messages API: point the official `@anthropic-ai/sdk` at ultrarouter by changing only the base URL and the key. The ur key is accepted via `Authorization: Bearer` OR `x-api-key` (the Anthropic SDK style); the body is FORWARDED VERBATIM to Anthropic and the response is returned UNTOUCHED — the gateway only meters, caps and captures. `stream:true` forwards the upstream SSE bytes verbatim. The ur extensions ride request headers (`X-UR-Call-Type`, `X-UR-Timeout-Ms` clamped 1 s–600 s (default 300 s), `X-UR-Trace`); the response carries `X-UR-Request-Id` and (non-streaming) `X-UR-Cost-Micro-USD`. An allowlist of request headers (`anthropic-version`, `anthropic-beta`, `idempotency-key`) is forwarded upstream; the caller's own key headers are never forwarded. Upstream errors pass through with their status and body; gateway failures (auth, caps, timeout) use the normalized error envelope. EXPERIMENT-BOUND calls: a call carrying `X-UR-Experiment-Execution` (an execution enrolled on `POST /v1/flywheel/experiments/{id}/executions`; the key also needs `flywheel:experiment:run`) is authorized against its execution (workspace, live experiment, open phase, bound candidate) BEFORE dispatch, reserved against the experiment budget from `max_tokens` and the dispatched bytes, claimed once (a retry of the same `attempt` is refused) and settled from the measured cost. For the TREATED arm’s lever call type only, the frozen learned pack is placed as a NEW FIRST TEXT BLOCK of the first user message — `system` and every `cache_control` marker are untouched; other stages and the control arm are forwarded unchanged. Refusals are named in the error message. A call without the header is unaffected. Requires API-key scope: gateway:invoke."
       operationId: "createMessage"
       requestBody:
         content:
@@ -23133,7 +24185,7 @@ paths:
         - "Flywheel"
   "/v1/responses":
     post:
-      description: "Native passthrough for the OpenAI Responses API: point the official `openai` SDK at ultrarouter by changing only the base URL and the key. The JSON body is FORWARDED VERBATIM to OpenAI (no routing, no compression, no model remapping, no field injection) and the response is returned UNTOUCHED — the gateway only meters, caps and captures. `stream:true` forwards the upstream SSE bytes verbatim. The ur extensions ride request headers (`X-UR-Call-Type`, `X-UR-Timeout-Ms` clamped 1 s–600 s (default 300 s), `X-UR-Trace`); the response carries `X-UR-Request-Id` and (non-streaming) `X-UR-Cost-Micro-USD`. An allowlist of request headers (`openai-beta`, `openai-organization`, `openai-project`, `idempotency-key`) is forwarded upstream; the caller's own `Authorization` is never forwarded. Upstream errors pass through with their status and body; gateway failures (auth, caps, timeout) use the normalized error envelope. Requires API-key scope: gateway:invoke."
+      description: "Native passthrough for the OpenAI Responses API: point the official `openai` SDK at ultrarouter by changing only the base URL and the key. The JSON body is FORWARDED VERBATIM to OpenAI (no routing, no compression, no model remapping, no field injection) and the response is returned UNTOUCHED — the gateway only meters, caps and captures. `stream:true` forwards the upstream SSE bytes verbatim. The ur extensions ride request headers (`X-UR-Call-Type`, `X-UR-Timeout-Ms` clamped 1 s–600 s (default 300 s), `X-UR-Trace`); the response carries `X-UR-Request-Id` and (non-streaming) `X-UR-Cost-Micro-USD`. An allowlist of request headers (`openai-beta`, `openai-organization`, `openai-project`, `idempotency-key`) is forwarded upstream; the caller's own `Authorization` is never forwarded. Upstream errors pass through with their status and body; gateway failures (auth, caps, timeout) use the normalized error envelope. EXPERIMENT-BOUND calls: a call carrying `X-UR-Experiment-Execution` (an execution enrolled on `POST /v1/flywheel/experiments/{id}/executions`; the key also needs `flywheel:experiment:run`) is authorized against its execution, reserved against the experiment budget before dispatch and settled from the measured cost; it must send `max_output_tokens`, a call type and an `attempt` in `X-UR-Trace`. The learned pack is never placed into a Responses body (a treated lever-stage call here is refused by name). A call without the header is unaffected. Requires API-key scope: gateway:invoke."
       operationId: "createResponse"
       requestBody:
         content:
@@ -23345,7 +24397,7 @@ paths:
                 name:
                   type: "string"
                 scopes:
-                  description: "Closed vocabulary: gateway:invoke, logs:read, config:read, config:write."
+                  description: "Closed vocabulary: gateway:invoke, logs:read, config:read, config:write, bench:run, outcomes:write, flywheel:experiment:run. Omitted ⇒ gateway:invoke + outcomes:write (flywheel:experiment:run is never granted by default)."
                   items:
                     type: "string"
                   type: "array"

@@ -345,6 +345,8 @@ export const COVERAGE = {
   getFlywheelExperiment: { methods: [], tests: [] },
   admitFlywheelExperiment: { methods: [], tests: [] },
   abandonFlywheelExperiment: { methods: [], tests: [] },
+  produceFlywheelExperimentCandidate: { methods: [], tests: [] },
+  enrolFlywheelExperimentExecution: { methods: [], tests: [] },
   listProviderKeys: { methods: [], tests: [] },
   createProviderKey: { methods: [], tests: [] },
   updateProviderKey: { methods: [], tests: [] },
