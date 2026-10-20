@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: 2df92e369deedb53e3bbc8eea2dd962bd79b83dcb4cac70e810d824000286d0f
+# spec-sha256: 782c08459bcb97ed1af8b245312a3bab11f0e8f808d67cf0b68a636af25734f8
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -12199,6 +12199,55 @@ components:
       required:
         - "object"
         - "data"
+      type: "object"
+    ReviewAssistRequest:
+      additionalProperties: false
+      description: "Ask the customer’s own model to revise a review-queue draft (billed as `ur_review_assist`)."
+      properties:
+        item_id:
+          description: "The review item id from the queue listing (`exec:…` | `rec:…` | `req:…`)."
+          maxLength: 512
+          minLength: 1
+          type: "string"
+        note:
+          description: "Optional reviewer feedback — \"what should change\" (drives the revision). ≤ 2,000 chars."
+          maxLength: 2000
+          type: "string"
+        reject_reason:
+          description: "Optional closed reject-reason code that steers the revision."
+          enum:
+            - "off_topic"
+            - "inaccurate"
+            - "tone"
+            - "incomplete"
+            - "formatting"
+            - "policy"
+            - "other"
+          type: "string"
+      required:
+        - "item_id"
+      type: "object"
+    ReviewAssistResponse:
+      description: "The \"Fix with AI\" revision + the metered request id + cost."
+      properties:
+        cost_micro_usd:
+          description: "The cost of this call in integer micro-USD — the customer’s own usage spend."
+          type: "integer"
+        object:
+          enum:
+            - "review_assist"
+          type: "string"
+        request_id:
+          description: "The `req_…` id of the metered `ur_review_assist` call (appears in the workspace log)."
+          type: "string"
+        revision:
+          description: "The revised draft text (the human accepts / edits / discards it)."
+          type: "string"
+      required:
+        - "object"
+        - "revision"
+        - "request_id"
+        - "cost_micro_usd"
       type: "object"
     ReviewerBackfill:
       additionalProperties: false
@@ -31182,6 +31231,35 @@ paths:
       summary: "Approve (activate) or reject a screened hosted-prompt candidate"
       tags:
         - "Flywheel"
+  "/v1/flywheel/review/assist":
+    post:
+      description: "The review queue’s \"Fix with AI\": the server reads the FULL draft of `item_id` (consent + retention gated, audited), composes a prompt from the draft + the reviewer’s optional `note` + optional `reject_reason`, and dispatches ONE chat completion through the SAME metered gateway path as `/v1/chat/completions` — call type `ur_review_assist`, the model fixed by the server — so it is the customer’s OWN usage (a `requests` row + `gateway_call` ledger row + the workspace spend caps all apply). The returned `revision` fills the editor for the human to accept / change / discard — it is NEVER stored as a Final or an outcome by itself. A workspace spend-cap breach is a named 402. OWNER/member SESSION only (`flywheel.write`), never an api key; audited (`flywheel.review.assist`, ids / hashes only). The session path names its workspace via the `X-UR-Workspace` header. NEVER a body in a log."
+      operationId: "reviewAssist"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ReviewAssistRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ReviewAssistResponse"
+          description: "The revision + the metered request id + the cost in micro-USD."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Fix with AI — revise a review-queue draft (billed as the customer’s own usage)"
+      tags:
+        - "Flywheel"
   "/v1/flywheel/reviewer/events":
     post:
       description: "The ONE supported reviewer-integration endpoint. Each event carries a stable `artifact_key` (or `artifact_id`), the EXACT `artifact_version` the human reviewed, the reviewer system’s own `event_id`, an `effective_at` and an OPTIONAL consented `final`. The request MUST be signed: `X-UR-Reviewer-Signature: sha256=<hex>` over `\"<X-UR-Reviewer-Timestamp>.<raw body>\"`, keyed by the API key you authenticate with — a missing, stale or invalid signature FAILS CLOSED (403) with a distinct named reason and nothing is written. Per event: a replay of an already-recorded `event_id` is `duplicate` (a visible no-op, never a second row and never an error); an artifact link that does not resolve in this workspace is `unmatched_artifact_key` / `wrong_tenant_artifact_id`; a stale pin is `version_mismatch` and is HELD for repair, never guessed; a final BODY without `corrections_consent` is refused and never stored. An `approved` decision with NO final records the decision and says `final_absent` — a missing final is NEVER auto-declared accepted. Provenance, `latency_class` and `learning_use` are SERVER-assigned; the event schema has no field for them, so an adapter cannot supply them and cannot impersonate another producer. The reviewer decides whether a final is approved — an edit is not an oracle of correctness. Requires API-key scope: outcomes:write."
@@ -32943,6 +33021,271 @@ paths:
       summary: "Roll an API key secret"
       tags:
         - "API keys"
+  "/v1/workspaces/{id}/experiment-packs":
+    get:
+      description: "LIST the workspace experiment packs, newest first — ids / `module_hash` / token count / source / created + revoked timestamps only (never the module text). owner|admin session (`flywheel.write`)."
+      operationId: "listExperimentPacks"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "The workspace experiment packs (empty when none)."
+                properties:
+                  data:
+                    items:
+                      description: "An experiment pack (metadata only — the module text is never returned)."
+                      properties:
+                        call_type_id:
+                          description: "The call type the pack is for."
+                          type: "string"
+                        created_at:
+                          type: "string"
+                        created_by:
+                          nullable: true
+                          type: "string"
+                        id:
+                          description: "The pack id (`xpk_…`)."
+                          type: "string"
+                        module_hash:
+                          type: "string"
+                        name:
+                          type: "string"
+                        object:
+                          enum:
+                            - "experiment_pack"
+                          type: "string"
+                        revoked_at:
+                          nullable: true
+                          type: "string"
+                        source:
+                          type: "string"
+                        tokens:
+                          type: "integer"
+                      required:
+                        - "object"
+                        - "id"
+                        - "call_type_id"
+                        - "name"
+                        - "module_hash"
+                        - "tokens"
+                        - "source"
+                        - "created_by"
+                        - "created_at"
+                        - "revoked_at"
+                      type: "object"
+                    type: "array"
+                  object:
+                    enum:
+                      - "experiment_pack_list"
+                    type: "string"
+                required:
+                  - "object"
+                  - "data"
+                type: "object"
+          description: "The workspace experiment packs (empty when none)."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "List the workspace live-injection experiment packs"
+      tags:
+        - "Workspaces"
+    post:
+      description: "Load a small, experiment-labeled learned PLAYBOOK (a `ur:learned` reference block ≤ 800 tokens) that a passthrough rule’s `inject` can bind to a (call type × api key). A matching `POST /v1/messages` / `POST /v1/responses` request gets the pack inserted into the learned reference slot, stamped, bounded and fail-safe. The module TEXT is stored in encrypted blob storage under `corrections_consent` — a create is REFUSED when consent is off, when the text exceeds 800 tokens by the core estimator, or when it is not a `ur:learned` shape. NOT a product lever adoption, NOT a holdout arm. owner|admin session (`flywheel.write`), audited (ids / hashes only); never returns the text."
+      operationId: "createExperimentPack"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              additionalProperties: false
+              description: "Load a new experiment pack (owner|admin, session only, audited; refused when consent is off)."
+              properties:
+                call_type_id:
+                  description: "The call type (`ct_…`) the pack is for — a bound inject rule matches this call type."
+                  minLength: 1
+                  type: "string"
+                module_text:
+                  description: "The learned pack TEXT — a `ur:learned` reference block (≤ 800 tokens by the core estimator). Stored in encrypted blob storage under `corrections_consent`; never echoed back in any response."
+                  minLength: 1
+                  type: "string"
+                name:
+                  description: "A human label for the pack (e.g. the lab build it came from)."
+                  maxLength: 200
+                  minLength: 1
+                  type: "string"
+                source:
+                  default: "lab_build:ai"
+                  description: "The pack provenance tag (e.g. `lab_build:ai`) — analysis separates the injected arm by it."
+                  maxLength: 120
+                  minLength: 1
+                  type: "string"
+              required:
+                - "name"
+                - "call_type_id"
+                - "module_text"
+              type: "object"
+        required: true
+      responses:
+        "201":
+          content:
+            "application/json":
+              schema:
+                description: "An experiment pack (metadata only — the module text is never returned)."
+                properties:
+                  call_type_id:
+                    description: "The call type the pack is for."
+                    type: "string"
+                  created_at:
+                    type: "string"
+                  created_by:
+                    nullable: true
+                    type: "string"
+                  id:
+                    description: "The pack id (`xpk_…`)."
+                    type: "string"
+                  module_hash:
+                    type: "string"
+                  name:
+                    type: "string"
+                  object:
+                    enum:
+                      - "experiment_pack"
+                    type: "string"
+                  revoked_at:
+                    nullable: true
+                    type: "string"
+                  source:
+                    type: "string"
+                  tokens:
+                    type: "integer"
+                required:
+                  - "object"
+                  - "id"
+                  - "call_type_id"
+                  - "name"
+                  - "module_hash"
+                  - "tokens"
+                  - "source"
+                  - "created_by"
+                  - "created_at"
+                  - "revoked_at"
+                type: "object"
+          description: "The loaded experiment pack (metadata only)."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Load a live-injection experiment pack"
+      tags:
+        - "Workspaces"
+  "/v1/workspaces/{id}/experiment-packs/{packId}":
+    delete:
+      description: "REVOKE an experiment pack (set `revoked_at`). A revoked pack is no longer injected on any matching request — the gateway serves verbatim with a recorded skip — within one 5 s config window (a revoke bumps `config_version`). The module body rides the corrections-body retention sweep. owner|admin session (`flywheel.write`), audited."
+      operationId: "revokeExperimentPack"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+        -
+          description: "Path parameter `packId`."
+          in: "path"
+          name: "packId"
+          required: true
+          schema:
+            description: "Path parameter `packId`."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "An experiment pack (metadata only — the module text is never returned)."
+                properties:
+                  call_type_id:
+                    description: "The call type the pack is for."
+                    type: "string"
+                  created_at:
+                    type: "string"
+                  created_by:
+                    nullable: true
+                    type: "string"
+                  id:
+                    description: "The pack id (`xpk_…`)."
+                    type: "string"
+                  module_hash:
+                    type: "string"
+                  name:
+                    type: "string"
+                  object:
+                    enum:
+                      - "experiment_pack"
+                    type: "string"
+                  revoked_at:
+                    nullable: true
+                    type: "string"
+                  source:
+                    type: "string"
+                  tokens:
+                    type: "integer"
+                required:
+                  - "object"
+                  - "id"
+                  - "call_type_id"
+                  - "name"
+                  - "module_hash"
+                  - "tokens"
+                  - "source"
+                  - "created_by"
+                  - "created_at"
+                  - "revoked_at"
+                type: "object"
+          description: "The revoked experiment pack (metadata only)."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Revoke a live-injection experiment pack"
+      tags:
+        - "Workspaces"
   "/v1/workspaces/{id}/flywheel-consents":
     patch:
       description: "Owner-only, audited, bumps `config_version`: `corrections_consent` (store finals), `training_export_consent` (allow the training-READY export), `corrections_retention_days`."
@@ -33824,7 +34167,7 @@ paths:
                   rules:
                     items:
                       additionalProperties: false
-                      description: "A native-passthrough stage-keyed routing rule."
+                      description: "A native-passthrough stage-keyed routing + live-injection rule."
                       properties:
                         cache:
                           default: "off"
@@ -33838,6 +34181,17 @@ paths:
                           maxLength: 128
                           minLength: 1
                           type: "string"
+                        inject:
+                          additionalProperties: false
+                          description: "Insert a learned experiment pack into the matched request’s learned reference slot. Carried ALONGSIDE or INSTEAD OF `serve`; an inject rule must match a call type and never composes with a cross-family (`openai_chat`) serve."
+                          properties:
+                            experiment_pack_id:
+                              description: "The experiment pack id (`xpk_…`) whose ≤ 800-token learned pack is inserted into the matched request’s learned reference slot. Validated (exists, not revoked, same workspace) at set time."
+                              minLength: 1
+                              type: "string"
+                          required:
+                            - "experiment_pack_id"
+                          type: "object"
                         match:
                           additionalProperties: false
                           default: {}
@@ -33862,7 +34216,7 @@ paths:
                           type: "object"
                         serve:
                           additionalProperties: false
-                          description: "What the matched request is served with."
+                          description: "What the matched request is served with (the model rewrite). OPTIONAL: an inject-only rule leaves the model verbatim."
                           properties:
                             model:
                               description: "The model the gateway serves instead of the requested one."
@@ -33880,7 +34234,6 @@ paths:
                           type: "object"
                       required:
                         - "id"
-                        - "serve"
                       type: "object"
                     type: "array"
                   updated_at:
@@ -33938,7 +34291,7 @@ paths:
                   description: "The stage-keyed rules, evaluated in order (first match wins)."
                   items:
                     additionalProperties: false
-                    description: "A native-passthrough stage-keyed routing rule."
+                    description: "A native-passthrough stage-keyed routing + live-injection rule."
                     properties:
                       cache:
                         default: "off"
@@ -33952,6 +34305,17 @@ paths:
                         maxLength: 128
                         minLength: 1
                         type: "string"
+                      inject:
+                        additionalProperties: false
+                        description: "Insert a learned experiment pack into the matched request’s learned reference slot. Carried ALONGSIDE or INSTEAD OF `serve`; an inject rule must match a call type and never composes with a cross-family (`openai_chat`) serve."
+                        properties:
+                          experiment_pack_id:
+                            description: "The experiment pack id (`xpk_…`) whose ≤ 800-token learned pack is inserted into the matched request’s learned reference slot. Validated (exists, not revoked, same workspace) at set time."
+                            minLength: 1
+                            type: "string"
+                        required:
+                          - "experiment_pack_id"
+                        type: "object"
                       match:
                         additionalProperties: false
                         default: {}
@@ -33976,7 +34340,7 @@ paths:
                         type: "object"
                       serve:
                         additionalProperties: false
-                        description: "What the matched request is served with."
+                        description: "What the matched request is served with (the model rewrite). OPTIONAL: an inject-only rule leaves the model verbatim."
                         properties:
                           model:
                             description: "The model the gateway serves instead of the requested one."
@@ -33994,7 +34358,6 @@ paths:
                         type: "object"
                     required:
                       - "id"
-                      - "serve"
                     type: "object"
                   maxItems: 100
                   type: "array"
@@ -34019,7 +34382,7 @@ paths:
                   rules:
                     items:
                       additionalProperties: false
-                      description: "A native-passthrough stage-keyed routing rule."
+                      description: "A native-passthrough stage-keyed routing + live-injection rule."
                       properties:
                         cache:
                           default: "off"
@@ -34033,6 +34396,17 @@ paths:
                           maxLength: 128
                           minLength: 1
                           type: "string"
+                        inject:
+                          additionalProperties: false
+                          description: "Insert a learned experiment pack into the matched request’s learned reference slot. Carried ALONGSIDE or INSTEAD OF `serve`; an inject rule must match a call type and never composes with a cross-family (`openai_chat`) serve."
+                          properties:
+                            experiment_pack_id:
+                              description: "The experiment pack id (`xpk_…`) whose ≤ 800-token learned pack is inserted into the matched request’s learned reference slot. Validated (exists, not revoked, same workspace) at set time."
+                              minLength: 1
+                              type: "string"
+                          required:
+                            - "experiment_pack_id"
+                          type: "object"
                         match:
                           additionalProperties: false
                           default: {}
@@ -34057,7 +34431,7 @@ paths:
                           type: "object"
                         serve:
                           additionalProperties: false
-                          description: "What the matched request is served with."
+                          description: "What the matched request is served with (the model rewrite). OPTIONAL: an inject-only rule leaves the model verbatim."
                           properties:
                             model:
                               description: "The model the gateway serves instead of the requested one."
@@ -34075,7 +34449,6 @@ paths:
                           type: "object"
                       required:
                         - "id"
-                        - "serve"
                       type: "object"
                     type: "array"
                   updated_at:

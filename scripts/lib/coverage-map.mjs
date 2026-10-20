@@ -319,6 +319,11 @@ export const COVERAGE = {
   reviewLearningPlan: { methods: [], tests: [] },
   listLearningPlans: { methods: [], tests: [] },
   proposeLearningPlan: { methods: [], tests: [] },
+  // Session-only (dashboard): the review queue's Fix with AI, and the owner's experiment packs.
+  reviewAssist: { methods: [], tests: [] },
+  listExperimentPacks: { methods: [], tests: [] },
+  createExperimentPack: { methods: [], tests: [] },
+  revokeExperimentPack: { methods: [], tests: [] },
   listPromptCandidates: { methods: [], tests: [] },
   decidePromptCandidate: { methods: [], tests: [] },
   // Workspace administration (dashboard session)
