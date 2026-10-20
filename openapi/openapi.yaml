@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: f5372296721086b2324ca4982b96d96cb3fbd1e4621fce985604de0e161dc5f1
+# spec-sha256: 2df92e369deedb53e3bbc8eea2dd962bd79b83dcb4cac70e810d824000286d0f
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -33843,6 +33843,10 @@ paths:
                           default: {}
                           description: "A passthrough rule match predicate (an empty object is a catch-all)."
                           properties:
+                            api_key_id:
+                              description: "Match only requests made with THIS API key (`key_…`) — run several arms side by side, one per key."
+                              minLength: 1
+                              type: "string"
                             call_type:
                               description: "Match the `X-UR-Call-Type` slug the request is tagged with."
                               minLength: 1
@@ -33861,8 +33865,15 @@ paths:
                           description: "What the matched request is served with."
                           properties:
                             model:
-                              description: "The model the gateway serves instead (SAME provider family only)."
+                              description: "The model the gateway serves instead of the requested one."
                               minLength: 1
+                              type: "string"
+                            protocol:
+                              default: "native"
+                              description: "How the served model is reached. `native` (default) forwards the body verbatim on its own family (same-family, or a custom provider speaking the native API). `openai_chat` serves a model that speaks OpenAI chat completions — the gateway translates the request, response and stream both ways, so an Anthropic or OpenAI SDK app can be served by an open model across families with no code change."
+                              enum:
+                                - "native"
+                                - "openai_chat"
                               type: "string"
                           required:
                             - "model"
@@ -33946,6 +33957,10 @@ paths:
                         default: {}
                         description: "A passthrough rule match predicate (an empty object is a catch-all)."
                         properties:
+                          api_key_id:
+                            description: "Match only requests made with THIS API key (`key_…`) — run several arms side by side, one per key."
+                            minLength: 1
+                            type: "string"
                           call_type:
                             description: "Match the `X-UR-Call-Type` slug the request is tagged with."
                             minLength: 1
@@ -33964,8 +33979,15 @@ paths:
                         description: "What the matched request is served with."
                         properties:
                           model:
-                            description: "The model the gateway serves instead (SAME provider family only)."
+                            description: "The model the gateway serves instead of the requested one."
                             minLength: 1
+                            type: "string"
+                          protocol:
+                            default: "native"
+                            description: "How the served model is reached. `native` (default) forwards the body verbatim on its own family (same-family, or a custom provider speaking the native API). `openai_chat` serves a model that speaks OpenAI chat completions — the gateway translates the request, response and stream both ways, so an Anthropic or OpenAI SDK app can be served by an open model across families with no code change."
+                            enum:
+                              - "native"
+                              - "openai_chat"
                             type: "string"
                         required:
                           - "model"
@@ -34016,6 +34038,10 @@ paths:
                           default: {}
                           description: "A passthrough rule match predicate (an empty object is a catch-all)."
                           properties:
+                            api_key_id:
+                              description: "Match only requests made with THIS API key (`key_…`) — run several arms side by side, one per key."
+                              minLength: 1
+                              type: "string"
                             call_type:
                               description: "Match the `X-UR-Call-Type` slug the request is tagged with."
                               minLength: 1
@@ -34034,8 +34060,15 @@ paths:
                           description: "What the matched request is served with."
                           properties:
                             model:
-                              description: "The model the gateway serves instead (SAME provider family only)."
+                              description: "The model the gateway serves instead of the requested one."
                               minLength: 1
+                              type: "string"
+                            protocol:
+                              default: "native"
+                              description: "How the served model is reached. `native` (default) forwards the body verbatim on its own family (same-family, or a custom provider speaking the native API). `openai_chat` serves a model that speaks OpenAI chat completions — the gateway translates the request, response and stream both ways, so an Anthropic or OpenAI SDK app can be served by an open model across families with no code change."
+                              enum:
+                                - "native"
+                                - "openai_chat"
                               type: "string"
                           required:
                             - "model"
