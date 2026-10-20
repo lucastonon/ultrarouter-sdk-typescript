@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: 782c08459bcb97ed1af8b245312a3bab11f0e8f808d67cf0b68a636af25734f8
+# spec-sha256: c8c0b6b2da63945ea733014de8be88e096cc697c2eb8406d01fdc6c70b3f32c6
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -34183,7 +34183,7 @@ paths:
                           type: "string"
                         inject:
                           additionalProperties: false
-                          description: "Insert a learned experiment pack into the matched request’s learned reference slot. Carried ALONGSIDE or INSTEAD OF `serve`; an inject rule must match a call type and never composes with a cross-family (`openai_chat`) serve."
+                          description: "Insert a learned experiment pack into the matched request’s learned reference slot. Carried ALONGSIDE or INSTEAD OF `serve`; an inject rule must match a call type. May be combined with a cross-family (`openai_chat`) serve — the pack is placed into the native body, then that body is translated."
                           properties:
                             experiment_pack_id:
                               description: "The experiment pack id (`xpk_…`) whose ≤ 800-token learned pack is inserted into the matched request’s learned reference slot. Validated (exists, not revoked, same workspace) at set time."
@@ -34228,6 +34228,13 @@ paths:
                               enum:
                                 - "native"
                                 - "openai_chat"
+                              type: "string"
+                            reasoning_effort:
+                              description: "Force this reasoning effort on the cross-family translated request, overriding whatever the client asked (Anthropic `output_config.effort` / `thinking`, Responses `reasoning.effort`) — so a heavy reasoner can be served at a lower effort instead of spending the whole `max_tokens` budget on reasoning and never answering. Valid ONLY with `protocol: \"openai_chat\"` (the policy is refused, naming the rule, otherwise)."
+                              enum:
+                                - "low"
+                                - "medium"
+                                - "high"
                               type: "string"
                           required:
                             - "model"
@@ -34307,7 +34314,7 @@ paths:
                         type: "string"
                       inject:
                         additionalProperties: false
-                        description: "Insert a learned experiment pack into the matched request’s learned reference slot. Carried ALONGSIDE or INSTEAD OF `serve`; an inject rule must match a call type and never composes with a cross-family (`openai_chat`) serve."
+                        description: "Insert a learned experiment pack into the matched request’s learned reference slot. Carried ALONGSIDE or INSTEAD OF `serve`; an inject rule must match a call type. May be combined with a cross-family (`openai_chat`) serve — the pack is placed into the native body, then that body is translated."
                         properties:
                           experiment_pack_id:
                             description: "The experiment pack id (`xpk_…`) whose ≤ 800-token learned pack is inserted into the matched request’s learned reference slot. Validated (exists, not revoked, same workspace) at set time."
@@ -34352,6 +34359,13 @@ paths:
                             enum:
                               - "native"
                               - "openai_chat"
+                            type: "string"
+                          reasoning_effort:
+                            description: "Force this reasoning effort on the cross-family translated request, overriding whatever the client asked (Anthropic `output_config.effort` / `thinking`, Responses `reasoning.effort`) — so a heavy reasoner can be served at a lower effort instead of spending the whole `max_tokens` budget on reasoning and never answering. Valid ONLY with `protocol: \"openai_chat\"` (the policy is refused, naming the rule, otherwise)."
+                            enum:
+                              - "low"
+                              - "medium"
+                              - "high"
                             type: "string"
                         required:
                           - "model"
@@ -34398,7 +34412,7 @@ paths:
                           type: "string"
                         inject:
                           additionalProperties: false
-                          description: "Insert a learned experiment pack into the matched request’s learned reference slot. Carried ALONGSIDE or INSTEAD OF `serve`; an inject rule must match a call type and never composes with a cross-family (`openai_chat`) serve."
+                          description: "Insert a learned experiment pack into the matched request’s learned reference slot. Carried ALONGSIDE or INSTEAD OF `serve`; an inject rule must match a call type. May be combined with a cross-family (`openai_chat`) serve — the pack is placed into the native body, then that body is translated."
                           properties:
                             experiment_pack_id:
                               description: "The experiment pack id (`xpk_…`) whose ≤ 800-token learned pack is inserted into the matched request’s learned reference slot. Validated (exists, not revoked, same workspace) at set time."
@@ -34443,6 +34457,13 @@ paths:
                               enum:
                                 - "native"
                                 - "openai_chat"
+                              type: "string"
+                            reasoning_effort:
+                              description: "Force this reasoning effort on the cross-family translated request, overriding whatever the client asked (Anthropic `output_config.effort` / `thinking`, Responses `reasoning.effort`) — so a heavy reasoner can be served at a lower effort instead of spending the whole `max_tokens` budget on reasoning and never answering. Valid ONLY with `protocol: \"openai_chat\"` (the policy is refused, naming the rule, otherwise)."
+                              enum:
+                                - "low"
+                                - "medium"
+                                - "high"
                               type: "string"
                           required:
                             - "model"
