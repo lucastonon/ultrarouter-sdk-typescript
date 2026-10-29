@@ -382,8 +382,11 @@ Every control resolves a `learning_control` result: the `action`, whether it `ch
 resulting status as `learning`.
 
 **Enable.** `enable(callTypeId, { reflection_model, lessons_mode?, lessons_k?, promotion?, recipe? })`
-needs the workspace's corrections consent and a `reflection_model` that resolves to a
-workspace-owned offer: one of your custom providers, or a provider your workspace stored its own
+needs the workspace's full self-learning opt-in: **knowledge and corrections consent**. An owner
+or admin grants both on the dashboard Learning page or with a signed-in session calling
+`PUT /v1/workspaces/{id}/self-learning` with `{"enabled":true}`. An API key cannot grant consent;
+turning on corrections consent alone is insufficient. It also needs a `reflection_model` that
+resolves to a workspace-owned offer: one of your custom providers, or a provider your workspace stored its own
 key for. There is no platform or paid fallback. `promotion` is an object of policy changes merged
 over the current policy: `mode` (`evaluate`, `manual` or `immediate`), `objective` (`success` or
 `cost_noninferior`), `min_verified_per_arm`, `max_verified_per_arm`, `alpha`, `min_effect_pp`,
@@ -410,7 +413,7 @@ sub-reason as `detail`, the actionable `reason`, and the `action` to take:
 
 | `reason`               | `refusal` (status)                                                                                    | Typical cause                                                                                                                                        |
 | ---------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `missing_consent`      | `corrections_consent_required` (409)                                                                  | The workspace's corrections consent is off.                                                                                                          |
+| `missing_consent`      | `corrections_consent_required` (409)                                                                  | The workspace's knowledge or corrections consent is off; an owner/admin must grant the full self-learning opt-in.                                    |
 | `provider_unavailable` | `reflection_model_not_workspace_owned` (400)                                                          | `detail`: `no_offer`, `platform_offer_only`, `no_workspace_key`, `model_denied_by_policy`, `workspace_funding_not_byok`, `workspace_funding_frozen`. |
 | `not_enabled`          | `learning_not_enabled` (409)                                                                          | A control before `enable`.                                                                                                                           |
 | `invalid_promotion`    | `promotion_invalid` (400)                                                                             | `detail` names the out-of-range policy field.                                                                                                        |

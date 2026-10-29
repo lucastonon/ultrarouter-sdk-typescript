@@ -596,7 +596,8 @@ export interface LearningResource {
   status: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
   /**
    * Enable learning (self-serve: an owner/admin or a `config:write` key, with the workspace's
-   * corrections consent on and a workspace-owned offer for `reflection_model`).
+   * full self-learning opt-in (knowledge and corrections consent) on and a workspace-owned offer
+   * for `reflection_model`). Consent must be granted separately by an owner/admin session.
    */
   enable: (
     callTypeId: string,

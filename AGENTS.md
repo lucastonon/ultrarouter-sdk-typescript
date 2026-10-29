@@ -93,6 +93,11 @@ Correlate every call (`requestId` on every result; `{ requestId, episodeKey }` p
 verdict of a check you trust once per task on its final request, and steer learning per call type.
 The full guide is `docs/plug-and-play-learning.md`; the starters are in `@ultrarouter/sdk/learning`.
 
+Before enabling learning, an owner/admin must grant the workspace self-learning opt-in
+(knowledge and corrections consent) on the dashboard Learning page or through the signed-in
+session `PUT /v1/workspaces/{id}/self-learning` with `{"enabled":true}`. An API key cannot grant
+consent; corrections consent alone is insufficient.
+
 ```ts
 import UltraRouter, { LearningError, mintEpisodeKey } from '@ultrarouter/sdk';
 import { createOrderDesk } from '@ultrarouter/sdk/learning';

@@ -91,6 +91,8 @@ supersedes? })`: a `pass` / `fail` verdict from a `verifier`, `business_rule`, `
 
 ### Changed
 
+- Learning setup and refusal guidance require the full owner/admin self-learning opt-in
+  (knowledge and corrections consent); the synced API specification carries the same requirement.
 - The durable outcome queue treats a success result with `status: "pending"` as delivered (the
   gateway holds a receipt and applies the outcome once the request lands) instead of resending it.
   The shared retention fixture gains the two `pending` cases; the Python SDK takes the same change.

@@ -474,6 +474,11 @@ Correlate every call (`requestId` on every result; `{ requestId, episodeKey }` p
 verdict of a check you trust once per task on its final request, and steer learning per call type.
 The full guide is `docs/plug-and-play-learning.md`; the starters are in `@ultrarouter/sdk/learning`.
 
+Before enabling learning, an owner/admin must grant the workspace self-learning opt-in
+(knowledge and corrections consent) on the dashboard Learning page or through the signed-in
+session `PUT /v1/workspaces/{id}/self-learning` with `{"enabled":true}`. An API key cannot grant
+consent; corrections consent alone is insufficient.
+
 ```ts
 import UltraRouter, { LearningError, mintEpisodeKey } from '@ultrarouter/sdk';
 import { createOrderDesk } from '@ultrarouter/sdk/learning';
@@ -3688,8 +3693,11 @@ Every control resolves a `learning_control` result: the `action`, whether it `ch
 resulting status as `learning`.
 
 **Enable.** `enable(callTypeId, { reflection_model, lessons_mode?, lessons_k?, promotion?, recipe? })`
-needs the workspace's corrections consent and a `reflection_model` that resolves to a
-workspace-owned offer: one of your custom providers, or a provider your workspace stored its own
+needs the workspace's full self-learning opt-in: **knowledge and corrections consent**. An owner
+or admin grants both on the dashboard Learning page or with a signed-in session calling
+`PUT /v1/workspaces/{id}/self-learning` with `{"enabled":true}`. An API key cannot grant consent;
+turning on corrections consent alone is insufficient. It also needs a `reflection_model` that
+resolves to a workspace-owned offer: one of your custom providers, or a provider your workspace stored its own
 key for. There is no platform or paid fallback. `promotion` is an object of policy changes merged
 over the current policy: `mode` (`evaluate`, `manual` or `immediate`), `objective` (`success` or
 `cost_noninferior`), `min_verified_per_arm`, `max_verified_per_arm`, `alpha`, `min_effect_pp`,
@@ -3716,7 +3724,7 @@ sub-reason as `detail`, the actionable `reason`, and the `action` to take:
 
 | `reason`               | `refusal` (status)                                                                                    | Typical cause                                                                                                                                        |
 | ---------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `missing_consent`      | `corrections_consent_required` (409)                                                                  | The workspace's corrections consent is off.                                                                                                          |
+| `missing_consent`      | `corrections_consent_required` (409)                                                                  | The workspace's knowledge or corrections consent is off; an owner/admin must grant the full self-learning opt-in.                                    |
 | `provider_unavailable` | `reflection_model_not_workspace_owned` (400)                                                          | `detail`: `no_offer`, `platform_offer_only`, `no_workspace_key`, `model_denied_by_policy`, `workspace_funding_not_byok`, `workspace_funding_frozen`. |
 | `not_enabled`          | `learning_not_enabled` (409)                                                                          | A control before `enable`.                                                                                                                           |
 | `invalid_promotion`    | `promotion_invalid` (400)                                                                             | `detail` names the out-of-range policy field.                                                                                                        |
@@ -7614,6 +7622,8 @@ supersedes? })`: a `pass` / `fail` verdict from a `verifier`, `business_rule`, `
 
 ### Changed
 
+- Learning setup and refusal guidance require the full owner/admin self-learning opt-in
+  (knowledge and corrections consent); the synced API specification carries the same requirement.
 - The durable outcome queue treats a success result with `status: "pending"` as delivered (the
   gateway holds a receipt and applies the outcome once the request lands) instead of resending it.
   The shared retention fixture gains the two `pending` cases; the Python SDK takes the same change.

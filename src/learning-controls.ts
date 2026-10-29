@@ -140,7 +140,7 @@ export const LEARNING_ERROR_CODES: Readonly<Record<LearningErrorReason, readonly
 /** What to do about each {@link LearningErrorReason}. */
 export const LEARNING_ERROR_ACTIONS: Readonly<Record<LearningErrorReason, string>> = {
   missing_consent:
-    "A workspace owner or admin must turn on the workspace's corrections consent before learning can be enabled.",
+    'A workspace owner or admin must turn on the workspace self-learning opt-in (knowledge and corrections consent) in the dashboard Learning page or through the signed-in session PUT /v1/workspaces/{id}/self-learning with {"enabled":true}; an API key cannot grant consent.',
   provider_unavailable:
     'Give the reflection model a workspace-owned offer (one of your custom providers, or a provider your workspace stored its own key for); learning never falls back to a platform provider. `detail` names what is missing.',
   not_enabled: 'Enable learning for this call type first (ur.ur.learning.enable).',
