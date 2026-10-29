@@ -45,6 +45,28 @@ const client = (fetch: FetchLike) =>
   new UltraRouter({ apiKey: 'k', baseURL: 'http://gw', fetch, maxRetries: 0 });
 
 describe('routes', () => {
+  it('replaces, reads and clears tool documentation with encoded call type ids', async () => {
+    const r = recording();
+    const learning = client(r.fetch).ur.learning;
+    const tools = [
+      {
+        type: 'function' as const,
+        function: {
+          name: 'reserve_stock',
+          parameters: { type: 'object', properties: { status: { enum: ['reserved'] } } },
+        },
+      },
+    ];
+    await learning.putToolDocumentation('ct/1', { tools });
+    await learning.toolDocumentation('ct/1');
+    await learning.putToolDocumentation('ct/1', { tools: [] });
+    const path = 'http://gw/v1/call-types/ct%2F1/learning/tool-documentation';
+    expect(r.calls).toEqual([
+      { method: 'PUT', url: path, body: { tools } },
+      { method: 'GET', url: path, body: undefined },
+      { method: 'PUT', url: path, body: { tools: [] } },
+    ]);
+  });
   it('maps every control to its route, method and body', async () => {
     const r = recording();
     const ur = client(r.fetch);

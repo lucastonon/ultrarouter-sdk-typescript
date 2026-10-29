@@ -568,6 +568,34 @@ if (requestId !== null) {
 
 ## Pitfalls
 
+For tools described in prompt text, upload their actual schemas once per call type. Native tool
+requests already carry schemas. This replaces the previous set (maximum 256 tools, 1 MiB); use an
+empty array to clear it. Resolve the `ct_…` id with `ur.ur.callTypes.list()` first.
+
+```ts
+import UltraRouter from '@ultrarouter/sdk';
+const ur = new UltraRouter();
+const { data } = await ur.ur.callTypes.list();
+const ct = data.find((item) => item.slug === 'support-reply');
+if (ct) {
+  await ur.ur.learning.putToolDocumentation(ct.id, {
+    tools: [
+      {
+        type: 'function',
+        function: {
+          name: 'set_order_status',
+          parameters: {
+            type: 'object',
+            properties: { status: { enum: ['reserved', 'backordered'] } },
+          },
+        },
+      },
+    ],
+  });
+  console.log((await ur.ur.learning.toolDocumentation(ct.id)).tool_count);
+}
+```
+
 - **Report the task, not the call.** A 200 response or a tool that returned `ok` is not task
   success. Report the verdict of a check you trust, once per episode, on its final request.
 - **Unknown stays unknown.** Do not turn missing feedback into a fail; report `unknown` or nothing.

@@ -288,6 +288,16 @@ const TABLE: readonly Row[] = [
     invoke: (ur) => ur.ur.learning.status(ADV),
   },
   {
+    label: 'learning.toolDocumentation',
+    pattern: '/v1/call-types/{}/learning/tool-documentation',
+    invoke: (ur) => ur.ur.learning.toolDocumentation(ADV),
+  },
+  {
+    label: 'learning.putToolDocumentation',
+    pattern: '/v1/call-types/{}/learning/tool-documentation',
+    invoke: (ur) => ur.ur.learning.putToolDocumentation(ADV, { tools: [] }),
+  },
+  {
     label: 'learning.enable',
     pattern: '/v1/call-types/{}/learning/enable',
     invoke: (ur) => ur.ur.learning.enable(ADV, { reflection_model: 'm' }),

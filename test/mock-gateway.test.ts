@@ -45,6 +45,7 @@ function bodyFor(method: string, template: string): unknown {
   if (template === '/v1/artifacts/{id}/outcomes')
     return { outcomes: [{ channel: 'mechanical', kind: 'schema_valid' }] };
   if (template === '/v1/call-types') return { slug: 'support' };
+  if (template === '/v1/call-types/{id}/learning/tool-documentation') return { tools: [] };
   if (template === '/v1/requests/{id}/outcomes')
     return { channel: 'mechanical', kind: 'schema_valid' };
   if (template === '/v1/call-types/{id}/learning/enable')

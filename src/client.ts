@@ -67,6 +67,8 @@ import {
   type LearningEvaluationList,
   type LearningRollbackParams,
   type LearningStatus,
+  type LearningToolDocumentation,
+  type PutLearningToolDocumentationParams,
   type LearningVersionDetail,
   type LearningVersionList,
 } from './learning-controls.js';
@@ -576,6 +578,17 @@ export interface OutcomesResource {
  * naming the `reason`, the gateway's `refusal`, its `detail` and the `action`.
  */
 export interface LearningResource {
+  /** Read the customer-supplied tool summaries for a call type. */
+  toolDocumentation: (
+    callTypeId: string,
+    options?: RequestOptions,
+  ) => Promise<LearningToolDocumentation>;
+  /** Replace the tool schemas (at most 256, 1 MiB); tools: [] clears them. */
+  putToolDocumentation: (
+    callTypeId: string,
+    params: PutLearningToolDocumentationParams,
+    options?: RequestOptions,
+  ) => Promise<LearningToolDocumentation>;
   /**
    * Read the status: state, recipe, reflection provider, promotion policy, active version, latest
    * candidate, running and last evaluation, evidence, budget, usage and outcome receipts.
@@ -1757,6 +1770,19 @@ export class UltraRouter {
     };
     return {
       status: (id, o = {}) => call<LearningStatus>('GET', `/v1/call-types/${seg(id)}/learning`, o),
+      toolDocumentation: (id, o = {}) =>
+        call<LearningToolDocumentation>(
+          'GET',
+          `/v1/call-types/${seg(id)}/learning/tool-documentation`,
+          o,
+        ),
+      putToolDocumentation: (id, params, o = {}) =>
+        call<LearningToolDocumentation>(
+          'PUT',
+          `/v1/call-types/${seg(id)}/learning/tool-documentation`,
+          o,
+          params,
+        ),
       enable: (id, params, o = {}) =>
         call<LearningControlResult>('POST', `/v1/call-types/${seg(id)}/learning/enable`, o, params),
       pause: (id, o = {}) =>

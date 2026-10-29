@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: 1aa7c655b0795cfe1776f4281fe1c43b0175a29192aa8f348adecf191e4e9869
+# spec-sha256: c420515d5223856c32d92086426087847ca64c8db3b646c9297f860425cf1838
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -19152,6 +19152,266 @@ paths:
         -
           sessionCookie: []
       summary: "Roll back to an earlier version"
+      tags:
+        - "Learning"
+  "/v1/call-types/{id}/learning/tool-documentation":
+    get:
+      description: "The call type’s customer-supplied tool documentation as stored: per tool its name, schema fingerprint, parameter names and documented constants (never description prose), plus the set’s `etd1_` digest. Empty (`tool_count` 0, `digest` null) when none is stored. Dual auth: an api key (`config:read` to read, `config:write` to change) or an owner/admin session with the `X-UR-Workspace` header; a viewer may read only. A call type of another workspace is a 404. Requires API-key scope: config:read or config:write."
+      operationId: "getLearningToolDocumentation"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "A call type’s customer-supplied tool documentation (bounded summaries; no prose)."
+                properties:
+                  call_type_id:
+                    type: "string"
+                  changed:
+                    description: "PUT only: false when the same documentation was already stored (idempotent)."
+                    type: "boolean"
+                  digest:
+                    description: "`etd1_…` — the content address of the stored set; null when none is stored."
+                    nullable: true
+                    type: "string"
+                  object:
+                    enum:
+                      - "learning_tool_documentation"
+                    type: "string"
+                  tool_count:
+                    minimum: 0
+                    type: "integer"
+                  tools:
+                    items:
+                      description: "One tool’s stored summary."
+                      properties:
+                        documented:
+                          description: "Every constant the spec documents (bounded)."
+                          items:
+                            properties:
+                              param:
+                                description: "The parameter it belongs to, or null for the function’s own description."
+                                nullable: true
+                                type: "string"
+                              source:
+                                enum:
+                                  - "enum"
+                                  - "const"
+                                  - "default"
+                                  - "description"
+                                type: "string"
+                              value:
+                                type: "string"
+                            required:
+                              - "param"
+                              - "value"
+                              - "source"
+                            type: "object"
+                          type: "array"
+                        fingerprint:
+                          description: "`tsf1_…` — the schema fingerprint the documented constants are scoped to."
+                          type: "string"
+                        name:
+                          type: "string"
+                        params:
+                          description: "Parameter names (bounded)."
+                          items:
+                            type: "string"
+                          type: "array"
+                      required:
+                        - "name"
+                        - "fingerprint"
+                        - "params"
+                        - "documented"
+                      type: "object"
+                    type: "array"
+                  updated_at:
+                    nullable: true
+                    type: "string"
+                required:
+                  - "object"
+                  - "call_type_id"
+                  - "tool_count"
+                  - "digest"
+                  - "updated_at"
+                  - "tools"
+                type: "object"
+          description: "The stored tool documentation."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          bearerAuth: []
+        -
+          sessionCookie: []
+      summary: "Get the tool documentation the learner reads"
+      tags:
+        - "Learning"
+    put:
+      description: "For agents whose tools are not sent as native `tools[]` (a code-style `api.<name>(…)` protocol): up to 256 OpenAI-style function specs (unique names; body at most 1 MiB). Each is stored as a bounded summary — name, schema fingerprint, parameter names and the constants it documents (enum / const / default / a number or quoted token its description states); description prose is never stored. When learning admits a lesson (`elv2`), such a constant is admissible only in a lesson that names the documenting tool. Replaces any stored set; an empty `tools` list clears it; the same set again is a no-op (`changed: false`). Erased with the learning data when corrections consent is revoked. 400 `invalid_request` (`tool_documentation_too_large`, `tool_documentation_invalid (<reason>)`). Dual auth: an api key (`config:read` to read, `config:write` to change) or an owner/admin session with the `X-UR-Workspace` header; a viewer may read only. A call type of another workspace is a 404. Requires API-key scope: config:write."
+      operationId: "putLearningToolDocumentation"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              additionalProperties: false
+              description: "The call type’s tool documentation (replaces any stored set)."
+              properties:
+                tools:
+                  description: "At most 256 specs with unique names; an empty list clears the documentation."
+                  items:
+                    description: "One OpenAI-style function tool spec."
+                    properties:
+                      function:
+                        description: "The function declaration."
+                        properties:
+                          description:
+                            description: "Read for the CONSTANTS it states (numbers and quoted tokens) — the prose itself is never stored."
+                            maxLength: 4096
+                            type: "string"
+                          name:
+                            description: "The tool’s name exactly as the agent calls it (`fillFuelTank`, `api.fillFuelTank` → `fillFuelTank`)."
+                            maxLength: 64
+                            minLength: 1
+                            pattern: "^[A-Za-z0-9_.-]+$"
+                            type: "string"
+                          parameters:
+                            additionalProperties:
+                              nullable: true
+                            description: "The JSON Schema of the arguments; its `enum` / `const` / `default` values are documented constants."
+                            type: "object"
+                          strict:
+                            type: "boolean"
+                        required:
+                          - "name"
+                        type: "object"
+                      type:
+                        enum:
+                          - "function"
+                        type: "string"
+                    required:
+                      - "type"
+                      - "function"
+                    type: "object"
+                  maxItems: 256
+                  type: "array"
+              required:
+                - "tools"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "A call type’s customer-supplied tool documentation (bounded summaries; no prose)."
+                properties:
+                  call_type_id:
+                    type: "string"
+                  changed:
+                    description: "PUT only: false when the same documentation was already stored (idempotent)."
+                    type: "boolean"
+                  digest:
+                    description: "`etd1_…` — the content address of the stored set; null when none is stored."
+                    nullable: true
+                    type: "string"
+                  object:
+                    enum:
+                      - "learning_tool_documentation"
+                    type: "string"
+                  tool_count:
+                    minimum: 0
+                    type: "integer"
+                  tools:
+                    items:
+                      description: "One tool’s stored summary."
+                      properties:
+                        documented:
+                          description: "Every constant the spec documents (bounded)."
+                          items:
+                            properties:
+                              param:
+                                description: "The parameter it belongs to, or null for the function’s own description."
+                                nullable: true
+                                type: "string"
+                              source:
+                                enum:
+                                  - "enum"
+                                  - "const"
+                                  - "default"
+                                  - "description"
+                                type: "string"
+                              value:
+                                type: "string"
+                            required:
+                              - "param"
+                              - "value"
+                              - "source"
+                            type: "object"
+                          type: "array"
+                        fingerprint:
+                          description: "`tsf1_…` — the schema fingerprint the documented constants are scoped to."
+                          type: "string"
+                        name:
+                          type: "string"
+                        params:
+                          description: "Parameter names (bounded)."
+                          items:
+                            type: "string"
+                          type: "array"
+                      required:
+                        - "name"
+                        - "fingerprint"
+                        - "params"
+                        - "documented"
+                      type: "object"
+                    type: "array"
+                  updated_at:
+                    nullable: true
+                    type: "string"
+                required:
+                  - "object"
+                  - "call_type_id"
+                  - "tool_count"
+                  - "digest"
+                  - "updated_at"
+                  - "tools"
+                type: "object"
+          description: "The stored tool documentation after the replace."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          bearerAuth: []
+        -
+          sessionCookie: []
+      summary: "Replace the tool documentation the learner reads"
       tags:
         - "Learning"
   "/v1/call-types/{id}/learning/versions":

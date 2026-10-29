@@ -137,6 +137,7 @@ export function createLearningMock() {
   const episodes = new Map();
   /** callTypeId → learning state */
   const learning = new Map();
+  const toolDocumentation = new Map();
 
   /** Resolve the request id for an inference call, or an error answer for a malformed one. */
   function requestIdFor(headers) {
@@ -562,6 +563,28 @@ export function createLearningMock() {
       );
 
     if (method === 'GET' && rest === '') return ok(statusOf(id));
+    if (rest === 'tool-documentation' && (method === 'GET' || method === 'PUT')) {
+      if (method === 'PUT')
+        toolDocumentation.set(id, {
+          object: 'learning_tool_documentation',
+          call_type_id: id,
+          tool_count: body.tools.length,
+          digest: body.tools.length ? 'etd1_mock' : null,
+          updated_at: null,
+          tools: [],
+          changed: true,
+        });
+      return ok(
+        toolDocumentation.get(id) ?? {
+          object: 'learning_tool_documentation',
+          call_type_id: id,
+          tool_count: 0,
+          digest: null,
+          updated_at: null,
+          tools: [],
+        },
+      );
+    }
     if (method === 'POST' && rest === 'enable') {
       if (typeof body?.reflection_model !== 'string' || body.reflection_model.trim() === '')
         return refuse(400, 'invalid_request', 'reflection_model: Required');

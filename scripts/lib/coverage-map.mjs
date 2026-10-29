@@ -101,6 +101,14 @@ export const COVERAGE = {
     tests: ['test/resources.test.ts', 'test/surface.test.ts'],
   },
   // Learning controls (per call type)
+  getLearningToolDocumentation: {
+    methods: ['ur.learning.toolDocumentation'],
+    tests: ['test/learning-controls.test.ts'],
+  },
+  putLearningToolDocumentation: {
+    methods: ['ur.learning.putToolDocumentation'],
+    tests: ['test/learning-controls.test.ts'],
+  },
   getLearningStatus: {
     methods: ['ur.learning.status'],
     tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],

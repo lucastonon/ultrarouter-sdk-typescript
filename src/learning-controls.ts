@@ -15,6 +15,13 @@ import type { OperationRequestBody, OperationResponse } from './resources.js';
 
 type Schemas = components['schemas'];
 
+/** Stored tool summaries and their content digest; original descriptions are not retained. */
+export type LearningToolDocumentation = OperationResponse<'getLearningToolDocumentation'>;
+
+/** Replace customer-supplied tool schemas; an empty tools array clears the stored set. */
+export type PutLearningToolDocumentationParams =
+  OperationRequestBody<'putLearningToolDocumentation'>;
+
 /** `GET /v1/call-types/{id}/learning`: a call type's learning status (`object: "learning"`). */
 export type LearningStatus = Schemas['LearningStatus'];
 
