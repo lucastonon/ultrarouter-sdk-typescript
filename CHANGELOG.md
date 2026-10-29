@@ -11,6 +11,9 @@ The version in `package.json` is now `0.1.0`: these changes ship as the 0.1.0 re
 
 ### Fixed
 
+- Preview installation commands explicitly select `feat/learning-loop`, so they build the 0.1.0
+  learning client instead of the older default branch.
+
 - The acknowledgement-loss example verifies the exact answer instead of hardcoding success;
   negative executions check wrong non-empty and empty answers report failure.
 - Learning examples now resolve a call type before traffic and send its slug on every call; controls

@@ -19,7 +19,7 @@ registry.
 <!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+git clone --branch feat/learning-loop --single-branch https://github.com/lucastonon/ultrarouter-sdk-typescript.git
 (cd ultrarouter-sdk-typescript && npm ci && npm run build && npm pack)   # → ultrarouter-sdk-0.1.0.tgz
 npm install ./ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 export ULTRAROUTER_API_KEY=ur_sk_test_...         # or UR_API_KEY

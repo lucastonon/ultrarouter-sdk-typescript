@@ -14,12 +14,13 @@
 
 `@ultrarouter/sdk` is **not published to the npm registry yet**: `npm install @ultrarouter/sdk`
 answers 404 today. Install it from the public GitHub source by building the package and installing
-the tarball it produces:
+the tarball it produces. Select `feat/learning-loop` for this 0.1.0 preview; the default
+branch does not yet include the learning additions:
 
 <!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+git clone --branch feat/learning-loop --single-branch https://github.com/lucastonon/ultrarouter-sdk-typescript.git
 cd ultrarouter-sdk-typescript
 npm ci && npm run build && npm pack   # writes ultrarouter-sdk-0.1.0.tgz
 
