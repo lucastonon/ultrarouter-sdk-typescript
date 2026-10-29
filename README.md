@@ -15,6 +15,8 @@ typed methods.
 - **Zero runtime dependencies**: `fetch`-based; ESM and CommonJS; tested on Node.js 20+ and Deno 2,
   expected to work (not yet tested) on Bun and edge runtimes. See
   [runtimes](./docs/installation.md).
+- **Plug-and-play learning**: request and episode correlation, verdict reports with durable
+  receipts that never double-count, learning controls, and starter verifiers and webhook receivers.
 - **Batteries for CI**: the `ur` CLI and a GitHub Action for Bench and application-CI gates.
 
 Version `0.1.0` is an early release; expect the API to evolve before 1.0.
@@ -260,6 +262,34 @@ await ur.withArtifact('ticket-4821', async (scope) => {
 ```
 
 [Outcomes](./docs/outcomes.md) · [Reviewer adapter](./docs/reviewer.md)
+
+### Plug-and-play learning
+
+Correlate every call, report the verified outcome of the finished task, and steer learning per
+call type. A report is accepted even before the gateway has finished writing the request (a durable
+`pending` receipt), and retries can never count it twice.
+
+```ts
+import UltraRouter, { mintEpisodeKey } from '@ultrarouter/sdk';
+
+const ur = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini' });
+const res = await ur.chat.completions.create(
+  { messages: [{ role: 'user', content: 'Please process order A-100.' }] },
+  { episodeKey: mintEpisodeKey() }, // one key per task; every step carries it
+);
+
+// Your own check decides the verdict (a test suite, a state check, a business rule).
+const report = await ur.ur.outcomes.report(res.requestId, { verdict: 'pass', source: 'verifier' });
+if (report.receipt !== null) {
+  const receipt = await ur.ur.outcomes.waitForReceipt(report.receipt.id, { timeoutMs: 10_000 });
+  console.log(receipt.status); // "applied"
+}
+console.log((await ur.ur.learning.status('support-reply')).state);
+```
+
+[Plug-and-play learning](./docs/plug-and-play-learning.md) ·
+[`@ultrarouter/sdk/learning` starters](./docs/api/learning.md) ·
+[eight runnable examples](./examples/learning/)
 
 ### Preflight: learned context without proxying
 

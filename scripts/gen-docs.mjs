@@ -45,6 +45,7 @@ export const GUIDES = [
   { file: 'docs/call-types.md', section: 'ultrarouter resources' },
   { file: 'docs/feedback-and-generation.md', section: 'ultrarouter resources' },
   { file: 'docs/outcomes.md', section: 'ultrarouter resources' },
+  { file: 'docs/plug-and-play-learning.md', section: 'ultrarouter resources' },
   { file: 'docs/reviewer.md', section: 'ultrarouter resources' },
   { file: 'docs/learning.md', section: 'ultrarouter resources' },
   { file: 'docs/imports.md', section: 'ultrarouter resources' },
@@ -60,6 +61,7 @@ export const GUIDES = [
   { file: 'docs/api/README.md', section: 'Reference' },
   { file: 'docs/api/sdk.md', section: 'Reference' },
   { file: 'docs/api/context.md', section: 'Reference' },
+  { file: 'docs/api/learning.md', section: 'Reference' },
   { file: 'CHANGELOG.md', section: 'Optional' },
 ];
 
@@ -297,7 +299,7 @@ function renderLlms(read) {
   );
   lines.push('');
   lines.push(
-    'The package is not on the npm registry yet: build it from the GitHub source and install the tarball (`npm ci && npm run build && npm pack`, then `npm install ./ultrarouter-sdk-<version>.tgz`). Configure with the `ULTRAROUTER_API_KEY` and `ULTRAROUTER_BASE_URL` (required: your own deployment) environment variables. `new UltraRouter()` exposes `chat.completions.create`, `embeddings.create`, `models.list` / `models.retrieve` (the OpenAI shapes), the ultrarouter resources under `ur.*`, a typed `request()` for any API operation, and `asOpenAI()` for the official `openai` client. The `@ultrarouter/sdk/context` entry is a pure context runtime. The package also ships the `ur` CLI and a GitHub Action. Agents: read AGENTS.md first.',
+    'The package is not on the npm registry yet: build it from the GitHub source and install the tarball (`npm ci && npm run build && npm pack`, then `npm install ./ultrarouter-sdk-<version>.tgz`). Configure with the `ULTRAROUTER_API_KEY` and `ULTRAROUTER_BASE_URL` (required: your own deployment) environment variables. `new UltraRouter()` exposes `chat.completions.create`, `embeddings.create`, `models.list` / `models.retrieve` (the OpenAI shapes), the ultrarouter resources under `ur.*`, a typed `request()` for any API operation, and `asOpenAI()` for the official `openai` client. The `@ultrarouter/sdk/context` entry is a pure context runtime; `@ultrarouter/sdk/learning` holds the plug-and-play learning starters (verifiers, a signed-webhook receiver, a demonstration environment). The package also ships the `ur` CLI and a GitHub Action. Agents: read AGENTS.md first.',
   );
   lines.push('');
   const sections = new Map();

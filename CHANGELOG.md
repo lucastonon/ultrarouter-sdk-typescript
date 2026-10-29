@@ -7,7 +7,44 @@ contain breaking changes; they are always listed under **Changed** or **Removed*
 
 ## [Unreleased]
 
+The version in `package.json` is now `0.1.0`: these changes ship as the 0.1.0 release.
+
 ### Added
+
+- **Plug-and-play learning** (new guide: `docs/plug-and-play-learning.md`; eight runnable programs in
+  `examples/learning/`).
+  - Request and episode correlation: chat completion and embeddings results expose `requestId` (the
+    `x-ur-request-id` the gateway echoes; not enumerable), and a stream exposes it as soon as it
+    opens. Per-call `requestId` and `episodeKey` options send `x-ur-request-id` and `x-ur-artifact`;
+    the `requestIds: 'client'` constructor option mints `req_c_<ULID>` ids so the id is known before
+    the call returns. `mintRequestId`, `mintEpisodeKey`, `correlationHeaders` and `readRequestId`
+    cover the official `openai` client path.
+  - `ur.outcomes.report(requestId, { verdict, source, idempotencyKey?, observedAt?, evidenceHash?,
+supersedes? })`: a `pass` / `fail` verdict from a `verifier`, `business_rule`, `webhook`,
+    `human_review` or `self_rating` source mapped onto the outcome channels by `OUTCOME_VERDICTS`
+    (pinned by `test/fixtures/outcome-verdicts.json`, shared with the Python SDK). `unknown` sends
+    nothing and resolves `not_reported`; a `self_rating` is typed `teaches: false`. Each report
+    carries a `source_event_id` derived from the request, verdict, source and caller key
+    (`reportSourceEventId`) and goes through the durable queue under that identity, so a lost
+    acknowledgement, a flush, a repeated call or a restarted process never double-reports.
+  - Outcome receipts: `ur.outcomes.receipt(id)`, `ur.outcomes.receiptsForRequest(requestId)` and
+    `ur.outcomes.waitForReceipt(id, { timeoutMs, signal })` (bounded exponential backoff over the
+    public receipt route; `ReceiptWaitTimeoutError`; cancellable with an `AbortSignal`).
+  - Learning controls per call type: `ur.learning.status`, `enable`, `pause`, `resume`, `disable`,
+    `versions`, `version`, `rollback`, `promote`, `reject` and `evaluations`. A refusal you can act
+    on (missing consent, no learning provider, provider quota, learning budget, not found,
+    forbidden) is a `LearningError` with a `reason` and an `action`.
+  - The request and response types of the receipt and learning routes are hand-written
+    (`src/outcome-receipts.ts`, `src/learning-controls.ts`) until the routes are in the published
+    API description; fields may be added.
+- A new entry point, `@ultrarouter/sdk/learning`, with starter outcome adapters: `runVerifier` and
+  `verdictFromCommand` (a computable check or a command's exit code becomes a verdict plus an
+  evidence hash), `validateOutput` (a zod schema or a JSON-Schema subset plus business rules), and
+  `createWebhookReceiver` (HMAC-SHA256 signatures verified in constant time inside a timestamp
+  window, redeliveries deduplicated by event id through an atomic claim store, the secret read from
+  `ULTRAROUTER_WEBHOOK_SECRET`); and `createOrderDesk`, a deterministic four-tool demonstration
+  environment with a state-based verifier (`test/fixtures/toy-env.json`, shared with the Python
+  SDK). The environment demonstrates the integration; it is not evidence of efficacy.
 
 - The bounded-experiment RUN surface under `ur.flywheel.experiments`, for a key with the
   `flywheel:experiment:run` scope: `enrol(experimentId, { phase, pair_key, slot })` enrols one
@@ -35,11 +72,17 @@ contain breaking changes; they are always listed under **Changed** or **Removed*
 
 ### Changed
 
+- The durable outcome queue treats a success result with `status: "pending"` as delivered (the
+  gateway holds a receipt and applies the outcome once the request lands) instead of resending it.
+  The shared retention fixture gains the two `pending` cases; the Python SDK takes the same change.
 - Installation instructions no longer advertise a registry install: the package is not on the npm
   registry yet. The README, `AGENTS.md`, the installation, CLI and troubleshooting guides, the
   examples README and `llms*.txt` now describe building the tarball from the public GitHub source
   and installing it; the GitHub Action guide notes that its install step needs the package on the
   registry.
+- The core bundle budget rises from 15 kB to 19 kB min+gz for the learning surface; the new
+  `@ultrarouter/sdk/learning` entry has its own 10 kB budget and is never loaded by the client.
+
 - **Breaking:** the client now requires a gateway base URL — there is no hosted default. Pass
   `baseURL`, or set `ULTRAROUTER_BASE_URL` (or `UR_BASE_URL`). When none is configured the
   `UltraRouter` constructor throws an `UltraRouterError` with code `configuration` whose message

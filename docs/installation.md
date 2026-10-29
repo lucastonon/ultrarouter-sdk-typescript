@@ -81,13 +81,14 @@ ur.chat.completions
 
 ## Entry points
 
-| Import                     | Contents                                                                                                                                                                                                                             |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `@ultrarouter/sdk`         | The `UltraRouter` client, every request/response type, errors, and the pure helpers.                                                                                                                                                 |
-| `@ultrarouter/sdk/context` | The pure context runtime (modules, contracts, `compile`, `fromMessages` / `toMessages`), knowledge packs, the learned-module placement rule and the hosted-prompt renderer. No network. See [context runtime](./context-runtime.md). |
-| `ur` (binary)              | The command-line tool for CI gates and outcome imports. Node.js only. See [CLI](./cli.md).                                                                                                                                           |
+| Import                      | Contents                                                                                                                                                                                                                                            |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@ultrarouter/sdk`          | The `UltraRouter` client, every request/response type, errors, and the pure helpers.                                                                                                                                                                |
+| `@ultrarouter/sdk/context`  | The pure context runtime (modules, contracts, `compile`, `fromMessages` / `toMessages`), knowledge packs, the learned-module placement rule and the hosted-prompt renderer. No network. See [context runtime](./context-runtime.md).                |
+| `@ultrarouter/sdk/learning` | Starter outcome adapters (verifiers, a business-rule validator, a signed-webhook receiver) and the order-desk demonstration environment. No network of its own. See [plug-and-play learning](./plug-and-play-learning.md#starter-outcome-adapters). |
+| `ur` (binary)               | The command-line tool for CI gates and outcome imports. Node.js only. See [CLI](./cli.md).                                                                                                                                                          |
 
-Importing the client never loads the context runtime, and the reverse.
+Importing the client never loads the context runtime or the learning starters, and the reverse.
 
 ## Node.js
 

@@ -73,13 +73,18 @@ const res = await ur.chat.completions.create(
 console.log(res.ur.request_id);
 ```
 
-| Option           | Type                     | Effect                                                      |
-| ---------------- | ------------------------ | ----------------------------------------------------------- |
-| `signal`         | `AbortSignal`            | Abort the call and any pending retry.                       |
-| `timeout`        | `number` (ms)            | Total time for this call, retries and backoff included.     |
-| `maxRetries`     | `number`                 | Retries for this call.                                      |
-| `headers`        | `Record<string, string>` | Extra headers; they win over the client's `defaultHeaders`. |
-| `idempotencyKey` | `string`                 | Use this idempotency key instead of a generated one.        |
+| Option           | Type                     | Effect                                                             |
+| ---------------- | ------------------------ | ------------------------------------------------------------------ |
+| `signal`         | `AbortSignal`            | Abort the call and any pending retry.                              |
+| `timeout`        | `number` (ms)            | Total time for this call, retries and backoff included.            |
+| `maxRetries`     | `number`                 | Retries for this call.                                             |
+| `headers`        | `Record<string, string>` | Extra headers; they win over the client's `defaultHeaders`.        |
+| `idempotencyKey` | `string`                 | Use this idempotency key instead of a generated one.               |
+| `requestId`      | `string`                 | Your own request id, sent as `x-ur-request-id` (chat, embeddings). |
+| `episodeKey`     | `string`                 | The episode handle, sent as `x-ur-artifact` (chat, embeddings).    |
+
+See [plug-and-play learning](./plug-and-play-learning.md#correlation-request-ids-and-episodes) for
+`requestId` and `episodeKey`.
 
 ## Timeouts and cancellation
 

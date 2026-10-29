@@ -44,6 +44,7 @@ test, which installs the packed tarball and a few dev tools from the npm registr
 | `test/learned/placement-golden.json`, `test/prompt/render-golden.json`, `test/pack/release-checklist.ur.md` | the gateway project's golden generators          | No            |
 | `docs/api/**`, `docs/api-coverage.md`, `llms.txt`, `llms-full.txt`                                          | `npm run docs:gen`                               | No            |
 | `test/fixtures/queue-retention-cases.json`                                                                  | shared byte-for-byte with the Python SDK         | Both together |
+| `test/fixtures/outcome-verdicts.json`, `test/fixtures/toy-env.json`                                         | shared byte-for-byte with the Python SDK         | Both together |
 
 To update the API: sync the new specification, run `npm run codegen`, fix what `npm run typecheck`
 reports (the hand-written types in `src/types.ts` must declare every field the schema declares), add

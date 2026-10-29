@@ -198,6 +198,13 @@ await ur.recordOutcome(artifact.id, {
 The fields `source`, `producer`, `learning_use` and `latency_class` are assigned by the gateway from
 your credential and the event; the input type does not have them, so you cannot set them by accident.
 
+To report a task verdict on a request without choosing a channel and kind yourself, use
+`ur.ur.outcomes.report(requestId, { verdict, source })`: it maps `pass` / `fail` from a verifier, a
+business rule, a webhook, a human review or a self-rating onto the right event, sends nothing for
+`unknown`, and derives a stable identity so retries never double-report. An outcome on a request the
+gateway has not finished writing is accepted as `pending` with a durable receipt. See
+[plug-and-play learning](./plug-and-play-learning.md#report-an-outcome).
+
 ## The durable queue
 
 `ur.outcomes.record` never throws for a delivery failure and never loses an event:
@@ -212,6 +219,10 @@ your credential and the event; the input type does not have them, so you cannot 
 Because a replay is byte-identical (same `observed_at`, same `source_event_id`, same key), the
 gateway sees it as a `duplicate` of the event it may already have, never as a second, conflicting
 event.
+
+A success answer leaves the queue when its result `status` is `accepted`, `duplicate`, `conflict`,
+`rejected` or `pending`. `pending` is the request shortcut's durable acceptance: the gateway holds a
+receipt and applies the outcome once the request it names has been written.
 
 Only a **definitive refusal of the event** drops it (`isDefinitiveRejection(err)` is the exact
 rule). All of these must hold:
@@ -347,6 +358,8 @@ paginated (`cursor` / `next_cursor`) and filterable by `state`, `since` and `arc
 - [Reviewer decisions](./reviewer.md) — the signed adapter for approve / reject / edit decisions
 - [History imports](./imports.md) — bring past traffic and outcomes in bulk
 - [Learning status](./learning.md) — what the ledger is doing with your outcomes
+- [Plug-and-play learning](./plug-and-play-learning.md) — verdict reports, receipts and learning
+  controls
 - [Preflight and learned context](./preflight.md) — record outcomes that quote an exposure grant
 - API reference: [`ArtifactsResource`](./api/sdk.md#artifactsresource),
   [`OutcomesResource`](./api/sdk.md#outcomesresource), [`diffStats`](./api/sdk.md#diffstats)

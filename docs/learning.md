@@ -11,6 +11,10 @@ loop and the two ways you make your signals trustworthy:
 - **Oracles**: checks you register that can tell a right answer from a wrong one, including a pull
   transport your own worker or CI answers.
 
+To connect an agent to learning (correlate its calls, report verified outcomes, read receipts, and
+enable, pause, roll back or disable learning per call type), see
+[plug-and-play learning](./plug-and-play-learning.md).
+
 What is available depends on your workspace's data and settings. Every read here reports its state
 honestly: a workspace that is still collecting evidence says so, and nothing on this page reports an
 improvement the evidence has not established.
@@ -336,6 +340,8 @@ what recording would do before you write anything.
 ## Related
 
 - [Outcomes and artifacts](./outcomes.md) — record the outcomes this page reports on
+- [Plug-and-play learning](./plug-and-play-learning.md) — verdict reports, receipts and learning
+  controls per call type
 - [Call types](./call-types.md) — evals, recommendations and verified memory
 - [History imports](./imports.md) — bring history in so reads have data sooner
 - API reference: [`FlywheelResource`](./api/sdk.md#flywheelresource),

@@ -2,7 +2,7 @@
 
 > The official TypeScript SDK for ultrarouter, an OpenAI-compatible LLM gateway and router. Version 0.1.0, MIT licensed, zero runtime dependencies, ESM and CommonJS, Node.js 20+ and Deno 2 (tested; Bun and edge runtimes untested).
 
-The package is not on the npm registry yet: build it from the GitHub source and install the tarball (`npm ci && npm run build && npm pack`, then `npm install ./ultrarouter-sdk-<version>.tgz`). Configure with the `ULTRAROUTER_API_KEY` and `ULTRAROUTER_BASE_URL` (required: your own deployment) environment variables. `new UltraRouter()` exposes `chat.completions.create`, `embeddings.create`, `models.list` / `models.retrieve` (the OpenAI shapes), the ultrarouter resources under `ur.*`, a typed `request()` for any API operation, and `asOpenAI()` for the official `openai` client. The `@ultrarouter/sdk/context` entry is a pure context runtime. The package also ships the `ur` CLI and a GitHub Action. Agents: read AGENTS.md first.
+The package is not on the npm registry yet: build it from the GitHub source and install the tarball (`npm ci && npm run build && npm pack`, then `npm install ./ultrarouter-sdk-<version>.tgz`). Configure with the `ULTRAROUTER_API_KEY` and `ULTRAROUTER_BASE_URL` (required: your own deployment) environment variables. `new UltraRouter()` exposes `chat.completions.create`, `embeddings.create`, `models.list` / `models.retrieve` (the OpenAI shapes), the ultrarouter resources under `ur.*`, a typed `request()` for any API operation, and `asOpenAI()` for the official `openai` client. The `@ultrarouter/sdk/context` entry is a pure context runtime; `@ultrarouter/sdk/learning` holds the plug-and-play learning starters (verifiers, a signed-webhook receiver, a demonstration environment). The package also ships the `ur` CLI and a GitHub Action. Agents: read AGENTS.md first.
 
 ## Start here
 
@@ -32,6 +32,7 @@ The package is not on the npm registry yet: build it from the GitHub source and 
 - [Call types](docs/call-types.md): A **call type** is a stable name for one kind of request your application makes, for example `support-reply` or `invoice-triage`.
 - [Feedback, generation stats and key info](docs/feedback-and-generation.md): Three small reads and writes that work on any request the gateway served:
 - [Outcomes and artifacts](docs/outcomes.md): Model calls are only half of the story; what matters is what happened to the thing your application produced.
+- [Plug-and-play learning](docs/plug-and-play-learning.md): The gateway can adapt an agent from its own traffic: verified outcomes become candidate adaptations, each candidate is evaluated against the version serving now (the incumbent), and it is promoted only when a decision rule frozen before the …
 - [Reviewer decisions](docs/reviewer.md): Your people already approve, reject or edit what the model drafts: in a review queue, an admin page, a ticket workflow.
 - [Learning status, verdict sources and oracles](docs/learning.md): ultrarouter learns from the outcomes you record: which models are enough for a call type, which learned context helps, which past cases answer a new request.
 - [History imports](docs/imports.md): You do not have to route traffic through the gateway before ultrarouter can see it.
@@ -51,6 +52,7 @@ The package is not on the npm registry yet: build it from the GitHub source and 
 - [API reference](docs/api/README.md): Generated from the TypeScript sources by `scripts/gen-docs.mjs`.
 - [API reference: `@ultrarouter/sdk`](docs/api/sdk.md): Generated from the TypeScript sources and their TSDoc by `scripts/gen-docs.mjs` (do not edit by hand).
 - [API reference: `@ultrarouter/sdk/context`](docs/api/context.md): Generated from the TypeScript sources and their TSDoc by `scripts/gen-docs.mjs` (do not edit by hand).
+- [API reference: `@ultrarouter/sdk/learning`](docs/api/learning.md): Generated from the TypeScript sources and their TSDoc by `scripts/gen-docs.mjs` (do not edit by hand).
 
 ## Optional
 
