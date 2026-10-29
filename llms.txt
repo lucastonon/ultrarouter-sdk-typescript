@@ -2,7 +2,7 @@
 
 > The official TypeScript SDK for ultrarouter, an OpenAI-compatible LLM gateway and router. Version 0.1.0, MIT licensed, zero runtime dependencies, ESM and CommonJS, Node.js 20+ and Deno 2 (tested; Bun and edge runtimes untested).
 
-Install with `npm install @ultrarouter/sdk`. Configure with the `ULTRAROUTER_API_KEY` environment variable (and `ULTRAROUTER_BASE_URL` for your own deployment). `new UltraRouter()` exposes `chat.completions.create`, `embeddings.create`, `models.list` / `models.retrieve` (the OpenAI shapes), the ultrarouter resources under `ur.*`, a typed `request()` for any API operation, and `asOpenAI()` for the official `openai` client. The `@ultrarouter/sdk/context` entry is a pure context runtime. The package also ships the `ur` CLI and a GitHub Action. Agents: read AGENTS.md first.
+The package is not on the npm registry yet: build it from the GitHub source and install the tarball (`npm ci && npm run build && npm pack`, then `npm install ./ultrarouter-sdk-<version>.tgz`). Configure with the `ULTRAROUTER_API_KEY` and `ULTRAROUTER_BASE_URL` (required: your own deployment) environment variables. `new UltraRouter()` exposes `chat.completions.create`, `embeddings.create`, `models.list` / `models.retrieve` (the OpenAI shapes), the ultrarouter resources under `ur.*`, a typed `request()` for any API operation, and `asOpenAI()` for the official `openai` client. The `@ultrarouter/sdk/context` entry is a pure context runtime. The package also ships the `ur` CLI and a GitHub Action. Agents: read AGENTS.md first.
 
 ## Start here
 

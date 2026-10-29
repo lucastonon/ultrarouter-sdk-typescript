@@ -35,6 +35,11 @@ contain breaking changes; they are always listed under **Changed** or **Removed*
 
 ### Changed
 
+- Installation instructions no longer advertise a registry install: the package is not on the npm
+  registry yet. The README, `AGENTS.md`, the installation, CLI and troubleshooting guides, the
+  examples README and `llms*.txt` now describe building the tarball from the public GitHub source
+  and installing it; the GitHub Action guide notes that its install step needs the package on the
+  registry.
 - **Breaking:** the client now requires a gateway base URL — there is no hosted default. Pass
   `baseURL`, or set `ULTRAROUTER_BASE_URL` (or `UR_BASE_URL`). When none is configured the
   `UltraRouter` constructor throws an `UltraRouterError` with code `configuration` whose message

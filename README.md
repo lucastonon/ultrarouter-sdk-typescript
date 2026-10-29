@@ -21,11 +21,24 @@ Version `0.1.0` is an early release; expect the API to evolve before 1.0.
 
 ## Install
 
-<!-- doctest: skip — installs from the npm registry -->
+`@ultrarouter/sdk` is **not published to the npm registry yet**, so `npm install @ultrarouter/sdk`
+does not work today. Install it from the public GitHub source: build the package and install the
+tarball it produces (Node.js 20 or later).
+
+<!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-npm install @ultrarouter/sdk
+git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+cd ultrarouter-sdk-typescript
+npm ci && npm run build && npm pack   # writes ultrarouter-sdk-0.1.0.tgz
+
+cd ../your-app
+npm install ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 ```
+
+`npm install github:lucastonon/ultrarouter-sdk-typescript` does not work either: the repository
+holds no prebuilt `dist/`. See [installation](./docs/installation.md#install) for pnpm, Yarn and
+Bun.
 
 ## Quickstart
 
@@ -290,9 +303,8 @@ console.log(JSON.stringify(toMessages(lifted.manifest)) === JSON.stringify(messa
 ### CLI and GitHub Action
 
 The package ships the `ur` command for CI: Bench baseline-compare gates, application-CI checks with
-a pull-request comment, outcome imports, and knowledge-pack validation. In a project that depends on the
-package, run it with `npx ur`; without installing, name the package:
-`npx --package=@ultrarouter/sdk@0.1.0 ur --help`.
+a pull-request comment, outcome imports, and knowledge-pack validation. In a project where the
+package is installed (from the tarball, above), run it with `npx ur`.
 
 ```bash
 npx ur --help
@@ -323,7 +335,7 @@ npx ur outcomes import outcomes.jsonl
 
 Read [`AGENTS.md`](./AGENTS.md) for canonical usage patterns, pitfalls and the contributor
 commands. [`llms.txt`](./llms.txt) indexes the docs and [`llms-full.txt`](./llms-full.txt) holds
-them in one file. All of these ship in the npm package (`node_modules/@ultrarouter/sdk/`).
+them in one file. All of these ship in the package (`node_modules/@ultrarouter/sdk/` once installed).
 
 ## License
 

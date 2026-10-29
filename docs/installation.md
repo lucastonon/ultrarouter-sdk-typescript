@@ -12,15 +12,33 @@
 
 ## Install
 
-<!-- doctest: skip — installs from the npm registry -->
+`@ultrarouter/sdk` is **not published to the npm registry yet**: `npm install @ultrarouter/sdk`
+answers 404 today. Install it from the public GitHub source by building the package and installing
+the tarball it produces:
+
+<!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-npm install @ultrarouter/sdk
-# or
-pnpm add @ultrarouter/sdk
-yarn add @ultrarouter/sdk
-bun add @ultrarouter/sdk
+git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+cd ultrarouter-sdk-typescript
+npm ci && npm run build && npm pack   # writes ultrarouter-sdk-0.1.0.tgz
+
+cd ../your-app
+npm install ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 ```
+
+The same tarball works with the other package managers:
+
+<!-- doctest: skip — installs a locally built tarball with other package managers -->
+
+```bash
+pnpm add ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
+yarn add ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
+bun add ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
+```
+
+A git dependency (`npm install github:lucastonon/ultrarouter-sdk-typescript`) does not work: the
+repository holds no prebuilt `dist/`, and installing does not build it.
 
 Then set your key:
 
@@ -85,10 +103,10 @@ npx ur --version
 Bun runs the same code as Node.js, ESM or CommonJS. Bun is not covered by the automated tests; report
 anything that behaves differently there.
 
-<!-- doctest: skip — needs Bun and installs from the npm registry -->
+<!-- doctest: skip — needs Bun and a locally built tarball -->
 
 ```bash
-bun add @ultrarouter/sdk
+bun add ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 ULTRAROUTER_API_KEY=ur_sk_test_... bun run app.ts
 ```
 

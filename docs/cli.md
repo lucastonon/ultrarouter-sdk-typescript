@@ -26,25 +26,29 @@ reporting success.
 
 `ur` is the `bin` of `@ultrarouter/sdk` and needs Node.js 20 or later.
 
-Run it without installing (name the package: `npx ur` alone would look for a package called `ur`):
+The package is not published to the npm registry yet, so `npx --package=@ultrarouter/sdk ur` and
+`npm install @ultrarouter/sdk` do not work today. Build the tarball from the public source (see
+[installation](./installation.md#install)) and install it in a project (then run `npx ur` or a
+package script) or globally:
+
+<!-- doctest: skip — installs a locally built tarball -->
 
 ```bash
-npx --package=@ultrarouter/sdk@0.1.0 ur --help
-```
-
-Or install it, in a project (then run it through `npx ur` or a package script) or globally:
-
-<!-- doctest: skip — installs from the npm registry -->
-
-```bash
-npm install --save-dev @ultrarouter/sdk
+npm install --save-dev ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 npx ur --version
 
-npm install --global @ultrarouter/sdk
+npm install --global ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 ur --version
 ```
 
-In GitHub Actions, the [GitHub Action](./github-action.md) installs and runs `ur` for you.
+Once installed in a project, `npx ur` runs this package's binary:
+
+```bash
+npx ur --help
+```
+
+In GitHub Actions, the [GitHub Action](./github-action.md) installs and runs `ur` for you once the
+package is on the npm registry; see its availability note.
 
 ## Configuration: API key and base URL
 

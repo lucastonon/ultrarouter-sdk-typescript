@@ -1,7 +1,15 @@
 # GitHub Action
 
 This repository is also a GitHub Action (`action.yml` at the repository root). It installs the
-[`ur` CLI](./cli.md) from npm and runs one of three gates:
+[`ur` CLI](./cli.md) from the npm registry and runs one of three gates.
+
+> **Availability:** `@ultrarouter/sdk` is not published to the npm registry yet, so the action's
+> install step cannot succeed today. Until it is, run the `ur` CLI in your workflow from a build of
+> this repository (check it out, `npm ci && npm run build && npm pack`, then
+> `npm install --global ./ultrarouter-sdk-<version>.tgz`) and call `ur` directly with the same
+> arguments the action would pass.
+
+The three gates:
 
 | `mode`            | What it does                                                                                                                                                                                                                              | Fails the job when                                                                                                              |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |

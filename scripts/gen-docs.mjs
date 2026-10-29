@@ -6,9 +6,9 @@
  *   node scripts/gen-docs.mjs --check   # exit 1 if any generated file is stale or a guide is missing
  *
  * Generated files:
- * - `docs/api/README.md`, `docs/api/sdk.md`, `docs/api/context.md` — the API reference, built from
- *   the TypeScript sources and their TSDoc (every export of `@ultrarouter/sdk` and
- *   `@ultrarouter/sdk/context`).
+ * - `docs/api/README.md`, `docs/api/sdk.md`, `docs/api/context.md`, `docs/api/learning.md` — the
+ *   API reference, built from the TypeScript sources and their TSDoc (every export of
+ *   `@ultrarouter/sdk`, `@ultrarouter/sdk/context` and `@ultrarouter/sdk/learning`).
  * - `docs/api-coverage.md` — every operation of `openapi/openapi.yaml` with the SDK method, CLI
  *   command and test that cover it (from `scripts/lib/coverage-map.mjs`).
  * - `llms.txt` (llmstxt.org format) and `llms-full.txt` (every guide concatenated) — entry points for
@@ -297,7 +297,7 @@ function renderLlms(read) {
   );
   lines.push('');
   lines.push(
-    'Install with `npm install @ultrarouter/sdk`. Configure with the `ULTRAROUTER_API_KEY` environment variable (and `ULTRAROUTER_BASE_URL` for your own deployment). `new UltraRouter()` exposes `chat.completions.create`, `embeddings.create`, `models.list` / `models.retrieve` (the OpenAI shapes), the ultrarouter resources under `ur.*`, a typed `request()` for any API operation, and `asOpenAI()` for the official `openai` client. The `@ultrarouter/sdk/context` entry is a pure context runtime. The package also ships the `ur` CLI and a GitHub Action. Agents: read AGENTS.md first.',
+    'The package is not on the npm registry yet: build it from the GitHub source and install the tarball (`npm ci && npm run build && npm pack`, then `npm install ./ultrarouter-sdk-<version>.tgz`). Configure with the `ULTRAROUTER_API_KEY` and `ULTRAROUTER_BASE_URL` (required: your own deployment) environment variables. `new UltraRouter()` exposes `chat.completions.create`, `embeddings.create`, `models.list` / `models.retrieve` (the OpenAI shapes), the ultrarouter resources under `ur.*`, a typed `request()` for any API operation, and `asOpenAI()` for the official `openai` client. The `@ultrarouter/sdk/context` entry is a pure context runtime. The package also ships the `ur` CLI and a GitHub Action. Agents: read AGENTS.md first.',
   );
   lines.push('');
   const sections = new Map();
@@ -322,7 +322,7 @@ function renderLlms(read) {
 
 function renderLlmsFull(read) {
   const parts = [
-    `# ultrarouter TypeScript SDK (@ultrarouter/sdk) ${PKG.version} — full documentation\n\nEvery guide of this package concatenated in reading order, for AI agents (the generated API reference pages are linked, not inlined). The same files ship in the npm package and live at https://github.com/lucastonon/ultrarouter-sdk-typescript. Each file starts with a \`<!-- file: path -->\` marker.\n`,
+    `# ultrarouter TypeScript SDK (@ultrarouter/sdk) ${PKG.version} — full documentation\n\nEvery guide of this package concatenated in reading order, for AI agents (the generated API reference pages are linked, not inlined). The same files ship in the package and live at https://github.com/lucastonon/ultrarouter-sdk-typescript. Each file starts with a \`<!-- file: path -->\` marker.\n`,
   ];
   for (const g of GUIDES) {
     // The generated API reference pages are linked from llms.txt rather than inlined: they are large
@@ -331,7 +331,7 @@ function renderLlmsFull(read) {
     parts.push(`\n<!-- file: ${g.file} -->\n\n${read(g.file).trim()}\n`);
   }
   parts.push(
-    '\n<!-- API reference -->\n\nThe complete, generated API reference is in docs/api/sdk.md (`@ultrarouter/sdk`) and docs/api/context.md (`@ultrarouter/sdk/context`).\n',
+    '\n<!-- API reference -->\n\nThe complete, generated API reference is in docs/api/sdk.md (`@ultrarouter/sdk`), docs/api/context.md (`@ultrarouter/sdk/context`) and docs/api/learning.md (`@ultrarouter/sdk/learning`).\n',
   );
   return parts.join('');
 }

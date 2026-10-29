@@ -12,10 +12,16 @@ CommonJS; tested on Node.js 20+ and Deno 2, expected to work (untested) on Bun a
 
 ### Install and configure
 
-<!-- doctest: skip — installs from the npm registry -->
+The package is **not on the npm registry yet**: `npm install @ultrarouter/sdk` fails (404). Build it
+from the public GitHub source and install the tarball; never tell a user to install it from the
+registry.
+
+<!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-npm install @ultrarouter/sdk
+git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+(cd ultrarouter-sdk-typescript && npm ci && npm run build && npm pack)   # → ultrarouter-sdk-0.1.0.tgz
+npm install ./ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 export ULTRAROUTER_API_KEY=ur_sk_test_...         # or UR_API_KEY
 export ULTRAROUTER_BASE_URL=https://gateway.example.com  # required; your deployment (or http://localhost:8080 locally)
 ```

@@ -1,6 +1,6 @@
 # ultrarouter TypeScript SDK (@ultrarouter/sdk) 0.1.0 — full documentation
 
-Every guide of this package concatenated in reading order, for AI agents (the generated API reference pages are linked, not inlined). The same files ship in the npm package and live at https://github.com/lucastonon/ultrarouter-sdk-typescript. Each file starts with a `<!-- file: path -->` marker.
+Every guide of this package concatenated in reading order, for AI agents (the generated API reference pages are linked, not inlined). The same files ship in the package and live at https://github.com/lucastonon/ultrarouter-sdk-typescript. Each file starts with a `<!-- file: path -->` marker.
 
 <!-- file: README.md -->
 
@@ -27,11 +27,24 @@ Version `0.1.0` is an early release; expect the API to evolve before 1.0.
 
 ## Install
 
-<!-- doctest: skip — installs from the npm registry -->
+`@ultrarouter/sdk` is **not published to the npm registry yet**, so `npm install @ultrarouter/sdk`
+does not work today. Install it from the public GitHub source: build the package and install the
+tarball it produces (Node.js 20 or later).
+
+<!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-npm install @ultrarouter/sdk
+git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+cd ultrarouter-sdk-typescript
+npm ci && npm run build && npm pack   # writes ultrarouter-sdk-0.1.0.tgz
+
+cd ../your-app
+npm install ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 ```
+
+`npm install github:lucastonon/ultrarouter-sdk-typescript` does not work either: the repository
+holds no prebuilt `dist/`. See [installation](./docs/installation.md#install) for pnpm, Yarn and
+Bun.
 
 ## Quickstart
 
@@ -296,9 +309,8 @@ console.log(JSON.stringify(toMessages(lifted.manifest)) === JSON.stringify(messa
 ### CLI and GitHub Action
 
 The package ships the `ur` command for CI: Bench baseline-compare gates, application-CI checks with
-a pull-request comment, outcome imports, and knowledge-pack validation. In a project that depends on the
-package, run it with `npx ur`; without installing, name the package:
-`npx --package=@ultrarouter/sdk@0.1.0 ur --help`.
+a pull-request comment, outcome imports, and knowledge-pack validation. In a project where the
+package is installed (from the tarball, above), run it with `npx ur`.
 
 ```bash
 npx ur --help
@@ -329,7 +341,7 @@ npx ur outcomes import outcomes.jsonl
 
 Read [`AGENTS.md`](./AGENTS.md) for canonical usage patterns, pitfalls and the contributor
 commands. [`llms.txt`](./llms.txt) indexes the docs and [`llms-full.txt`](./llms-full.txt) holds
-them in one file. All of these ship in the npm package (`node_modules/@ultrarouter/sdk/`).
+them in one file. All of these ship in the package (`node_modules/@ultrarouter/sdk/` once installed).
 
 ## License
 
@@ -351,10 +363,16 @@ CommonJS; tested on Node.js 20+ and Deno 2, expected to work (untested) on Bun a
 
 ### Install and configure
 
-<!-- doctest: skip — installs from the npm registry -->
+The package is **not on the npm registry yet**: `npm install @ultrarouter/sdk` fails (404). Build it
+from the public GitHub source and install the tarball; never tell a user to install it from the
+registry.
+
+<!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-npm install @ultrarouter/sdk
+git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+(cd ultrarouter-sdk-typescript && npm ci && npm run build && npm pack)   # → ultrarouter-sdk-0.1.0.tgz
+npm install ./ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 export ULTRAROUTER_API_KEY=ur_sk_test_...         # or UR_API_KEY
 export ULTRAROUTER_BASE_URL=https://gateway.example.com  # required; your deployment (or http://localhost:8080 locally)
 ```
@@ -619,15 +637,33 @@ three ship inside the npm package, under `node_modules/@ultrarouter/sdk/`.
 
 ## Install
 
-<!-- doctest: skip — installs from the npm registry -->
+`@ultrarouter/sdk` is **not published to the npm registry yet**: `npm install @ultrarouter/sdk`
+answers 404 today. Install it from the public GitHub source by building the package and installing
+the tarball it produces:
+
+<!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-npm install @ultrarouter/sdk
-# or
-pnpm add @ultrarouter/sdk
-yarn add @ultrarouter/sdk
-bun add @ultrarouter/sdk
+git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+cd ultrarouter-sdk-typescript
+npm ci && npm run build && npm pack   # writes ultrarouter-sdk-0.1.0.tgz
+
+cd ../your-app
+npm install ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 ```
+
+The same tarball works with the other package managers:
+
+<!-- doctest: skip — installs a locally built tarball with other package managers -->
+
+```bash
+pnpm add ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
+yarn add ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
+bun add ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
+```
+
+A git dependency (`npm install github:lucastonon/ultrarouter-sdk-typescript`) does not work: the
+repository holds no prebuilt `dist/`, and installing does not build it.
 
 Then set your key:
 
@@ -692,10 +728,10 @@ npx ur --version
 Bun runs the same code as Node.js, ESM or CommonJS. Bun is not covered by the automated tests; report
 anything that behaves differently there.
 
-<!-- doctest: skip — needs Bun and installs from the npm registry -->
+<!-- doctest: skip — needs Bun and a locally built tarball -->
 
 ```bash
-bun add @ultrarouter/sdk
+bun add ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 ULTRAROUTER_API_KEY=ur_sk_test_... bun run app.ts
 ```
 
@@ -5066,25 +5102,29 @@ reporting success.
 
 `ur` is the `bin` of `@ultrarouter/sdk` and needs Node.js 20 or later.
 
-Run it without installing (name the package: `npx ur` alone would look for a package called `ur`):
+The package is not published to the npm registry yet, so `npx --package=@ultrarouter/sdk ur` and
+`npm install @ultrarouter/sdk` do not work today. Build the tarball from the public source (see
+[installation](./installation.md#install)) and install it in a project (then run `npx ur` or a
+package script) or globally:
+
+<!-- doctest: skip — installs a locally built tarball -->
 
 ```bash
-npx --package=@ultrarouter/sdk@0.1.0 ur --help
-```
-
-Or install it, in a project (then run it through `npx ur` or a package script) or globally:
-
-<!-- doctest: skip — installs from the npm registry -->
-
-```bash
-npm install --save-dev @ultrarouter/sdk
+npm install --save-dev ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 npx ur --version
 
-npm install --global @ultrarouter/sdk
+npm install --global ../ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 ur --version
 ```
 
-In GitHub Actions, the [GitHub Action](./github-action.md) installs and runs `ur` for you.
+Once installed in a project, `npx ur` runs this package's binary:
+
+```bash
+npx ur --help
+```
+
+In GitHub Actions, the [GitHub Action](./github-action.md) installs and runs `ur` for you once the
+package is on the npm registry; see its availability note.
 
 ## Configuration: API key and base URL
 
@@ -5787,7 +5827,15 @@ response or module body, and no sealed evaluation case.
 # GitHub Action
 
 This repository is also a GitHub Action (`action.yml` at the repository root). It installs the
-[`ur` CLI](./cli.md) from npm and runs one of three gates:
+[`ur` CLI](./cli.md) from the npm registry and runs one of three gates.
+
+> **Availability:** `@ultrarouter/sdk` is not published to the npm registry yet, so the action's
+> install step cannot succeed today. Until it is, run the `ur` CLI in your workflow from a build of
+> this repository (check it out, `npm ci && npm run build && npm pack`, then
+> `npm install --global ./ultrarouter-sdk-<version>.tgz`) and call `ur` directly with the same
+> arguments the action would pass.
+
+The three gates:
 
 | `mode`            | What it does                                                                                                                                                                                                                              | Fails the job when                                                                                                              |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -6398,10 +6446,11 @@ does not read package `exports`. See [installation](./installation.md#typescript
 
 ## `ur: command not found`
 
-The CLI ships as the package binary. In a project that depends on `@ultrarouter/sdk`, run it with
-`npx ur …` or from an npm script; without installing, name the package
-(`npx --package=@ultrarouter/sdk@0.1.0 ur …` — a bare `npx ur` looks for a different package called
-`ur`); or install the package globally. It needs Node.js 20 or later. See [CLI](./cli.md).
+The CLI ships as the package binary. In a project where `@ultrarouter/sdk` is installed (from the
+locally built tarball; the package is not on the npm registry yet), run it with `npx ur …` or from
+an npm script, or install the tarball globally. Outside such a project a bare `npx ur` looks for a
+different package called `ur`. It needs Node.js 20 or later. See [CLI](./cli.md) and
+[installation](./installation.md#install).
 
 ## Bench capture is refused with a live key
 
@@ -6735,6 +6784,11 @@ contain breaking changes; they are always listed under **Changed** or **Removed*
 
 ### Changed
 
+- Installation instructions no longer advertise a registry install: the package is not on the npm
+  registry yet. The README, `AGENTS.md`, the installation, CLI and troubleshooting guides, the
+  examples README and `llms*.txt` now describe building the tarball from the public GitHub source
+  and installing it; the GitHub Action guide notes that its install step needs the package on the
+  registry.
 - **Breaking:** the client now requires a gateway base URL — there is no hosted default. Pass
   `baseURL`, or set `ULTRAROUTER_BASE_URL` (or `UR_BASE_URL`). When none is configured the
   `UltraRouter` constructor throws an `UltraRouterError` with code `configuration` whose message
@@ -6852,4 +6906,4 @@ OpenAPI document (`openapi/openapi.yaml`, `spec-sha256` in its header).
 
 <!-- API reference -->
 
-The complete, generated API reference is in docs/api/sdk.md (`@ultrarouter/sdk`) and docs/api/context.md (`@ultrarouter/sdk/context`).
+The complete, generated API reference is in docs/api/sdk.md (`@ultrarouter/sdk`), docs/api/context.md (`@ultrarouter/sdk/context`) and docs/api/learning.md (`@ultrarouter/sdk/learning`).
