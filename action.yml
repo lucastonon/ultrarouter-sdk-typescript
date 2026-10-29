@@ -183,7 +183,7 @@ inputs:
   sdk-version:
     description: 'The @ultrarouter/sdk version to install for the `ur` CLI. Defaults to the version of this action release, so a pinned action runs a pinned CLI.'
     required: false
-    default: '0.0.1'
+    default: '0.1.0'
 
 runs:
   using: 'composite'

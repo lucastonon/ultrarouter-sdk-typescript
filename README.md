@@ -17,7 +17,7 @@ typed methods.
   [runtimes](./docs/installation.md).
 - **Batteries for CI**: the `ur` CLI and a GitHub Action for Bench and application-CI gates.
 
-Version `0.0.1` is an early release; expect the API to evolve before 1.0.
+Version `0.1.0` is an early release; expect the API to evolve before 1.0.
 
 ## Install
 
@@ -292,7 +292,7 @@ console.log(JSON.stringify(toMessages(lifted.manifest)) === JSON.stringify(messa
 The package ships the `ur` command for CI: Bench baseline-compare gates, application-CI checks with
 a pull-request comment, outcome imports, and knowledge-pack validation. In a project that depends on the
 package, run it with `npx ur`; without installing, name the package:
-`npx --package=@ultrarouter/sdk@0.0.1 ur --help`.
+`npx --package=@ultrarouter/sdk@0.1.0 ur --help`.
 
 ```bash
 npx ur --help

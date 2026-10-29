@@ -98,7 +98,7 @@ does not read package `exports`. See [installation](./installation.md#typescript
 
 The CLI ships as the package binary. In a project that depends on `@ultrarouter/sdk`, run it with
 `npx ur …` or from an npm script; without installing, name the package
-(`npx --package=@ultrarouter/sdk@0.0.1 ur …` — a bare `npx ur` looks for a different package called
+(`npx --package=@ultrarouter/sdk@0.1.0 ur …` — a bare `npx ur` looks for a different package called
 `ur`); or install the package globally. It needs Node.js 20 or later. See [CLI](./cli.md).
 
 ## Bench capture is refused with a live key

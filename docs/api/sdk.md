@@ -1,6 +1,6 @@
 # API reference: `@ultrarouter/sdk`
 
-Generated from the TypeScript sources and their TSDoc by `scripts/gen-docs.mjs` (do not edit by hand). Version 0.0.1. 288 exports.
+Generated from the TypeScript sources and their TSDoc by `scripts/gen-docs.mjs` (do not edit by hand). Version 0.1.0. 359 exports.
 
 ```ts
 import UltraRouter, { /* named exports */ } from '@ultrarouter/sdk';
@@ -9,11 +9,11 @@ import UltraRouter, { /* named exports */ } from '@ultrarouter/sdk';
 ## Contents
 
 - **Default export:** [`default`](#default)
-- **Classes:** [`FileOutcomeStore`](#fileoutcomestore), [`MemoryOutcomeStore`](#memoryoutcomestore), [`ModelUnpricedError`](#modelunpricederror), [`OutcomeQueue`](#outcomequeue), [`OutcomeStoreError`](#outcomestoreerror), [`PreflightCache`](#preflightcache), [`PromptVariablesMissingError`](#promptvariablesmissingerror), [`ReviewerQueue`](#reviewerqueue), [`UltraRouter`](#ultrarouter), [`UltraRouterError`](#ultraroutererror)
-- **Functions:** [`applyLearnedContext`](#applylearnedcontext), [`artifactListQueryString`](#artifactlistquerystring), [`bindArtifactKey`](#bindartifactkey), [`decidePreflightCache`](#decidepreflightcache), [`diffStats`](#diffstats), [`importListQueryString`](#importlistquerystring), [`isDefinitiveRejection`](#isdefinitiverejection), [`isGatewayErrorCode`](#isgatewayerrorcode), [`isRetryableStatus`](#isretryablestatus), [`isUltraRouterError`](#isultraroutererror), [`learnedPlacementIndex`](#learnedplacementindex), [`normalizeOutcomeTarget`](#normalizeoutcometarget), [`outcomeIdempotencyKey`](#outcomeidempotencykey), [`parseGrantHeader`](#parsegrantheader), [`parseMaxAgeSeconds`](#parsemaxageseconds), [`pendingQueryString`](#pendingquerystring), [`preflightCacheKey`](#preflightcachekey), [`preflightHasClusterKey`](#preflighthasclusterkey), [`renderHostedPromptResult`](#renderhostedpromptresult), [`renderPrompt`](#renderprompt), [`reviewerSignatureHeaders`](#reviewersignatureheaders), [`reviewerSignedPayload`](#reviewersignedpayload), [`reviewerVerdictAction`](#reviewerverdictaction), [`sha256Hex`](#sha256hex), [`signReviewerPayload`](#signreviewerpayload), [`ulid`](#ulid), [`withHeaderGrant`](#withheadergrant)
-- **Constants:** [`DEFAULT_MAX_RETRIES`](#default_max_retries), [`DEFAULT_PREFLIGHT_CACHE_MAX_ENTRIES`](#default_preflight_cache_max_entries), [`DEFAULT_TIMEOUT_MS`](#default_timeout_ms), [`EVENT_REJECTION_CODES`](#event_rejection_codes), [`EXPERIMENT_EXECUTION_HEADER`](#experiment_execution_header), [`GATEWAY_ERROR_CODES`](#gateway_error_codes), [`GATEWAY_ERROR_TAXONOMY`](#gateway_error_taxonomy), [`LEARNED_MESSAGE_ROLE`](#learned_message_role), [`ORACLE_SIGNATURE_HEADER`](#oracle_signature_header), [`ORACLE_TIMESTAMP_HEADER`](#oracle_timestamp_header), [`PREFLIGHT_DEFAULT_CONFIG_MAX_AGE_S`](#preflight_default_config_max_age_s), [`PREFLIGHT_DEFAULT_LIVE_MAX_AGE_S`](#preflight_default_live_max_age_s), [`PREFLIGHT_GRANT_HEADER`](#preflight_grant_header), [`PREFLIGHT_LIVE_MAX_AGE_HEADER`](#preflight_live_max_age_header), [`PROMPT_VARIABLES_MISSING_CODE`](#prompt_variables_missing_code), [`REVIEWER_SIGNATURE_HEADER`](#reviewer_signature_header), [`REVIEWER_TIMESTAMP_HEADER`](#reviewer_timestamp_header), [`VERSION`](#version)
-- **Interfaces:** [`ApiRequestInit`](#apirequestinit), [`ArtifactListQuery`](#artifactlistquery), [`ArtifactScope`](#artifactscope), [`ArtifactsResource`](#artifactsresource), [`AsOpenAI`](#asopenai), [`AutopilotCallType`](#autopilotcalltype), [`AutopilotCostProvenance`](#autopilotcostprovenance), [`AutopilotCoverage`](#autopilotcoverage), [`AutopilotStatus`](#autopilotstatus), [`BenchResource`](#benchresource), [`BenchRunParams`](#benchrunparams), [`CallType`](#calltype), [`CallTypeConfigBody`](#calltypeconfigbody), [`CallTypeConfigVersion`](#calltypeconfigversion), [`CallTypeListResponse`](#calltypelistresponse), [`CallTypesResource`](#calltypesresource), [`ChatChoice`](#chatchoice), [`ChatCompletion`](#chatcompletion), [`ChatCompletionChunk`](#chatcompletionchunk), [`ChatCompletionCreateParams`](#chatcompletioncreateparams), [`ChatCompletionsCreate`](#chatcompletionscreate), [`ChatContentPart`](#chatcontentpart), [`ChatMessage`](#chatmessage), [`ChatResource`](#chatresource), [`CompressionOptions`](#compressionoptions), [`CreateCallTypeParams`](#createcalltypeparams), [`CreateEmbeddingResponse`](#createembeddingresponse), [`DiffStats`](#diffstats), [`DurableEntry`](#durableentry), [`Embedding`](#embedding), [`EmbeddingCreateParams`](#embeddingcreateparams), [`EmbeddingsResource`](#embeddingsresource), [`EmbeddingUrBlock`](#embeddingurblock), [`ExperimentOutcomeOptions`](#experimentoutcomeoptions), [`ExperimentsResource`](#experimentsresource), [`Feedback`](#feedback), [`FeedbackEnvelope`](#feedbackenvelope), [`FeedbackParams`](#feedbackparams), [`FlywheelResource`](#flywheelresource), [`GatewayErrorEnvelope`](#gatewayerrorenvelope), [`GenerationOutcome`](#generationoutcome), [`GenerationStats`](#generationstats), [`HostedPromptsResource`](#hostedpromptsresource), [`HostedPromptVariable`](#hostedpromptvariable), [`ImportListQuery`](#importlistquery), [`ImportsResource`](#importsresource), [`LearnedMessage`](#learnedmessage), [`LearnedRecordOptions`](#learnedrecordoptions), [`LearnedSession`](#learnedsession), [`Model`](#model), [`ModelListQuery`](#modellistquery), [`ModelPricing`](#modelpricing), [`ModelsListResponse`](#modelslistresponse), [`ModelsResource`](#modelsresource), [`OpenAICompatConfig`](#openaicompatconfig), [`OracleSigningOptions`](#oraclesigningoptions), [`OraclesResource`](#oraclesresource), [`OutcomeFlushReport`](#outcomeflushreport), [`OutcomeQueueDeps`](#outcomequeuedeps), [`OutcomesResource`](#outcomesresource), [`OutcomeStore`](#outcomestore), [`PendingOutcomesQuery`](#pendingoutcomesquery), [`PreflightCacheEntry`](#preflightcacheentry), [`PreflightCacheOptions`](#preflightcacheoptions), [`PreflightRequestOptions`](#preflightrequestoptions), [`ProviderPreferences`](#providerpreferences), [`QueuedOutcome`](#queuedoutcome), [`QueuedReviewerEvent`](#queuedreviewerevent), [`ReasoningOptions`](#reasoningoptions), [`RenderablePrompt`](#renderableprompt), [`RequestOptions`](#requestoptions), [`ReviewerDeliveryOptions`](#reviewerdeliveryoptions), [`ReviewerFlushReport`](#reviewerflushreport), [`ReviewerQueueDeps`](#reviewerqueuedeps), [`ReviewerResource`](#reviewerresource), [`SegmentHint`](#segmenthint), [`SourceChecksResource`](#sourcechecksresource), [`UltraRouterDefaults`](#ultrarouterdefaults), [`UltraRouterOptions`](#ultrarouteroptions), [`UrCompressionBlock`](#urcompressionblock), [`UrNamespace`](#urnamespace), [`UrRequestOptions`](#urrequestoptions), [`UrResponseBlock`](#urresponseblock), [`UrRoutingBlock`](#urroutingblock), [`Usage`](#usage), [`VerifiedMemoryResource`](#verifiedmemoryresource)
-- **Types:** [`ActivateHostedPromptParams`](#activatehostedpromptparams), [`AnswerSourceCheckParams`](#answersourcecheckparams), [`ApiOperation`](#apioperation), [`ApiPath`](#apipath), [`ApiResponse`](#apiresponse), [`Artifact`](#artifact), [`ArtifactArchetype`](#artifactarchetype), [`ArtifactClaim`](#artifactclaim), [`ArtifactEnvelope`](#artifactenvelope), [`ArtifactListResponse`](#artifactlistresponse), [`ArtifactObjective`](#artifactobjective), [`ArtifactObjectiveMetric`](#artifactobjectivemetric), [`ArtifactObjectivePredicate`](#artifactobjectivepredicate), [`ArtifactType`](#artifacttype), [`ArtifactTypeEnvelope`](#artifacttypeenvelope), [`ArtifactTypeUpsertParams`](#artifacttypeupsertparams), [`AutopilotMode`](#autopilotmode), [`BatchOutcomeInput`](#batchoutcomeinput), [`BatchOutcomeResult`](#batchoutcomeresult), [`BatchOutcomesResponse`](#batchoutcomesresponse), [`BenchBaseline`](#benchbaseline), [`BenchCompareGate`](#benchcomparegate), [`BenchDatasetFreeze`](#benchdatasetfreeze), [`BenchExpectationInput`](#benchexpectationinput), [`BenchExpectations`](#benchexpectations), [`BenchFreezeParams`](#benchfreezeparams), [`BenchInitTag`](#benchinittag), [`BenchOutcomeInput`](#benchoutcomeinput), [`BenchOutcomes`](#benchoutcomes), [`BenchOutcomeTarget`](#benchoutcometarget), [`BenchReport`](#benchreport), [`BenchReportFormat`](#benchreportformat), [`BenchRun`](#benchrun), [`BenchRunMode`](#benchrunmode), [`BenchRunTrigger`](#benchruntrigger), [`BenchSelectionMode`](#benchselectionmode), [`BenchSuiteStatus`](#benchsuitestatus), [`BenchTag`](#benchtag), [`CallTypeImprovementReads`](#calltypeimprovementreads), [`CallTypeRecommendations`](#calltyperecommendations), [`ChatCompletionStream`](#chatcompletionstream), [`ChatRole`](#chatrole), [`ClaimInput`](#claiminput), [`ClaimOracleJobsParams`](#claimoraclejobsparams), [`CompressionMode`](#compressionmode), [`CompressionOption`](#compressionoption), [`CreateArtifactParams`](#createartifactparams), [`CreateHostedPromptParams`](#createhostedpromptparams), [`DeepReadonly`](#deepreadonly), [`EnableVerifiedMemoryParams`](#enableverifiedmemoryparams), [`EnqueueEvalParams`](#enqueueevalparams), [`EnqueueEvalResponse`](#enqueueevalresponse), [`EnrolExperimentExecutionParams`](#enrolexperimentexecutionparams), [`EvalRunList`](#evalrunlist), [`ExperimentExecution`](#experimentexecution), [`ExperimentExecutionOutcome`](#experimentexecutionoutcome), [`ExperimentExecutionOutcomeDryRun`](#experimentexecutionoutcomedryrun), [`ExperimentScreenEvaluation`](#experimentscreenevaluation), [`ExperimentTestEvaluation`](#experimenttestevaluation), [`FetchLike`](#fetchlike), [`FinalizedOutcomeEvent`](#finalizedoutcomeevent), [`FinalParams`](#finalparams), [`FinalResponse`](#finalresponse), [`FlywheelCalibration`](#flywheelcalibration), [`FlywheelStatus`](#flywheelstatus), [`FlywheelUsage`](#flywheelusage), [`GatewayErrorCode`](#gatewayerrorcode), [`HostedPromptList`](#hostedpromptlist), [`HostedPromptPointer`](#hostedpromptpointer), [`HostedPromptProposal`](#hostedpromptproposal), [`HostedPromptVersion`](#hostedpromptversion), [`HttpMethod`](#httpmethod), [`Import`](#import), [`ImportCapabilityReport`](#importcapabilityreport), [`ImportEnvelope`](#importenvelope), [`ImportListResponse`](#importlistresponse), [`ImportParams`](#importparams), [`ImprovementReads`](#improvementreads), [`IssueSourceCheckParams`](#issuesourcecheckparams), [`KeyInfo`](#keyinfo), [`LearnedContextDelivery`](#learnedcontextdelivery), [`ModelDetail`](#modeldetail), [`OpenAIConstructor`](#openaiconstructor), [`OperationId`](#operationid), [`OperationQuery`](#operationquery), [`OperationRequestBody`](#operationrequestbody), [`OperationResponse`](#operationresponse), [`Oracle`](#oracle), [`OracleJobClaim`](#oraclejobclaim), [`OracleQualification`](#oraclequalification), [`OracleRegistration`](#oracleregistration), [`OracleRevocation`](#oraclerevocation), [`OracleTestResult`](#oracletestresult), [`OracleVerdictsResult`](#oracleverdictsresult), [`OutcomeChannel`](#outcomechannel), [`OutcomeInput`](#outcomeinput), [`OutcomeReceipt`](#outcomereceipt), [`OutcomeResult`](#outcomeresult), [`OutcomeSender`](#outcomesender), [`OutcomeTarget`](#outcometarget), [`PendingClaim`](#pendingclaim), [`PendingClaimsResponse`](#pendingclaimsresponse), [`PreflightCacheDecision`](#preflightcachedecision), [`PreflightGrant`](#preflightgrant), [`PreflightKnowledge`](#preflightknowledge), [`PreflightParams`](#preflightparams), [`PreflightPrompt`](#preflightprompt), [`PreflightResponse`](#preflightresponse), [`PreflightRouting`](#preflightrouting), [`QualifyOracleParams`](#qualifyoracleparams), [`ReasoningEffort`](#reasoningeffort), [`RecordExperimentOutcomeParams`](#recordexperimentoutcomeparams), [`RecordOutcomesResponse`](#recordoutcomesresponse), [`RegisterOracleParams`](#registeroracleparams), [`RenderPromptResult`](#renderpromptresult), [`ResponseFormat`](#responseformat), [`ReviewerBackfill`](#reviewerbackfill), [`ReviewerDecision`](#reviewerdecision), [`ReviewerEvent`](#reviewerevent), [`ReviewerEventResult`](#reviewereventresult), [`ReviewerEventsResponse`](#reviewereventsresponse), [`ReviewerFinal`](#reviewerfinal), [`ReviewerHealth`](#reviewerhealth), [`ReviewerRepairResult`](#reviewerrepairresult), [`ReviewerSender`](#reviewersender), [`ReviewerSetup`](#reviewersetup), [`ReviewerTestResult`](#reviewertestresult), [`ReviewerTestScenario`](#reviewertestscenario), [`RouterMode`](#routermode), [`SegmentHintKind`](#segmenthintkind), [`SelfImproveGuardrails`](#selfimproveguardrails), [`SourceCheck`](#sourcecheck), [`SourceCheckGrade`](#sourcecheckgrade), [`SubmitOracleVerdictsParams`](#submitoracleverdictsparams), [`SuccessBody`](#successbody), [`TestOracleParams`](#testoracleparams), [`UrBenchEcho`](#urbenchecho), [`UrContextModule`](#urcontextmodule), [`UrManifest`](#urmanifest), [`UrManifestEntry`](#urmanifestentry), [`UrManifestRange`](#urmanifestrange), [`UrVerifiedMemoryBlock`](#urverifiedmemoryblock), [`VerdictSources`](#verdictsources), [`VerifiedMemoryDisableResult`](#verifiedmemorydisableresult), [`VerifiedMemoryEnableResult`](#verifiedmemoryenableresult), [`VerifiedMemoryStatus`](#verifiedmemorystatus)
+- **Classes:** [`FileOutcomeStore`](#fileoutcomestore), [`LearningError`](#learningerror), [`MemoryOutcomeStore`](#memoryoutcomestore), [`ModelUnpricedError`](#modelunpricederror), [`OutcomeQueue`](#outcomequeue), [`OutcomeStoreError`](#outcomestoreerror), [`PreflightCache`](#preflightcache), [`PromptVariablesMissingError`](#promptvariablesmissingerror), [`ReceiptWaitTimeoutError`](#receiptwaittimeouterror), [`ReviewerQueue`](#reviewerqueue), [`UltraRouter`](#ultrarouter), [`UltraRouterError`](#ultraroutererror)
+- **Functions:** [`applyLearnedContext`](#applylearnedcontext), [`artifactListQueryString`](#artifactlistquerystring), [`assertEpisodeKey`](#assertepisodekey), [`assertRequestId`](#assertrequestid), [`attachRequestId`](#attachrequestid), [`bindArtifactKey`](#bindartifactkey), [`correlationHeaders`](#correlationheaders), [`decidePreflightCache`](#decidepreflightcache), [`diffStats`](#diffstats), [`importListQueryString`](#importlistquerystring), [`isDefinitiveRejection`](#isdefinitiverejection), [`isGatewayErrorCode`](#isgatewayerrorcode), [`isOutcomeReceiptRecord`](#isoutcomereceiptrecord), [`isRetryableStatus`](#isretryablestatus), [`isTerminalReceiptState`](#isterminalreceiptstate), [`isUltraRouterError`](#isultraroutererror), [`isValidRequestId`](#isvalidrequestid), [`learnedPlacementIndex`](#learnedplacementindex), [`learningErrorReason`](#learningerrorreason), [`mintEpisodeKey`](#mintepisodekey), [`mintRequestId`](#mintrequestid), [`normalizeOutcomeTarget`](#normalizeoutcometarget), [`outcomeIdempotencyKey`](#outcomeidempotencykey), [`parseGrantHeader`](#parsegrantheader), [`parseMaxAgeSeconds`](#parsemaxageseconds), [`parseOutcomeReceipt`](#parseoutcomereceipt), [`parseOutcomeReceiptList`](#parseoutcomereceiptlist), [`pendingQueryString`](#pendingquerystring), [`planOutcomeReport`](#planoutcomereport), [`preflightCacheKey`](#preflightcachekey), [`preflightHasClusterKey`](#preflighthasclusterkey), [`readRequestId`](#readrequestid), [`renderHostedPromptResult`](#renderhostedpromptresult), [`renderPrompt`](#renderprompt), [`reportSourceEventId`](#reportsourceeventid), [`reviewerSignatureHeaders`](#reviewersignatureheaders), [`reviewerSignedPayload`](#reviewersignedpayload), [`reviewerVerdictAction`](#reviewerverdictaction), [`sha256Hex`](#sha256hex), [`signReviewerPayload`](#signreviewerpayload), [`toLearningError`](#tolearningerror), [`ulid`](#ulid), [`withHeaderGrant`](#withheadergrant)
+- **Constants:** [`DEFAULT_MAX_RETRIES`](#default_max_retries), [`DEFAULT_PREFLIGHT_CACHE_MAX_ENTRIES`](#default_preflight_cache_max_entries), [`DEFAULT_TIMEOUT_MS`](#default_timeout_ms), [`EPISODE_HEADER`](#episode_header), [`EPISODE_KEY_MAX_LENGTH`](#episode_key_max_length), [`EVENT_REJECTION_CODES`](#event_rejection_codes), [`EXPERIMENT_EXECUTION_HEADER`](#experiment_execution_header), [`GATEWAY_ERROR_CODES`](#gateway_error_codes), [`GATEWAY_ERROR_TAXONOMY`](#gateway_error_taxonomy), [`LEARNED_MESSAGE_ROLE`](#learned_message_role), [`LEARNING_ERROR_ACTIONS`](#learning_error_actions), [`LEARNING_ERROR_CODES`](#learning_error_codes), [`ORACLE_SIGNATURE_HEADER`](#oracle_signature_header), [`ORACLE_TIMESTAMP_HEADER`](#oracle_timestamp_header), [`OUTCOME_SOURCES`](#outcome_sources), [`OUTCOME_VERDICT_VALUES`](#outcome_verdict_values), [`OUTCOME_VERDICTS`](#outcome_verdicts), [`OUTCOME_VERDICTS_SCHEMA_VERSION`](#outcome_verdicts_schema_version), [`PREFLIGHT_DEFAULT_CONFIG_MAX_AGE_S`](#preflight_default_config_max_age_s), [`PREFLIGHT_DEFAULT_LIVE_MAX_AGE_S`](#preflight_default_live_max_age_s), [`PREFLIGHT_GRANT_HEADER`](#preflight_grant_header), [`PREFLIGHT_LIVE_MAX_AGE_HEADER`](#preflight_live_max_age_header), [`PROMPT_VARIABLES_MISSING_CODE`](#prompt_variables_missing_code), [`RECEIPT_WAIT_DEFAULTS`](#receipt_wait_defaults), [`REPORT_IDENTITY_VERSION`](#report_identity_version), [`REQUEST_ID_HEADER`](#request_id_header), [`REQUEST_ID_PATTERN`](#request_id_pattern), [`REVIEWER_SIGNATURE_HEADER`](#reviewer_signature_header), [`REVIEWER_TIMESTAMP_HEADER`](#reviewer_timestamp_header), [`TERMINAL_RECEIPT_STATES`](#terminal_receipt_states), [`VERSION`](#version)
+- **Interfaces:** [`ApiRequestInit`](#apirequestinit), [`ArtifactListQuery`](#artifactlistquery), [`ArtifactScope`](#artifactscope), [`ArtifactsResource`](#artifactsresource), [`AsOpenAI`](#asopenai), [`AutopilotCallType`](#autopilotcalltype), [`AutopilotCostProvenance`](#autopilotcostprovenance), [`AutopilotCoverage`](#autopilotcoverage), [`AutopilotStatus`](#autopilotstatus), [`BenchResource`](#benchresource), [`BenchRunParams`](#benchrunparams), [`CallType`](#calltype), [`CallTypeConfigBody`](#calltypeconfigbody), [`CallTypeConfigVersion`](#calltypeconfigversion), [`CallTypeListResponse`](#calltypelistresponse), [`CallTypesResource`](#calltypesresource), [`ChatChoice`](#chatchoice), [`ChatCompletion`](#chatcompletion), [`ChatCompletionChunk`](#chatcompletionchunk), [`ChatCompletionCreateParams`](#chatcompletioncreateparams), [`ChatCompletionsCreate`](#chatcompletionscreate), [`ChatContentPart`](#chatcontentpart), [`ChatMessage`](#chatmessage), [`ChatResource`](#chatresource), [`CompressionOptions`](#compressionoptions), [`CorrelationOptions`](#correlationoptions), [`CreateCallTypeParams`](#createcalltypeparams), [`CreateEmbeddingResponse`](#createembeddingresponse), [`DiffStats`](#diffstats), [`DurableEntry`](#durableentry), [`Embedding`](#embedding), [`EmbeddingCreateParams`](#embeddingcreateparams), [`EmbeddingsResource`](#embeddingsresource), [`EmbeddingUrBlock`](#embeddingurblock), [`EnableLearningParams`](#enablelearningparams), [`ExperimentOutcomeOptions`](#experimentoutcomeoptions), [`ExperimentsResource`](#experimentsresource), [`Feedback`](#feedback), [`FeedbackEnvelope`](#feedbackenvelope), [`FeedbackParams`](#feedbackparams), [`FlywheelResource`](#flywheelresource), [`GatewayErrorEnvelope`](#gatewayerrorenvelope), [`GenerationOutcome`](#generationoutcome), [`GenerationStats`](#generationstats), [`HostedPromptsResource`](#hostedpromptsresource), [`HostedPromptVariable`](#hostedpromptvariable), [`ImportListQuery`](#importlistquery), [`ImportsResource`](#importsresource), [`LearnedMessage`](#learnedmessage), [`LearnedRecordOptions`](#learnedrecordoptions), [`LearnedSession`](#learnedsession), [`LearningArmEvidence`](#learningarmevidence), [`LearningDecisionParams`](#learningdecisionparams), [`LearningEvaluation`](#learningevaluation), [`LearningEvaluationList`](#learningevaluationlist), [`LearningEvidenceCounts`](#learningevidencecounts), [`LearningLesson`](#learninglesson), [`LearningPromotionPolicy`](#learningpromotionpolicy), [`LearningResource`](#learningresource), [`LearningRollbackParams`](#learningrollbackparams), [`LearningStatus`](#learningstatus), [`LearningVersion`](#learningversion), [`LearningVersionDetail`](#learningversiondetail), [`LearningVersionList`](#learningversionlist), [`LearningVersionRef`](#learningversionref), [`Model`](#model), [`ModelListQuery`](#modellistquery), [`ModelPricing`](#modelpricing), [`ModelsListResponse`](#modelslistresponse), [`ModelsResource`](#modelsresource), [`OpenAICompatConfig`](#openaicompatconfig), [`OracleSigningOptions`](#oraclesigningoptions), [`OraclesResource`](#oraclesresource), [`OutcomeFlushReport`](#outcomeflushreport), [`OutcomeNotReported`](#outcomenotreported), [`OutcomeQueueDeps`](#outcomequeuedeps), [`OutcomeReceiptList`](#outcomereceiptlist), [`OutcomeReceiptRecord`](#outcomereceiptrecord), [`OutcomeReported`](#outcomereported), [`OutcomeReportParams`](#outcomereportparams), [`OutcomeSourceMapping`](#outcomesourcemapping), [`OutcomesResource`](#outcomesresource), [`OutcomeStore`](#outcomestore), [`OutcomeVerdictMapping`](#outcomeverdictmapping), [`PendingOutcomesQuery`](#pendingoutcomesquery), [`PreflightCacheEntry`](#preflightcacheentry), [`PreflightCacheOptions`](#preflightcacheoptions), [`PreflightRequestOptions`](#preflightrequestoptions), [`ProviderPreferences`](#providerpreferences), [`QueuedOutcome`](#queuedoutcome), [`QueuedReviewerEvent`](#queuedreviewerevent), [`ReasoningOptions`](#reasoningoptions), [`RenderablePrompt`](#renderableprompt), [`RequestCorrelation`](#requestcorrelation), [`RequestOptions`](#requestoptions), [`ReviewerDeliveryOptions`](#reviewerdeliveryoptions), [`ReviewerFlushReport`](#reviewerflushreport), [`ReviewerQueueDeps`](#reviewerqueuedeps), [`ReviewerResource`](#reviewerresource), [`SegmentHint`](#segmenthint), [`SourceChecksResource`](#sourcechecksresource), [`StreamCorrelation`](#streamcorrelation), [`UltraRouterDefaults`](#ultrarouterdefaults), [`UltraRouterOptions`](#ultrarouteroptions), [`UrCompressionBlock`](#urcompressionblock), [`UrNamespace`](#urnamespace), [`UrRequestOptions`](#urrequestoptions), [`UrResponseBlock`](#urresponseblock), [`UrRoutingBlock`](#urroutingblock), [`Usage`](#usage), [`VerifiedMemoryResource`](#verifiedmemoryresource), [`WaitForReceiptOptions`](#waitforreceiptoptions)
+- **Types:** [`ActivateHostedPromptParams`](#activatehostedpromptparams), [`AnswerSourceCheckParams`](#answersourcecheckparams), [`ApiOperation`](#apioperation), [`ApiPath`](#apipath), [`ApiResponse`](#apiresponse), [`Artifact`](#artifact), [`ArtifactArchetype`](#artifactarchetype), [`ArtifactClaim`](#artifactclaim), [`ArtifactEnvelope`](#artifactenvelope), [`ArtifactListResponse`](#artifactlistresponse), [`ArtifactObjective`](#artifactobjective), [`ArtifactObjectiveMetric`](#artifactobjectivemetric), [`ArtifactObjectivePredicate`](#artifactobjectivepredicate), [`ArtifactType`](#artifacttype), [`ArtifactTypeEnvelope`](#artifacttypeenvelope), [`ArtifactTypeUpsertParams`](#artifacttypeupsertparams), [`AutopilotMode`](#autopilotmode), [`BatchOutcomeInput`](#batchoutcomeinput), [`BatchOutcomeResult`](#batchoutcomeresult), [`BatchOutcomesResponse`](#batchoutcomesresponse), [`BenchBaseline`](#benchbaseline), [`BenchCompareGate`](#benchcomparegate), [`BenchDatasetFreeze`](#benchdatasetfreeze), [`BenchExpectationInput`](#benchexpectationinput), [`BenchExpectations`](#benchexpectations), [`BenchFreezeParams`](#benchfreezeparams), [`BenchInitTag`](#benchinittag), [`BenchOutcomeInput`](#benchoutcomeinput), [`BenchOutcomes`](#benchoutcomes), [`BenchOutcomeTarget`](#benchoutcometarget), [`BenchReport`](#benchreport), [`BenchReportFormat`](#benchreportformat), [`BenchRun`](#benchrun), [`BenchRunMode`](#benchrunmode), [`BenchRunTrigger`](#benchruntrigger), [`BenchSelectionMode`](#benchselectionmode), [`BenchSuiteStatus`](#benchsuitestatus), [`BenchTag`](#benchtag), [`CallTypeImprovementReads`](#calltypeimprovementreads), [`CallTypeRecommendations`](#calltyperecommendations), [`ChatCompletionStream`](#chatcompletionstream), [`ChatRole`](#chatrole), [`ClaimInput`](#claiminput), [`ClaimOracleJobsParams`](#claimoraclejobsparams), [`CompressionMode`](#compressionmode), [`CompressionOption`](#compressionoption), [`CreateArtifactParams`](#createartifactparams), [`CreateHostedPromptParams`](#createhostedpromptparams), [`DeepReadonly`](#deepreadonly), [`EnableVerifiedMemoryParams`](#enableverifiedmemoryparams), [`EnqueueEvalParams`](#enqueueevalparams), [`EnqueueEvalResponse`](#enqueueevalresponse), [`EnrolExperimentExecutionParams`](#enrolexperimentexecutionparams), [`EvalRunList`](#evalrunlist), [`ExperimentExecution`](#experimentexecution), [`ExperimentExecutionOutcome`](#experimentexecutionoutcome), [`ExperimentExecutionOutcomeDryRun`](#experimentexecutionoutcomedryrun), [`ExperimentScreenEvaluation`](#experimentscreenevaluation), [`ExperimentTestEvaluation`](#experimenttestevaluation), [`FetchLike`](#fetchlike), [`FinalizedOutcomeEvent`](#finalizedoutcomeevent), [`FinalParams`](#finalparams), [`FinalResponse`](#finalresponse), [`FlywheelCalibration`](#flywheelcalibration), [`FlywheelStatus`](#flywheelstatus), [`FlywheelUsage`](#flywheelusage), [`GatewayErrorCode`](#gatewayerrorcode), [`HostedPromptList`](#hostedpromptlist), [`HostedPromptPointer`](#hostedpromptpointer), [`HostedPromptProposal`](#hostedpromptproposal), [`HostedPromptVersion`](#hostedpromptversion), [`HttpMethod`](#httpmethod), [`Import`](#import), [`ImportCapabilityReport`](#importcapabilityreport), [`ImportEnvelope`](#importenvelope), [`ImportListResponse`](#importlistresponse), [`ImportParams`](#importparams), [`ImprovementReads`](#improvementreads), [`IssueSourceCheckParams`](#issuesourcecheckparams), [`KeyInfo`](#keyinfo), [`LearnedContextDelivery`](#learnedcontextdelivery), [`LearningErrorReason`](#learningerrorreason), [`LearningEvaluationDecision`](#learningevaluationdecision), [`LearningObjective`](#learningobjective), [`LearningPromotionMode`](#learningpromotionmode), [`LearningState`](#learningstate), [`LearningVersionState`](#learningversionstate), [`ModelDetail`](#modeldetail), [`OpenAIConstructor`](#openaiconstructor), [`OperationId`](#operationid), [`OperationQuery`](#operationquery), [`OperationRequestBody`](#operationrequestbody), [`OperationResponse`](#operationresponse), [`Oracle`](#oracle), [`OracleJobClaim`](#oraclejobclaim), [`OracleQualification`](#oraclequalification), [`OracleRegistration`](#oracleregistration), [`OracleRevocation`](#oraclerevocation), [`OracleTestResult`](#oracletestresult), [`OracleVerdictsResult`](#oracleverdictsresult), [`OutcomeChannel`](#outcomechannel), [`OutcomeEpisodeAssociation`](#outcomeepisodeassociation), [`OutcomeInput`](#outcomeinput), [`OutcomeReceipt`](#outcomereceipt), [`OutcomeReceiptState`](#outcomereceiptstate), [`OutcomeReportPlan`](#outcomereportplan), [`OutcomeReportResult`](#outcomereportresult), [`OutcomeResult`](#outcomeresult), [`OutcomeSender`](#outcomesender), [`OutcomeSource`](#outcomesource), [`OutcomeTarget`](#outcometarget), [`OutcomeTeaches`](#outcometeaches), [`OutcomeVerdict`](#outcomeverdict), [`PendingClaim`](#pendingclaim), [`PendingClaimsResponse`](#pendingclaimsresponse), [`PreflightCacheDecision`](#preflightcachedecision), [`PreflightGrant`](#preflightgrant), [`PreflightKnowledge`](#preflightknowledge), [`PreflightParams`](#preflightparams), [`PreflightPrompt`](#preflightprompt), [`PreflightResponse`](#preflightresponse), [`PreflightRouting`](#preflightrouting), [`QualifyOracleParams`](#qualifyoracleparams), [`ReasoningEffort`](#reasoningeffort), [`RecordExperimentOutcomeParams`](#recordexperimentoutcomeparams), [`RecordOutcomesResponse`](#recordoutcomesresponse), [`RegisterOracleParams`](#registeroracleparams), [`RenderPromptResult`](#renderpromptresult), [`RequestOutcomeResult`](#requestoutcomeresult), [`ResponseFormat`](#responseformat), [`ReviewerBackfill`](#reviewerbackfill), [`ReviewerDecision`](#reviewerdecision), [`ReviewerEvent`](#reviewerevent), [`ReviewerEventResult`](#reviewereventresult), [`ReviewerEventsResponse`](#reviewereventsresponse), [`ReviewerFinal`](#reviewerfinal), [`ReviewerHealth`](#reviewerhealth), [`ReviewerRepairResult`](#reviewerrepairresult), [`ReviewerSender`](#reviewersender), [`ReviewerSetup`](#reviewersetup), [`ReviewerTestResult`](#reviewertestresult), [`ReviewerTestScenario`](#reviewertestscenario), [`RouterMode`](#routermode), [`SegmentHintKind`](#segmenthintkind), [`SelfImproveGuardrails`](#selfimproveguardrails), [`SourceCheck`](#sourcecheck), [`SourceCheckGrade`](#sourcecheckgrade), [`SubmitOracleVerdictsParams`](#submitoracleverdictsparams), [`SuccessBody`](#successbody), [`TestOracleParams`](#testoracleparams), [`UrBenchEcho`](#urbenchecho), [`UrContextModule`](#urcontextmodule), [`UrManifest`](#urmanifest), [`UrManifestEntry`](#urmanifestentry), [`UrManifestRange`](#urmanifestrange), [`UrVerifiedMemoryBlock`](#urverifiedmemoryblock), [`VerdictSources`](#verdictsources), [`VerifiedMemoryDisableResult`](#verifiedmemorydisableresult), [`VerifiedMemoryEnableResult`](#verifiedmemoryenableresult), [`VerifiedMemoryStatus`](#verifiedmemorystatus)
 
 ## Default export
 
@@ -50,6 +50,24 @@ class FileOutcomeStore
 | `update(entry: T): Promise<void>` | Persist an updated entry. |
 | `remove(id: string): Promise<void>` | Remove an entry by id. |
 | `list(): Promise<T[]>` | Every queued entry, in insertion order. |
+
+### LearningError
+
+class · `src/learning-controls.ts`
+
+A learning control refused for a reason you can act on: `reason` names it and `action` says what
+to do. It is an [`UltraRouterError`](#ultraroutererror), so `code`, `status`, `requestId` and `retryable` are the
+gateway's.
+
+```ts signature
+class LearningError
+```
+
+| Member | Description |
+| --- | --- |
+| `readonly reason: LearningErrorReason` | Why the control was refused. |
+| `readonly action: string` | What to do about it. |
+| `constructor(cause: UltraRouterError, reason: LearningErrorReason)` | Wrap a gateway error with its learning reason. |
 
 ### MemoryOutcomeStore
 
@@ -120,6 +138,7 @@ class OutcomeQueue
 | --- | --- |
 | `constructor(deps: OutcomeQueueDeps)` | Create a queue over a store and a sender. |
 | `enqueue(target: OutcomeTarget, outcome: OutcomeInput, options?: RequestOptions): Promise<OutcomeReceipt>` | Finalize an outcome (fix `observed_at` + `source_event_id`), PERSIST it, THEN attempt a single best-effort delivery. Only a definitive refusal of the event ([`isDefinitiveRejection`](#isdefinitiverejection)) drops it; every other failure leaves the identical entry in place for `flush`. A delivery failure never throws; a store that cannot persist does. |
+| `enqueueStable(entryId: string, target: OutcomeTarget, outcome: OutcomeInput & { source_event_id: string }, options?: RequestOptions): Promise<OutcomeReceipt>` | Like `enqueue`, under a caller-chosen stable entry id (so the Idempotency-Key, derived from the entry id, is stable too). A repeat of the same identity never creates a second event: - an entry with that id still in the store is replayed verbatim; - an entry delivered earlier by this queue is replayed with its original bytes (`observed_at` included) unless the caller now sends a different payload; - a different payload under the same `source_event_id` is sent as its own entry, so the gateway answers it as a conflict instead of it silently replacing the first; - concurrent calls for one id share one send. |
 | `flush(options?: RequestOptions): Promise<OutcomeFlushReport>` | Drain every queued outcome, replaying each stored event verbatim (same `source_event_id`, same `observed_at`, same Idempotency-Key). Delivered and definitively refused entries are removed; everything else stays for the next flush. |
 | `size(): Promise<number>` | The number of outcomes still durably queued (awaiting a successful flush). |
 
@@ -180,6 +199,23 @@ class PromptVariablesMissingError
 | `readonly code: string` | Always `prompt_variables_missing`. |
 | `readonly missing: readonly string[]` | The missing variable names, sorted. |
 | `constructor(missing: readonly string[])` | Create the error from the missing variable names. |
+
+### ReceiptWaitTimeoutError
+
+class · `src/outcome-receipts.ts`
+
+`waitForReceipt` ran out of time before the receipt reached a final state. The receipt is still
+durable on the gateway; read it again later with `ur.ur.outcomes.receipt(id)`.
+
+```ts signature
+class ReceiptWaitTimeoutError
+```
+
+| Member | Description |
+| --- | --- |
+| `readonly receiptId: string` | The receipt that was being waited on. |
+| `readonly lastReceipt: OutcomeReceiptRecord \| null` | The last receipt read before time ran out, or `null` when no read succeeded. |
+| `constructor(receiptId: string, timeoutMs: number, lastReceipt: OutcomeReceiptRecord \| null)` | Create the error. |
 
 ### ReviewerQueue
 
@@ -311,6 +347,38 @@ Build the `/v1/artifacts` query string (empty when no filters).
 function artifactListQueryString(query: ArtifactListQuery = {}): string
 ```
 
+### assertEpisodeKey
+
+function · `src/correlation.ts`
+
+Throw `invalid_request` unless `value` can travel as the `x-ur-artifact` header.
+
+```ts signature
+function assertEpisodeKey(value: unknown): asserts value is string
+```
+
+### assertRequestId
+
+function · `src/correlation.ts`
+
+Throw `invalid_request` unless `value` is an acceptable client request id.
+
+```ts signature
+function assertRequestId(value: unknown): asserts value is string
+```
+
+### attachRequestId
+
+function · `src/correlation.ts`
+
+Attach a non-enumerable `requestId` to a result object.
+
+```ts signature
+function attachRequestId<T extends object, V extends string | null>(target: T, requestId: V): T & {
+    readonly requestId: V;
+}
+```
+
 ### bindArtifactKey
 
 function · `src/artifacts.ts`
@@ -324,6 +392,18 @@ WINS (the caller can override the scope binding). Used by `withArtifact`.
 function bindArtifactKey<T extends {
     ur?: UrRequestOptions;
 }>(params: T, key: string): T
+```
+
+### correlationHeaders
+
+function · `src/correlation.ts`
+
+The correlation headers for any HTTP client, validated: `x-ur-request-id` for `requestId`,
+`x-ur-artifact` for `episodeKey`. Pass them as per-call headers to the official `openai` client
+(`{ headers: correlationHeaders({ requestId, episodeKey }) }`) or to `fetch`.
+
+```ts signature
+function correlationHeaders(options: CorrelationOptions): Record<string, string>
 ```
 
 ### decidePreflightCache
@@ -399,6 +479,16 @@ Type guard: is `value` one of the stable [`GatewayErrorCode`](#gatewayerrorcode)
 function isGatewayErrorCode(value: string): value is GatewayErrorCode
 ```
 
+### isOutcomeReceiptRecord
+
+function · `src/outcome-receipts.ts`
+
+Whether a value looks like a receipt: an object with string `id` and `status`.
+
+```ts signature
+function isOutcomeReceiptRecord(value: unknown): value is OutcomeReceiptRecord
+```
+
 ### isRetryableStatus
 
 function · `src/errors.ts`
@@ -408,6 +498,16 @@ HTTP statuses the SDK treats as retryable when a response carries no gateway err
 
 ```ts signature
 function isRetryableStatus(status: number): boolean
+```
+
+### isTerminalReceiptState
+
+function · `src/outcome-receipts.ts`
+
+Whether a receipt state is final (anything but `pending`).
+
+```ts signature
+function isTerminalReceiptState(state: string): boolean
 ```
 
 ### isUltraRouterError
@@ -433,6 +533,16 @@ function describe(err: unknown): string {
 console.log(describe(new Error("boom")));
 ```
 
+### isValidRequestId
+
+function · `src/correlation.ts`
+
+Whether `value` is a request id the gateway accepts from a client.
+
+```ts signature
+function isValidRequestId(value: unknown): value is string
+```
+
 ### learnedPlacementIndex
 
 function · `src/learned-placement.ts`
@@ -447,6 +557,40 @@ places the block FIRST (index 0), still ahead of every volatile turn.
 function learnedPlacementIndex(messages: readonly {
     readonly role?: unknown;
 }[]): number
+```
+
+### learningErrorReason
+
+function · `src/learning-controls.ts`
+
+The [`LearningErrorReason`](#learningerrorreason) for a gateway error code, or `null`.
+
+```ts signature
+function learningErrorReason(code: string): LearningErrorReason | null
+```
+
+### mintEpisodeKey
+
+function · `src/correlation.ts`
+
+Mint an episode key (`ep_<ULID>`). Give every independent task its own key, even when two tasks
+start with identical text: without a key the gateway groups steps by their opening text, so two
+concurrent tasks that open the same way would be merged into one episode and share one verdict.
+
+```ts signature
+function mintEpisodeKey(): string
+```
+
+### mintRequestId
+
+function · `src/correlation.ts`
+
+Mint a client-side request id (`req_c_<ULID>`, 32 characters). Send it with
+`{ requestId }` on a chat or embeddings call to know the id before the call returns. The `req_c_`
+prefix keeps a client-minted id apart from the ids the gateway mints itself.
+
+```ts signature
+function mintRequestId(): string
 ```
 
 ### normalizeOutcomeTarget
@@ -492,6 +636,26 @@ Parse the `max-age` seconds out of a `Cache-Control` header value, or null when 
 function parseMaxAgeSeconds(cacheControl: string | null): number | null
 ```
 
+### parseOutcomeReceipt
+
+function · `src/outcome-receipts.ts`
+
+Read one receipt from a response body: a bare receipt or one wrapped as `{ receipt }`.
+
+```ts signature
+function parseOutcomeReceipt(body: unknown): OutcomeReceiptRecord
+```
+
+### parseOutcomeReceiptList
+
+function · `src/outcome-receipts.ts`
+
+Read a receipt list from a response body: `{ data: [...] }`, `{ receipts: [...] }` or a bare array.
+
+```ts signature
+function parseOutcomeReceiptList(body: unknown): OutcomeReceiptList
+```
+
 ### pendingQueryString
 
 function · `src/outcomes.ts`
@@ -500,6 +664,16 @@ Build the `/v1/outcomes/pending` query string (empty string when no filters).
 
 ```ts signature
 function pendingQueryString(query: PendingOutcomesQuery = {}): string
+```
+
+### planOutcomeReport
+
+function · `src/outcome-report.ts`
+
+Validate a report and build the event it sends. Pure: no IO.
+
+```ts signature
+function planOutcomeReport(requestId: string, params: OutcomeReportParams): OutcomeReportPlan
 ```
 
 ### preflightCacheKey
@@ -520,6 +694,19 @@ Does a preflight request carry a cluster key (so a grant is minted)?
 
 ```ts signature
 function preflightHasClusterKey(params: PreflightParams): boolean
+```
+
+### readRequestId
+
+function · `src/correlation.ts`
+
+Read the gateway request id from whatever you hold: an SDK result (`.requestId`), a response body
+with the `ur` block (`ur.request_id`, which is also what the official `openai` client returns), a
+`Response`, a `Headers` object, or anything with a `headers` property (for example the `response`
+of the `openai` client's `.withResponse()`). Returns `null` when none is present.
+
+```ts signature
+function readRequestId(source: unknown): string | null
 ```
 
 ### renderHostedPromptResult
@@ -551,6 +738,18 @@ Render a hosted prompt (the ergonomic API) — returns the substituted instructi
 
 ```ts signature
 function renderPrompt(prompt: RenderablePrompt, vars?: Readonly<Record<string, unknown>>): string
+```
+
+### reportSourceEventId
+
+function · `src/outcome-report.ts`
+
+The `source_event_id` a report carries: `rpt_` followed by the lowercase hex SHA-256 of the UTF-8
+string `"ur-outcome-report/v1\n" + requestId + "\n" + verdict + "\n" + source + "\n" +
+(idempotencyKey ?? "")`. Deterministic, so the same report is always the same event.
+
+```ts signature
+function reportSourceEventId(requestId: string, verdict: 'pass' | 'fail', source: OutcomeSource, idempotencyKey?: string): string
 ```
 
 ### reviewerSignatureHeaders
@@ -615,6 +814,18 @@ checked against a known-good implementation.
 async function signReviewerPayload(secret: string, timestamp: string, rawBody: string): Promise<string>
 ```
 
+### toLearningError
+
+function · `src/learning-controls.ts`
+
+Turn a gateway refusal of a learning control into a [`LearningError`](#learningerror) when its code is one of
+[`LEARNING_ERROR_CODES`](#learning_error_codes); anything else (a transport failure, an unrecognised code) is returned
+unchanged.
+
+```ts signature
+function toLearningError(err: unknown): unknown
+```
+
 ### ulid
 
 function · `src/flywheel-queue.ts`
@@ -670,6 +881,26 @@ The default total request timeout (ms).
 
 ```ts signature
 const DEFAULT_TIMEOUT_MS = 600_000
+```
+
+### EPISODE_HEADER
+
+const · `src/correlation.ts`
+
+The header that carries the episode handle (equivalent to the body field `ur.artifact`).
+
+```ts signature
+const EPISODE_HEADER = 'x-ur-artifact'
+```
+
+### EPISODE_KEY_MAX_LENGTH
+
+const · `src/correlation.ts`
+
+The longest episode key the SDK sends in a header.
+
+```ts signature
+const EPISODE_KEY_MAX_LENGTH = 256
 ```
 
 ### EVENT_REJECTION_CODES
@@ -733,6 +964,26 @@ The role the learned block is injected under — a DATA `user` message, exactly 
 const LEARNED_MESSAGE_ROLE = 'user'
 ```
 
+### LEARNING_ERROR_ACTIONS
+
+const · `src/learning-controls.ts`
+
+What to do about each [`LearningErrorReason`](#learningerrorreason).
+
+```ts signature
+const LEARNING_ERROR_ACTIONS: Readonly<Record<LearningErrorReason, string>>
+```
+
+### LEARNING_ERROR_CODES
+
+const · `src/learning-controls.ts`
+
+The gateway error codes each [`LearningErrorReason`](#learningerrorreason) is recognised from.
+
+```ts signature
+const LEARNING_ERROR_CODES: Readonly<Record<LearningErrorReason, readonly string[]>>
+```
+
 ### ORACLE_SIGNATURE_HEADER
 
 const · `src/resources.ts`
@@ -751,6 +1002,46 @@ The request header carrying the oracle signature timestamp (unix seconds).
 
 ```ts signature
 const ORACLE_TIMESTAMP_HEADER = 'x-ur-oracle-timestamp'
+```
+
+### OUTCOME_SOURCES
+
+const · `src/outcome-report.ts`
+
+Every [`OutcomeSource`](#outcomesource), in table order.
+
+```ts signature
+const OUTCOME_SOURCES = Object.keys(OUTCOME_VERDICTS) as readonly OutcomeSource[]
+```
+
+### OUTCOME_VERDICT_VALUES
+
+const · `src/outcome-report.ts`
+
+Every [`OutcomeVerdict`](#outcomeverdict).
+
+```ts signature
+const OUTCOME_VERDICT_VALUES: readonly OutcomeVerdict[]
+```
+
+### OUTCOME_VERDICTS
+
+const · `src/outcome-report.ts`
+
+The verdict mapping, source by source. Identical to the shared fixture's `sources`.
+
+```ts signature
+const OUTCOME_VERDICTS: Readonly<Record<OutcomeSource, OutcomeSourceMapping>>
+```
+
+### OUTCOME_VERDICTS_SCHEMA_VERSION
+
+const · `src/outcome-report.ts`
+
+The schema version of the verdict mapping (the shared fixture's `schema_version`).
+
+```ts signature
+const OUTCOME_VERDICTS_SCHEMA_VERSION = 1
 ```
 
 ### PREFLIGHT_DEFAULT_CONFIG_MAX_AGE_S
@@ -803,6 +1094,50 @@ The stable error code the gateway raises for a missing required hosted-prompt va
 const PROMPT_VARIABLES_MISSING_CODE = 'prompt_variables_missing'
 ```
 
+### RECEIPT_WAIT_DEFAULTS
+
+const · `src/outcome-receipts.ts`
+
+`waitForReceipt` defaults.
+
+```ts signature
+const RECEIPT_WAIT_DEFAULTS = {
+  timeoutMs: 30_000,
+  pollIntervalMs: 250,
+  maxPollIntervalMs: 4_000,
+} as const
+```
+
+### REPORT_IDENTITY_VERSION
+
+const · `src/outcome-report.ts`
+
+The version tag mixed into every derived `source_event_id`.
+
+```ts signature
+const REPORT_IDENTITY_VERSION = 'ur-outcome-report/v1'
+```
+
+### REQUEST_ID_HEADER
+
+const · `src/correlation.ts`
+
+The header the gateway echoes the request id on, and accepts a client-chosen id from.
+
+```ts signature
+const REQUEST_ID_HEADER = 'x-ur-request-id'
+```
+
+### REQUEST_ID_PATTERN
+
+const · `src/correlation.ts`
+
+The shape the gateway accepts for a client-sent request id: 1–64 of `A-Z a-z 0-9 _ -`.
+
+```ts signature
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/
+```
+
 ### REVIEWER_SIGNATURE_HEADER
 
 const · `src/reviewer.ts`
@@ -823,6 +1158,16 @@ The header carrying the signature's unix-second timestamp (bound INTO the MAC).
 const REVIEWER_TIMESTAMP_HEADER = 'x-ur-reviewer-timestamp'
 ```
 
+### TERMINAL_RECEIPT_STATES
+
+const · `src/outcome-receipts.ts`
+
+The final receipt states: [`OutcomeReceiptState`](#outcomereceiptstate) values other than `pending`.
+
+```ts signature
+const TERMINAL_RECEIPT_STATES: readonly OutcomeReceiptState[]
+```
+
 ### VERSION
 
 const · `src/version.ts`
@@ -830,7 +1175,7 @@ const · `src/version.ts`
 The version of this SDK (kept equal to `package.json` by a unit test).
 
 ```ts signature
-const VERSION = '0.0.1'
+const VERSION = '0.1.0'
 ```
 
 ## Interfaces
@@ -890,11 +1235,11 @@ interface ArtifactScope {
     readonly key: string;
     chat: {
         completions: {
-            create: (params: ChatCompletionCreateParams, options?: RequestOptions) => Promise<ChatCompletion | ChatCompletionStream>;
+            create: (params: ChatCompletionCreateParams, options?: RequestOptions) => Promise<(ChatCompletion & RequestCorrelation) | (ChatCompletionStream & StreamCorrelation)>;
         };
     };
     embeddings: {
-        create: (params: EmbeddingCreateParams, options?: RequestOptions) => Promise<CreateEmbeddingResponse>;
+        create: (params: EmbeddingCreateParams, options?: RequestOptions) => Promise<CreateEmbeddingResponse & RequestCorrelation>;
     };
     record: (outcome: OutcomeInput, options?: RequestOptions) => Promise<OutcomeReceipt>;
     final: (params: FinalParams, options?: RequestOptions) => Promise<FinalResponse>;
@@ -904,8 +1249,8 @@ interface ArtifactScope {
 | Member | Description |
 | --- | --- |
 | `readonly key: string` | The bound artifact key. |
-| `chat: { completions: { create: ( params: ChatCompletionCreateParams, options?: RequestOptions, ) => Promise<ChatCompletion \| ChatCompletionStream>; }; }` | Chat completions bound to the artifact. |
-| `embeddings: { create: ( params: EmbeddingCreateParams, options?: RequestOptions, ) => Promise<CreateEmbeddingResponse>; }` | Embeddings bound to the artifact. |
+| `chat: { completions: { create: ( params: ChatCompletionCreateParams, options?: RequestOptions, ) => Promise< (ChatCompletion & RequestCorrelation) \| (ChatCompletionStream & StreamCorrelation) >; }; }` | Chat completions bound to the artifact. |
+| `embeddings: { create: ( params: EmbeddingCreateParams, options?: RequestOptions, ) => Promise<CreateEmbeddingResponse & RequestCorrelation>; }` | Embeddings bound to the artifact. |
 | `record: (outcome: OutcomeInput, options?: RequestOptions) => Promise<OutcomeReceipt>` | Durably record an outcome on the bound artifact (upserted on first use). |
 | `final: (params: FinalParams, options?: RequestOptions) => Promise<FinalResponse>` | Record the human-approved final on the bound artifact. |
 
@@ -1478,11 +1823,11 @@ interface · `src/client.ts`
 interface ChatCompletionsCreate {
     (params: ChatCompletionCreateParams & {
         stream?: false | undefined;
-    }, options?: RequestOptions): Promise<ChatCompletion>;
+    }, options?: RequestOptions): Promise<ChatCompletion & RequestCorrelation>;
     (params: ChatCompletionCreateParams & {
         stream: true;
-    }, options?: RequestOptions): Promise<ChatCompletionStream>;
-    (params: ChatCompletionCreateParams, options?: RequestOptions): Promise<ChatCompletion | ChatCompletionStream>;
+    }, options?: RequestOptions): Promise<ChatCompletionStream & StreamCorrelation>;
+    (params: ChatCompletionCreateParams, options?: RequestOptions): Promise<(ChatCompletion & RequestCorrelation) | (ChatCompletionStream & StreamCorrelation)>;
 }
 ```
 
@@ -1573,6 +1918,24 @@ interface CompressionOptions {
 | `mode?: CompressionMode` | The compression mode. |
 | `no_compress_fields?: string[]` | Message paths that must never be rewritten, e.g. `messages.1.content` or `messages.2`. |
 | `max_quality_risk?: 'low' \| 'medium' \| 'high'` | How much quality risk lossy pruning may take (maps to a prune-ratio cap). |
+
+### CorrelationOptions
+
+interface · `src/correlation.ts`
+
+The ids [`correlationHeaders`](#correlationheaders) turns into request headers.
+
+```ts signature
+interface CorrelationOptions {
+    requestId?: string | undefined;
+    episodeKey?: string | undefined;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `requestId?: string \| undefined` | A client-chosen request id (`[A-Za-z0-9_-]{1,64}`), sent as `x-ur-request-id`. |
+| `episodeKey?: string \| undefined` | The episode handle, sent as `x-ur-artifact`: printable ASCII, at most 256 characters. |
 
 ### CreateCallTypeParams
 
@@ -1725,13 +2088,13 @@ interface · `src/client.ts`
 
 ```ts signature
 interface EmbeddingsResource {
-    create: (params: EmbeddingCreateParams, options?: RequestOptions) => Promise<CreateEmbeddingResponse>;
+    create: (params: EmbeddingCreateParams, options?: RequestOptions) => Promise<CreateEmbeddingResponse & RequestCorrelation>;
 }
 ```
 
 | Member | Description |
 | --- | --- |
-| `create: ( params: EmbeddingCreateParams, options?: RequestOptions, ) => Promise<CreateEmbeddingResponse>` | Create embeddings (`POST /v1/embeddings`). |
+| `create: ( params: EmbeddingCreateParams, options?: RequestOptions, ) => Promise<CreateEmbeddingResponse & RequestCorrelation>` | Create embeddings (`POST /v1/embeddings`), with the gateway request id as `requestId`. |
 
 ### EmbeddingUrBlock
 
@@ -1751,6 +2114,26 @@ interface EmbeddingUrBlock extends Omit<UrResponseBlock, 'compression' | 'routin
 | Member | Description |
 | --- | --- |
 | `routing: Omit<UrRoutingBlock, 'mode'> & { mode: RouterMode \| (string & {}) }` | How the request was routed; `mode` is a [`RouterMode`](#routermode) value in practice, typed open. |
+
+### EnableLearningParams
+
+interface · `src/learning-controls.ts`
+
+`ur.ur.learning.enable(callTypeId, params)`: the self-serve enable request.
+
+```ts signature
+interface EnableLearningParams {
+    reflection_model: string;
+    promotion?: LearningPromotionMode | LearningPromotionPolicy | undefined;
+    recipe?: string | undefined;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `reflection_model: string` | The model (one your workspace has configured) that writes candidate adaptations. |
+| `promotion?: LearningPromotionMode \| LearningPromotionPolicy \| undefined` | The promotion policy, or just its mode (default `evaluate`). |
+| `recipe?: string \| undefined` | A named learning recipe (default: the gateway's default recipe). |
 
 ### ExperimentOutcomeOptions
 
@@ -2168,6 +2551,342 @@ interface LearnedSession {
 | `apply: <M extends { readonly role?: unknown }>(messages: readonly M[]) => (M \| LearnedMessage)[]` | Insert the learned module into `messages` right after the leading system messages (the same position the gateway uses). Always injects when `knowledge` is present; passes the messages through unchanged when it is `null`. Pure: never mutates the input. |
 | `record: (outcome: OutcomeInput, options?: LearnedRecordOptions) => Promise<OutcomeReceipt>` | Record an outcome on the artifact named by the preflight `artifact_key`, quoting the grant (`grant_id` + `attestation: 'applied'`), through the durable outcome queue. |
 
+### LearningArmEvidence
+
+interface · `src/learning-controls.ts`
+
+One arm's evidence in an evaluation.
+
+```ts signature
+interface LearningArmEvidence {
+    version_id: string | null;
+    verified: number;
+    passed: number;
+    unknown?: number;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `version_id: string \| null` | The version the arm served. |
+| `verified: number` | Episodes with a verified verdict. |
+| `passed: number` | Verified episodes that passed. |
+| `unknown?: number` | Episodes whose verdict stayed unknown. |
+
+### LearningDecisionParams
+
+interface · `src/learning-controls.ts`
+
+`ur.ur.learning.promote` / `reject`: an optional reason for the manual decision.
+
+```ts signature
+interface LearningDecisionParams {
+    reason?: string | undefined;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `reason?: string \| undefined` | Why (recorded with the audit event). |
+
+### LearningEvaluation
+
+interface · `src/learning-controls.ts`
+
+One prospective evaluation of a candidate against the incumbent.
+
+```ts signature
+interface LearningEvaluation {
+    id: string;
+    decision: LearningEvaluationDecision;
+    reason?: string | null;
+    objective?: LearningObjective;
+    rule?: Record<string, unknown>;
+    candidate?: LearningArmEvidence;
+    incumbent?: LearningArmEvidence;
+    interval?: {
+        lower: number | null;
+        upper: number | null;
+    } | null;
+    started_at?: string;
+    decided_at?: string | null;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `id: string` | The evaluation id. |
+| `decision: LearningEvaluationDecision` | The decision (`running` until decided). |
+| `reason?: string \| null` | Why it decided, when it has. |
+| `objective?: LearningObjective` | The objective, frozen when the evaluation started. |
+| `rule?: Record<string, unknown>` | The decision rule, frozen when the evaluation started. |
+| `candidate?: LearningArmEvidence` | The candidate arm. |
+| `incumbent?: LearningArmEvidence` | The incumbent arm. |
+| `interval?: { lower: number \| null; upper: number \| null } \| null` | The one-sided interval on (candidate − incumbent) success, in percentage points. |
+| `started_at?: string` | When it started (ISO-8601). |
+| `decided_at?: string \| null` | When it decided (ISO-8601), else `null`. |
+
+### LearningEvaluationList
+
+interface · `src/learning-controls.ts`
+
+`GET /v1/call-types/{id}/learning/evaluations`: evaluations, newest first.
+
+```ts signature
+interface LearningEvaluationList {
+    data: LearningEvaluation[];
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `data: LearningEvaluation[]` | The evaluations. |
+
+### LearningEvidenceCounts
+
+interface · `src/learning-controls.ts`
+
+Evidence counts: outcomes that arrived, were verified, were incorporated, and are still pending.
+
+```ts signature
+interface LearningEvidenceCounts {
+    arrived: number;
+    verified: number;
+    incorporated: number;
+    pending: number;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `arrived: number` | Outcomes that arrived. |
+| `verified: number` | Outcomes verified against an episode. |
+| `incorporated: number` | Verified outcomes already used to learn. |
+| `pending: number` | Outcomes still waiting (for example on a pending receipt). |
+
+### LearningLesson
+
+interface · `src/learning-controls.ts`
+
+One lesson of a learned version.
+
+```ts signature
+interface LearningLesson {
+    id: string;
+    text: string;
+    tool?: string | null;
+    evidence_count?: number;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `id: string` | The lesson id (stable across versions). |
+| `text: string` | The lesson text. |
+| `tool?: string \| null` | The tool the lesson is scoped to, or `null` for general guidance. |
+| `evidence_count?: number` | How many evidence cases support it. |
+
+### LearningPromotionPolicy
+
+interface · `src/learning-controls.ts`
+
+A promotion policy: the mode and, for `evaluate`, the objective.
+
+```ts signature
+interface LearningPromotionPolicy {
+    mode: LearningPromotionMode;
+    objective?: LearningObjective | undefined;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `mode: LearningPromotionMode` | How a candidate becomes active. |
+| `objective?: LearningObjective \| undefined` | What an evaluation must show (for `evaluate`). |
+
+### LearningResource
+
+interface · `src/client.ts`
+
+`ur.ur.learning`: learning controls for one call type (`/v1/call-types/{id}/learning*`). A refusal
+you can act on (missing consent, no learning provider, provider quota, learning budget, not found,
+forbidden) rejects with a `LearningError` naming the `reason` and the `action`.
+
+```ts signature
+interface LearningResource {
+    status: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
+    enable: (callTypeId: string, params: EnableLearningParams, options?: RequestOptions) => Promise<LearningStatus>;
+    pause: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
+    resume: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
+    disable: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
+    versions: (callTypeId: string, options?: RequestOptions) => Promise<LearningVersionList>;
+    version: (callTypeId: string, versionId: string, options?: RequestOptions) => Promise<LearningVersionDetail>;
+    rollback: (callTypeId: string, params: LearningRollbackParams, options?: RequestOptions) => Promise<LearningStatus>;
+    promote: (callTypeId: string, versionId: string, params?: LearningDecisionParams, options?: RequestOptions) => Promise<LearningVersion>;
+    reject: (callTypeId: string, versionId: string, params?: LearningDecisionParams, options?: RequestOptions) => Promise<LearningVersion>;
+    evaluations: (callTypeId: string, options?: RequestOptions) => Promise<LearningEvaluationList>;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `status: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>` | Read the learning status: state, provider, active and candidate versions, evaluation, evidence, backlog, budget. |
+| `enable: ( callTypeId: string, params: EnableLearningParams, options?: RequestOptions, ) => Promise<LearningStatus>` | Enable learning (self-serve; needs corrections consent and a `config:write` key or an owner/admin). |
+| `pause: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>` | Pause: stop learning and evaluation decisions, keep serving the active version. |
+| `resume: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>` | Resume a paused (or quota / budget stopped) call type. |
+| `disable: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>` | Disable: stop serving learned versions (the kill switch). |
+| `versions: (callTypeId: string, options?: RequestOptions) => Promise<LearningVersionList>` | List the version history with each version's state, newest first. |
+| `version: ( callTypeId: string, versionId: string, options?: RequestOptions, ) => Promise<LearningVersionDetail>` | Read one version: its lessons and a provenance summary. |
+| `rollback: ( callTypeId: string, params: LearningRollbackParams, options?: RequestOptions, ) => Promise<LearningStatus>` | Point the active version at an exact earlier version. |
+| `promote: ( callTypeId: string, versionId: string, params?: LearningDecisionParams, options?: RequestOptions, ) => Promise<LearningVersion>` | Promote a candidate by hand (owner/admin). |
+| `reject: ( callTypeId: string, versionId: string, params?: LearningDecisionParams, options?: RequestOptions, ) => Promise<LearningVersion>` | Reject a candidate by hand (owner/admin); the incumbent keeps serving. |
+| `evaluations: (callTypeId: string, options?: RequestOptions) => Promise<LearningEvaluationList>` | List evaluations with their frozen rule, arms, interval and decision, newest first. |
+
+### LearningRollbackParams
+
+interface · `src/learning-controls.ts`
+
+`ur.ur.learning.rollback(callTypeId, params)`: point the active version at an earlier one.
+
+```ts signature
+interface LearningRollbackParams {
+    version_id: string;
+    reason?: string | undefined;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `version_id: string` | The exact earlier version to serve. |
+| `reason?: string \| undefined` | Why (recorded with the audit event). |
+
+### LearningStatus
+
+interface · `src/learning-controls.ts`
+
+`GET /v1/call-types/{id}/learning`: the learning status of one call type.
+
+```ts signature
+interface LearningStatus {
+    call_type_id: string;
+    state: LearningState;
+    reason?: string | null;
+    provider?: {
+        model: string | null;
+        state?: string;
+    } | null;
+    promotion?: LearningPromotionPolicy | null;
+    active?: LearningVersionRef | null;
+    candidate?: LearningVersionRef | null;
+    evaluation?: LearningEvaluation | null;
+    evidence?: LearningEvidenceCounts;
+    backlog?: number | null;
+    budget?: {
+        state: 'ok' | 'exhausted' | (string & {});
+        remaining_usd?: number | null;
+    } | null;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `call_type_id: string` | The call type id. |
+| `state: LearningState` | The learning state. |
+| `reason?: string \| null` | A stable machine reason for the state, when there is one (for example `provider_missing`). |
+| `provider?: { model: string \| null; state?: string } \| null` | The learning provider: the reflection model and whether it is usable. |
+| `promotion?: LearningPromotionPolicy \| null` | The promotion policy. |
+| `active?: LearningVersionRef \| null` | The version serving now (the incumbent), or `null`. |
+| `candidate?: LearningVersionRef \| null` | The newest candidate, or `null`. |
+| `evaluation?: LearningEvaluation \| null` | The running or latest evaluation, or `null`. |
+| `evidence?: LearningEvidenceCounts` | Evidence counts. |
+| `backlog?: number \| null` | Outcomes waiting to be learned from. |
+| `budget?: { state: 'ok' \| 'exhausted' \| (string & {}); remaining_usd?: number \| null } \| null` | The learning budget: its state and what is left. |
+
+### LearningVersion
+
+interface · `src/learning-controls.ts`
+
+One learned version in the history.
+
+```ts signature
+interface LearningVersion {
+    id: string;
+    state: LearningVersionState;
+    state_reason?: string | null;
+    parent_version_id?: string | null;
+    lesson_count?: number;
+    evaluation_id?: string | null;
+    created_at: string;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `id: string` | The version id. |
+| `state: LearningVersionState` | The version state. |
+| `state_reason?: string \| null` | Why the version is in this state (a stable machine code), when known. |
+| `parent_version_id?: string \| null` | The version this one was derived from, or `null`. |
+| `lesson_count?: number` | The number of lessons in the version. |
+| `evaluation_id?: string \| null` | The evaluation that decided this version, when one did. |
+| `created_at: string` | When the version was created (ISO-8601). |
+
+### LearningVersionDetail
+
+interface · `src/learning-controls.ts`
+
+`GET /v1/call-types/{id}/learning/versions/{version_id}`: one version, its lessons and provenance.
+
+```ts signature
+interface LearningVersionDetail extends LearningVersion {
+    lessons: LearningLesson[];
+    provenance?: {
+        episodes: number;
+        outcomes: number;
+    } | null;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `lessons: LearningLesson[]` | The lessons. |
+| `provenance?: { episodes: number; outcomes: number } \| null` | A summary of where the lessons came from. |
+
+### LearningVersionList
+
+interface · `src/learning-controls.ts`
+
+`GET /v1/call-types/{id}/learning/versions`: the version history, newest first.
+
+```ts signature
+interface LearningVersionList {
+    data: LearningVersion[];
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `data: LearningVersion[]` | The versions. |
+
+### LearningVersionRef
+
+interface · `src/learning-controls.ts`
+
+A short reference to a learned version inside a status.
+
+```ts signature
+interface LearningVersionRef {
+    id: string;
+    state: LearningVersionState;
+    created_at?: string;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `id: string` | The version id. |
+| `state: LearningVersionState` | The version state. |
+| `created_at?: string` | When the version was created (ISO-8601). |
+
 ### Model
 
 interface · `src/types.ts`
@@ -2374,6 +3093,32 @@ interface OutcomeFlushReport {
 | `pending: number` | Events still queued after this flush (an unknown outcome or a refused credential — flush again later). |
 | `results: OutcomeResult[]` | The delivered server results, in flush order. |
 
+### OutcomeNotReported
+
+interface · `src/outcome-report.ts`
+
+The result of reporting `unknown`: nothing was sent.
+
+```ts signature
+interface OutcomeNotReported<S extends OutcomeSource = OutcomeSource> {
+    readonly status: 'not_reported';
+    readonly requestId: string;
+    readonly verdict: 'unknown';
+    readonly source: S;
+    readonly teaches: false;
+    readonly reason: 'verdict_unknown';
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `readonly status: 'not_reported'` | Always `not_reported`. |
+| `readonly requestId: string` | The request the verdict was about. |
+| `readonly verdict: 'unknown'` | Always `unknown`. |
+| `readonly source: S` | The source passed in. |
+| `readonly teaches: false` | Always `false`: an unknown verdict carries no signal. |
+| `readonly reason: 'verdict_unknown'` | Always `verdict_unknown`. |
+
 ### OutcomeQueueDeps
 
 interface · `src/flywheel-queue.ts`
@@ -2396,6 +3141,151 @@ interface OutcomeQueueDeps {
 | `now?: () => number` | Clock for `observed_at` + `enqueued_at` (injectable; defaults to `Date.now`). |
 | `genId?: () => string` | Queue-entry / `source_event_id` generator (injectable; defaults to a ULID). |
 
+### OutcomeReceiptList
+
+interface · `src/outcome-receipts.ts`
+
+`GET /v1/requests/{id}/outcome-receipts`: every receipt for one request, oldest first.
+
+```ts signature
+interface OutcomeReceiptList {
+    data: OutcomeReceiptRecord[];
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `data: OutcomeReceiptRecord[]` | The receipts. |
+
+### OutcomeReceiptRecord
+
+interface · `src/outcome-receipts.ts`
+
+One outcome receipt as the gateway reports it.
+
+```ts signature
+interface OutcomeReceiptRecord {
+    id: string;
+    request_id: string;
+    status: OutcomeReceiptState;
+    reason?: string | null;
+    episode?: OutcomeEpisodeAssociation | null;
+    channel: OutcomeChannel | (string & {});
+    kind: string;
+    source_event_id?: string | null;
+    outcome_event_id?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    applied_at?: string | null;
+    expires_at?: string | null;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `id: string` | The receipt id. |
+| `request_id: string` | The request the outcome names. |
+| `status: OutcomeReceiptState` | The receipt state. |
+| `reason?: string \| null` | A stable machine reason for a non-applied state (for example `request_not_found`), else `null`. |
+| `episode?: OutcomeEpisodeAssociation \| null` | How the outcome relates to the request's episode. |
+| `channel: OutcomeChannel \| (string & {})` | The outcome channel. |
+| `kind: string` | The channel kind. |
+| `source_event_id?: string \| null` | The idempotency discriminator the outcome was reported with. |
+| `outcome_event_id?: string \| null` | The recorded outcome event, once applied. |
+| `created_at?: string` | When the receipt was created (ISO-8601). |
+| `updated_at?: string` | When the receipt last changed (ISO-8601). |
+| `applied_at?: string \| null` | When the outcome was applied (ISO-8601), else `null`. |
+| `expires_at?: string \| null` | The receipt's next deadline (ISO-8601). |
+
+### OutcomeReported
+
+interface · `src/outcome-report.ts`
+
+The result of reporting `pass` or `fail`. `status` is the delivery state of the durable queue:
+`delivered` (the gateway answered; see `result` and `receipt`), `queued` (the outcome of the send
+is unknown or the gateway was unavailable; the identical event stays queued for
+`ur.ur.outcomes.flush()`), or `rejected` (the gateway definitively refused the event; see `error`).
+
+```ts signature
+interface OutcomeReported<S extends OutcomeSource = OutcomeSource> {
+    readonly status: 'delivered' | 'queued' | 'rejected';
+    readonly requestId: string;
+    readonly verdict: 'pass' | 'fail';
+    readonly source: S;
+    readonly channel: OutcomeChannel;
+    readonly kind: string;
+    readonly teaches: OutcomeTeaches<S>;
+    readonly sourceEventId: string;
+    readonly entryId: string;
+    readonly result: RequestOutcomeResult | null;
+    readonly receipt: OutcomeReceiptRecord | null;
+    readonly error: UltraRouterError | null;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `readonly status: 'delivered' \| 'queued' \| 'rejected'` | The delivery state. |
+| `readonly requestId: string` | The request the verdict is about. |
+| `readonly verdict: 'pass' \| 'fail'` | The verdict sent. |
+| `readonly source: S` | The source passed in. |
+| `readonly channel: OutcomeChannel` | The outcome channel the verdict mapped to. |
+| `readonly kind: string` | The channel kind the verdict mapped to. |
+| `readonly teaches: OutcomeTeaches<S>` | Whether this source can teach: `false` for `self_rating` (a proxy ranks but never teaches), `true` otherwise. The gateway's own assignment is in `result.learning_use`. |
+| `readonly sourceEventId: string` | The `source_event_id` sent (derived unless you supplied the parts). Use it as `supersedes`. |
+| `readonly entryId: string` | The durable queue entry id (stable for the same identity). |
+| `readonly result: RequestOutcomeResult \| null` | The gateway's answer when delivered, else `null`. Its `status` may be `pending`. |
+| `readonly receipt: OutcomeReceiptRecord \| null` | The durable receipt when the gateway returned one, else `null`. |
+| `readonly error: UltraRouterError \| null` | Why the event is still queued or was refused, else `null`. |
+
+### OutcomeReportParams
+
+interface · `src/outcome-report.ts`
+
+The arguments of `ur.ur.outcomes.report`.
+
+```ts signature
+interface OutcomeReportParams<S extends OutcomeSource = OutcomeSource, V extends OutcomeVerdict = OutcomeVerdict> {
+    verdict: V;
+    source: S;
+    idempotencyKey?: string | undefined;
+    observedAt?: string | Date | undefined;
+    evidenceHash?: string | undefined;
+    supersedes?: string | undefined;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `verdict: V` | The task verdict. `unknown` sends nothing (missing feedback stays unknown). |
+| `source: S` | Where the verdict came from. `self_rating` is a proxy that never teaches. |
+| `idempotencyKey?: string \| undefined` | Your own key for this verdict (for example the verifier name or a webhook event id). It is part of the derived identity: the same `(requestId, verdict, source, idempotencyKey)` is always the same event, so retrying never double-reports. Two independent verdicts of the same source on the same request need two keys. |
+| `observedAt?: string \| Date \| undefined` | When the verdict was observed (ISO-8601 or a `Date`; default: the first time it is reported). Pass it explicitly when a report may be retried from another process, so the replay is byte-identical. |
+| `evidenceHash?: string \| undefined` | A content hash of the evidence behind the verdict (never the evidence itself). |
+| `supersedes?: string \| undefined` | The `source_event_id` of an earlier report this one revises. |
+
+### OutcomeSourceMapping
+
+interface · `src/outcome-report.ts`
+
+How one [`OutcomeSource`](#outcomesource) maps onto outcome channels.
+
+```ts signature
+interface OutcomeSourceMapping {
+    readonly label: string;
+    readonly teaches: boolean;
+    readonly pass: OutcomeVerdictMapping;
+    readonly fail: OutcomeVerdictMapping;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `readonly label: string` | A short human label. |
+| `readonly teaches: boolean` | Whether this source can teach (`false` only for the self-rating proxy). |
+| `readonly pass: OutcomeVerdictMapping` | The event a `pass` verdict sends. |
+| `readonly fail: OutcomeVerdictMapping` | The event a `fail` verdict sends. |
+
 ### OutcomesResource
 
 interface · `src/client.ts`
@@ -2408,6 +3298,10 @@ interface OutcomesResource {
     batch: (outcomes: BatchOutcomeInput[], options?: RequestOptions) => Promise<BatchOutcomesResponse>;
     pending: (query?: PendingOutcomesQuery, options?: RequestOptions) => Promise<PendingClaimsResponse>;
     flush: (options?: RequestOptions) => Promise<OutcomeFlushReport>;
+    report: <S extends OutcomeSource, V extends OutcomeVerdict>(requestId: string, params: OutcomeReportParams<S, V>, options?: RequestOptions) => Promise<OutcomeReportResult<S, V>>;
+    receipt: (id: string, options?: RequestOptions) => Promise<OutcomeReceiptRecord>;
+    receiptsForRequest: (requestId: string, options?: RequestOptions) => Promise<OutcomeReceiptList>;
+    waitForReceipt: (id: string, options?: WaitForReceiptOptions) => Promise<OutcomeReceiptRecord>;
 }
 ```
 
@@ -2417,6 +3311,10 @@ interface OutcomesResource {
 | `batch: ( outcomes: BatchOutcomeInput[], options?: RequestOptions, ) => Promise<BatchOutcomesResponse>` | Record up to 1,000 outcomes keyed by request, artifact id or artifact key in one call. |
 | `pending: ( query?: PendingOutcomesQuery, options?: RequestOptions, ) => Promise<PendingClaimsResponse>` | List claims still awaiting resolution (keyset pagination). |
 | `flush: (options?: RequestOptions) => Promise<OutcomeFlushReport>` | Drain the durable queue. Call it before your process exits. |
+| `report: <S extends OutcomeSource, V extends OutcomeVerdict>( requestId: string, params: OutcomeReportParams<S, V>, options?: RequestOptions, ) => Promise<OutcomeReportResult<S, V>>` | Report a task verdict on a request: `pass` / `fail` / `unknown` plus its `source`, mapped onto the outcome channels by the SDK's verdict table. `unknown` sends nothing and resolves `not_reported`; `self_rating` is a proxy that never teaches (`teaches: false`). The event is sent through the durable queue under an identity derived from `(requestId, verdict, source, idempotencyKey)`, so a retry, a lost acknowledgement or a repeated call never double-reports. Report as soon as you have the verdict: the gateway accepts it before the request is fully written (`result.status === 'pending'`, with a receipt). Never throws for a delivery failure. |
+| `receipt: (id: string, options?: RequestOptions) => Promise<OutcomeReceiptRecord>` | Read one outcome receipt (`GET /v1/outcome-receipts/{id}`). |
+| `receiptsForRequest: (requestId: string, options?: RequestOptions) => Promise<OutcomeReceiptList>` | Read every outcome receipt of a request (`GET /v1/requests/{id}/outcome-receipts`). |
+| `waitForReceipt: (id: string, options?: WaitForReceiptOptions) => Promise<OutcomeReceiptRecord>` | Poll a receipt with bounded exponential backoff (250 ms doubling to 4 s by default) until it reaches a final state (`applied`, `rejected`, `failed`, `expired`), and resolve it. Rejects with [`ReceiptWaitTimeoutError`](#receiptwaittimeouterror) after `timeoutMs` (default 30 s) and with an `aborted` error when `signal` fires. It reads the public receipt route only. |
 
 ### OutcomeStore
 
@@ -2442,6 +3340,28 @@ interface OutcomeStore<T extends DurableEntry = QueuedOutcome> {
 | `update(entry: T): void \| Promise<void>` | Persist an updated entry. |
 | `remove(id: string): void \| Promise<void>` | Remove an entry by id. |
 | `list(): T[] \| Promise<T[]>` | Every queued entry, in insertion order. |
+
+### OutcomeVerdictMapping
+
+interface · `src/outcome-report.ts`
+
+One side (pass or fail) of a source's mapping: the outcome channel, kind and optional value.
+
+```ts signature
+interface OutcomeVerdictMapping {
+    readonly channel: OutcomeChannel;
+    readonly kind: string;
+    readonly value?: {
+        readonly value: number;
+    };
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `readonly channel: OutcomeChannel` | The outcome channel. |
+| `readonly kind: string` | The channel kind. |
+| `readonly value?: { readonly value: number }` | The typed value sent with the event (only `self_rating` has one). |
 
 ### PendingOutcomesQuery
 
@@ -2648,6 +3568,22 @@ interface RenderablePrompt {
 | `readonly template: string` | The template text with `{{name}}` slots. |
 | `readonly variables: readonly HostedPromptVariable[]` | The declared variables. |
 
+### RequestCorrelation
+
+interface · `src/correlation.ts`
+
+The correlation the SDK attaches to every chat completion and embeddings result.
+
+```ts signature
+interface RequestCorrelation {
+    readonly requestId: string;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `readonly requestId: string` | The gateway request id: the `x-ur-request-id` response header, else the body's `ur.request_id`. Pass it to `ur.ur.outcomes.report`. Not enumerable, so it never appears in `JSON.stringify` of the result. |
+
 ### RequestOptions
 
 interface · `src/types.ts`
@@ -2661,6 +3597,8 @@ interface RequestOptions {
     maxRetries?: number | undefined;
     headers?: Record<string, string> | undefined;
     idempotencyKey?: string | undefined;
+    requestId?: string | undefined;
+    episodeKey?: string | undefined;
 }
 ```
 
@@ -2671,6 +3609,8 @@ interface RequestOptions {
 | `maxRetries?: number \| undefined` | Maximum retries for this call. |
 | `headers?: Record<string, string> \| undefined` | Extra headers for this call (they win over the client defaults). |
 | `idempotencyKey?: string \| undefined` | An explicit idempotency key (otherwise one is generated for each non-streaming POST). |
+| `requestId?: string \| undefined` | Your own request id for this call (`[A-Za-z0-9_-]{1,64}`), sent as `x-ur-request-id` so you know the id before the call returns. Mint one with `mintRequestId()`. Meaningful on chat completions and embeddings; the gateway echoes it on the response. |
+| `episodeKey?: string \| undefined` | The episode handle, sent as `x-ur-artifact` (the same key as `ur.artifact`): every step of one multi-step task carries the same key, and concurrent tasks carry different keys even when they open with identical text. Printable ASCII, at most 256 characters. |
 
 ### ReviewerDeliveryOptions
 
@@ -2808,6 +3748,22 @@ interface SourceChecksResource {
 | `issue: (params: IssueSourceCheckParams, options?: RequestOptions) => Promise<SourceCheck>` | Issue a planted-failure check to the calling verdict source. Its probes are returned once. |
 | `answer: ( checkId: string, params: AnswerSourceCheckParams, options?: RequestOptions, ) => Promise<SourceCheckGrade>` | Answer a check: exactly one verdict per probe. It is graded once. |
 
+### StreamCorrelation
+
+interface · `src/correlation.ts`
+
+The correlation the SDK attaches to a chat stream as soon as it opens.
+
+```ts signature
+interface StreamCorrelation {
+    readonly requestId: string | null;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `readonly requestId: string \| null` | The gateway request id from the `x-ur-request-id` header (or the id you sent), available before the first chunk; `null` only when the gateway sent no header and you sent no id. The final chunk's `ur.request_id` carries it too. |
+
 ### UltraRouterDefaults
 
 interface · `src/types.ts`
@@ -2850,6 +3806,7 @@ interface UltraRouterOptions {
     maxRetries?: number | undefined;
     fetch?: FetchLike | undefined;
     defaultHeaders?: Record<string, string> | undefined;
+    requestIds?: 'gateway' | 'client' | undefined;
     outcomeStore?: OutcomeStore | undefined;
     reviewerStore?: OutcomeStore<QueuedReviewerEvent> | undefined;
     preflightCache?: PreflightCacheOptions | undefined;
@@ -2868,6 +3825,7 @@ interface UltraRouterOptions {
 | `maxRetries?: number \| undefined` | Maximum retries for a retryable failure (default 2). |
 | `fetch?: FetchLike \| undefined` | A custom `fetch` (default `globalThis.fetch`). |
 | `defaultHeaders?: Record<string, string> \| undefined` | Extra headers sent on every request. |
+| `requestIds?: 'gateway' \| 'client' \| undefined` | Who chooses request ids: `gateway` (default; the gateway mints one and echoes it) or `client` (the SDK mints one with `mintRequestId()` for every chat completion and embeddings call that does not pass `requestId`, so the id is known even when the response is lost). |
 | `outcomeStore?: OutcomeStore \| undefined` | Where outcome events are persisted before they are sent. Defaults to an in-process `MemoryOutcomeStore`; pass a `FileOutcomeStore(path)` to survive restarts, or your own [`OutcomeStore`](#outcomestore). |
 | `reviewerStore?: OutcomeStore<QueuedReviewerEvent> \| undefined` | Where reviewer events are persisted before they are sent (same options as `outcomeStore`). |
 | `preflightCache?: PreflightCacheOptions \| undefined` | The bound on the client-side `preflight()` cache: `{ maxEntries }` request identities (default 1000), least recently used evicted first; `{ maxEntries: 0 }` disables it. |
@@ -2930,6 +3888,7 @@ interface UrNamespace {
     };
     artifacts: ArtifactsResource;
     outcomes: OutcomesResource;
+    learning: LearningResource;
     reviewer: ReviewerResource;
     flywheel: FlywheelResource;
     imports: ImportsResource;
@@ -2951,7 +3910,8 @@ interface UrNamespace {
 | `bench: BenchResource` | Bench suites, runs, reports and the compare gate. |
 | `artifactTypes: { upsert: (params: ArtifactTypeUpsertParams, options?: RequestOptions) => Promise<ArtifactType>; }` | Artifact types: the objective that defines success for a kind of artifact. |
 | `artifacts: ArtifactsResource` | Artifacts: the units of value your application produces. |
-| `outcomes: OutcomesResource` | Outcome events with a durable local queue. |
+| `outcomes: OutcomesResource` | Outcome events with a durable local queue, verdict reports and receipts. |
+| `learning: LearningResource` | Learning controls per call type. |
 | `reviewer: ReviewerResource` | The signed reviewer-decision adapter. |
 | `flywheel: FlywheelResource` | Learning status and verdict-source health. |
 | `imports: ImportsResource` | History imports. |
@@ -3094,6 +4054,28 @@ interface VerifiedMemoryResource {
 | `get: (callTypeId: string, options?: RequestOptions) => Promise<VerifiedMemoryStatus>` | Read the verified-memory setting of the active config version and whether it can serve. |
 | `enable: ( callTypeId: string, params?: EnableVerifiedMemoryParams, options?: RequestOptions, ) => Promise<VerifiedMemoryEnableResult>` | Enable verified memory. The gateway calibrates against the declared `target_precision` and only enables it when an operating point clears it. Requires workspace authorisation. |
 | `disable: (callTypeId: string, options?: RequestOptions) => Promise<VerifiedMemoryDisableResult>` | Disable verified memory (the kill switch). Idempotent. |
+
+### WaitForReceiptOptions
+
+interface · `src/outcome-receipts.ts`
+
+Options for `ur.ur.outcomes.waitForReceipt`.
+
+```ts signature
+interface WaitForReceiptOptions {
+    timeoutMs?: number | undefined;
+    signal?: AbortSignal | undefined;
+    pollIntervalMs?: number | undefined;
+    maxPollIntervalMs?: number | undefined;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `timeoutMs?: number \| undefined` | The longest time to wait, in ms (default 30000). |
+| `signal?: AbortSignal \| undefined` | Stop waiting: the call rejects with an `aborted` error. |
+| `pollIntervalMs?: number \| undefined` | The first delay between reads, in ms (default 250); it doubles after every read. |
+| `maxPollIntervalMs?: number \| undefined` | The longest delay between reads, in ms (default 4000). |
 
 ## Types
 
@@ -3952,6 +4934,72 @@ How learned context is delivered on a call type.
 type LearnedContextDelivery = 'gateway_inject_after_stable_prefix' | 'off';
 ```
 
+### LearningErrorReason
+
+type · `src/learning-controls.ts`
+
+Why a learning control was refused, in terms you can act on.
+
+```ts signature
+type LearningErrorReason = 'missing_consent' | 'provider_unavailable' | 'quota_exhausted' | 'budget_exhausted' | 'not_found' | 'forbidden';
+```
+
+### LearningEvaluationDecision
+
+type · `src/learning-controls.ts`
+
+An evaluation's decision; `running` until it decides.
+
+```ts signature
+type LearningEvaluationDecision = 'running' | 'promoted' | 'retained' | 'inconclusive' | 'rejected' | 'stopped_budget' | 'stopped_manual' | (string & {});
+```
+
+### LearningObjective
+
+type · `src/learning-controls.ts`
+
+What an evaluation must show: `success` (better task success) or `cost_noninferior` (lower cost
+without losing more success than the declared margin).
+
+```ts signature
+type LearningObjective = 'success' | 'cost_noninferior';
+```
+
+### LearningPromotionMode
+
+type · `src/learning-controls.ts`
+
+How a candidate becomes active: `evaluate` (randomized evaluation against the incumbent under a
+rule frozen before it starts), `manual` (an owner or admin promotes or rejects it) or `immediate`
+(publication is activation).
+
+```ts signature
+type LearningPromotionMode = 'evaluate' | 'manual' | 'immediate';
+```
+
+### LearningState
+
+type · `src/learning-controls.ts`
+
+The learning state of a call type. `not_enabled` and `disabled` serve no learned version;
+`active` learns and serves; `paused` keeps serving the active version but stops learning and
+evaluation; `unavailable` has no usable learning provider; `quota_exhausted` and
+`budget_exhausted` are stopped by a provider quota or the learning budget (never silently).
+
+```ts signature
+type LearningState = 'not_enabled' | 'active' | 'paused' | 'disabled' | 'unavailable' | 'quota_exhausted' | 'budget_exhausted' | (string & {});
+```
+
+### LearningVersionState
+
+type · `src/learning-controls.ts`
+
+A learned version's state. Versions are immutable; only their state moves.
+
+```ts signature
+type LearningVersionState = 'candidate' | 'evaluating' | 'active' | 'retired' | 'rejected' | 'superseded' | (string & {});
+```
+
 ### ModelDetail
 
 type · `src/resources.ts`
@@ -4110,6 +5158,18 @@ The closed outcome-channel vocabulary.
 type OutcomeChannel = Schemas['OutcomeInput']['channel'];
 ```
 
+### OutcomeEpisodeAssociation
+
+type · `src/outcome-receipts.ts`
+
+How an applied outcome relates to the request's episode: `associated` (it is the episode's
+verdict), `pending` (the episode record has not landed yet), `not_recorded` (it never landed in
+time) or `not_applicable` (the outcome does not teach, or the request has no episode).
+
+```ts signature
+type OutcomeEpisodeAssociation = 'associated' | 'pending' | 'not_recorded' | 'not_applicable';
+```
+
 ### OutcomeInput
 
 type · `src/outcomes.ts`
@@ -4148,6 +5208,50 @@ type OutcomeReceipt = {
 };
 ```
 
+### OutcomeReceiptState
+
+type · `src/outcome-receipts.ts`
+
+A receipt's lifecycle: `pending` until its request lands, then exactly one final state —
+`applied` (recorded), `rejected` (refused, see `reason`), `failed` (could not be applied) or
+`expired` (its request never landed in time; an unknown or foreign request id ends here too,
+indistinguishable from an unknown one).
+
+```ts signature
+type OutcomeReceiptState = 'pending' | 'applied' | 'rejected' | 'failed' | 'expired';
+```
+
+### OutcomeReportPlan
+
+type · `src/outcome-report.ts`
+
+A validated report: either nothing to send, or the event and its stable identity.
+
+```ts signature
+type OutcomeReportPlan = {
+    readonly send: false;
+    readonly result: OutcomeNotReported;
+} | {
+    readonly send: true;
+    readonly mapping: OutcomeVerdictMapping;
+    readonly teaches: boolean;
+    readonly verdict: 'pass' | 'fail';
+    readonly event: OutcomeInput & {
+        source_event_id: string;
+    };
+};
+```
+
+### OutcomeReportResult
+
+type · `src/outcome-report.ts`
+
+What `report` resolves to for a given source and verdict.
+
+```ts signature
+type OutcomeReportResult<S extends OutcomeSource = OutcomeSource, V extends OutcomeVerdict = OutcomeVerdict> = V extends 'unknown' ? OutcomeNotReported<S> : OutcomeReported<S>;
+```
+
 ### OutcomeResult
 
 type · `src/outcomes.ts`
@@ -4168,6 +5272,16 @@ The transport seam: send ONE finalized event and resolve its server result, or t
 type OutcomeSender = (entry: QueuedOutcome, options?: RequestOptions) => Promise<OutcomeResult>;
 ```
 
+### OutcomeSource
+
+type · `src/outcome-report.ts`
+
+Where a verdict came from. Only `self_rating` never teaches.
+
+```ts signature
+type OutcomeSource = 'verifier' | 'business_rule' | 'webhook' | 'human_review' | 'self_rating';
+```
+
 ### OutcomeTarget
 
 type · `src/outcomes.ts`
@@ -4182,6 +5296,26 @@ type OutcomeTarget = {
 } | {
     readonly request: string;
 };
+```
+
+### OutcomeTeaches
+
+type · `src/outcome-report.ts`
+
+`true` for every source except `self_rating`, which is a proxy that never teaches.
+
+```ts signature
+type OutcomeTeaches<S extends OutcomeSource> = S extends 'self_rating' ? false : true;
+```
+
+### OutcomeVerdict
+
+type · `src/outcome-report.ts`
+
+A task verdict: `pass`, `fail`, or `unknown` (nothing is sent).
+
+```ts signature
+type OutcomeVerdict = 'pass' | 'fail' | 'unknown';
 ```
 
 ### PendingClaim
@@ -4349,6 +5483,20 @@ type RenderPromptResult = {
 } | {
     readonly ok: false;
     readonly missing: readonly string[];
+};
+```
+
+### RequestOutcomeResult
+
+type · `src/outcome-receipts.ts`
+
+The answer of `POST /v1/requests/{id}/outcomes`: the outcome result, where `status` may also be
+`pending` (accepted durably, applied once the request lands), plus the durable receipt.
+
+```ts signature
+type RequestOutcomeResult = Omit<OutcomeResult, 'status'> & {
+    status: OutcomeResult['status'] | 'pending';
+    receipt?: OutcomeReceiptRecord;
 };
 ```
 

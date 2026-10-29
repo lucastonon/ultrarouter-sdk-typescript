@@ -1,4 +1,4 @@
-# ultrarouter TypeScript SDK (@ultrarouter/sdk) 0.0.1 — full documentation
+# ultrarouter TypeScript SDK (@ultrarouter/sdk) 0.1.0 — full documentation
 
 Every guide of this package concatenated in reading order, for AI agents (the generated API reference pages are linked, not inlined). The same files ship in the npm package and live at https://github.com/lucastonon/ultrarouter-sdk-typescript. Each file starts with a `<!-- file: path -->` marker.
 
@@ -23,7 +23,7 @@ typed methods.
   [runtimes](./docs/installation.md).
 - **Batteries for CI**: the `ur` CLI and a GitHub Action for Bench and application-CI gates.
 
-Version `0.0.1` is an early release; expect the API to evolve before 1.0.
+Version `0.1.0` is an early release; expect the API to evolve before 1.0.
 
 ## Install
 
@@ -298,7 +298,7 @@ console.log(JSON.stringify(toMessages(lifted.manifest)) === JSON.stringify(messa
 The package ships the `ur` command for CI: Bench baseline-compare gates, application-CI checks with
 a pull-request comment, outcome imports, and knowledge-pack validation. In a project that depends on the
 package, run it with `npx ur`; without installing, name the package:
-`npx --package=@ultrarouter/sdk@0.0.1 ur --help`.
+`npx --package=@ultrarouter/sdk@0.1.0 ur --help`.
 
 ```bash
 npx ur --help
@@ -880,6 +880,7 @@ console.log(ur.baseURL);
 | `outcomeStore`   | `OutcomeStore`                      | `MemoryOutcomeStore`                                                     | Where outcome events are persisted before they are sent.                                |
 | `reviewerStore`  | `OutcomeStore<QueuedReviewerEvent>` | `MemoryOutcomeStore`                                                     | Where reviewer events are persisted before they are sent.                               |
 | `preflightCache` | `{ maxEntries?: number }`           | `{ maxEntries: 1000 }`                                                   | The bound on the `preflight()` cache (LRU); `0` turns it off.                           |
+| `requestIds`     | `'gateway' \| 'client'`             | `'gateway'`                                                              | `'client'` mints an `x-ur-request-id` for every chat and embeddings call without one.   |
 
 ## Request defaults and per-call precedence
 
@@ -5068,7 +5069,7 @@ reporting success.
 Run it without installing (name the package: `npx ur` alone would look for a package called `ur`):
 
 ```bash
-npx --package=@ultrarouter/sdk@0.0.1 ur --help
+npx --package=@ultrarouter/sdk@0.1.0 ur --help
 ```
 
 Or install it, in a project (then run it through `npx ur` or a package script) or globally:
@@ -5852,7 +5853,7 @@ pinned to full commit SHAs.
 | `api-key`            | `''`                   | Your ultrarouter API key. Store it as a secret. Use a test key (`ur_sk_test_…`) for Bench. Passed to the CLI as `UR_API_KEY`.                             |
 | `base-url`           | (required; no default) | The gateway base URL; point it at your own deployment to self-host (there is no hosted gateway). Passed as `UR_BASE_URL`.                                 |
 | `allow-inconclusive` | `false`                | When `true`, an inconclusive gate (Bench verdict, or the app-ci offline gate) passes instead of failing the job.                                          |
-| `sdk-version`        | `0.0.1` (this release) | The `@ultrarouter/sdk` version to install for the CLI. Defaults to the version of the action release you reference, so a pinned action runs a pinned CLI. |
+| `sdk-version`        | `0.1.0` (this release) | The `@ultrarouter/sdk` version to install for the CLI. Defaults to the version of the action release you reference, so a pinned action runs a pinned CLI. |
 
 ### `mode: bench`
 
@@ -6399,7 +6400,7 @@ does not read package `exports`. See [installation](./installation.md#typescript
 
 The CLI ships as the package binary. In a project that depends on `@ultrarouter/sdk`, run it with
 `npx ur …` or from an npm script; without installing, name the package
-(`npx --package=@ultrarouter/sdk@0.0.1 ur …` — a bare `npx ur` looks for a different package called
+(`npx --package=@ultrarouter/sdk@0.1.0 ur …` — a bare `npx ur` looks for a different package called
 `ur`); or install the package globally. It needs Node.js 20 or later. See [CLI](./cli.md).
 
 ## Bench capture is refused with a live key

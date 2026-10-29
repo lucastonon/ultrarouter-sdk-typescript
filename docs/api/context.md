@@ -1,6 +1,6 @@
 # API reference: `@ultrarouter/sdk/context`
 
-Generated from the TypeScript sources and their TSDoc by `scripts/gen-docs.mjs` (do not edit by hand). Version 0.0.1. 252 exports.
+Generated from the TypeScript sources and their TSDoc by `scripts/gen-docs.mjs` (do not edit by hand). Version 0.1.0. 252 exports.
 
 ```ts
 import { /* named exports */ } from '@ultrarouter/sdk/context';

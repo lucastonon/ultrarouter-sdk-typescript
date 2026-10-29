@@ -1,6 +1,6 @@
 {
   "name": "@ultrarouter/sdk",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Official TypeScript SDK for ultrarouter, an OpenAI-compatible LLM gateway and router: typed chat, streaming, embeddings, retries, an OpenAI drop-in, a context runtime, a CLI and a GitHub Action.",
   "license": "MIT",
   "author": "ultrarouter",

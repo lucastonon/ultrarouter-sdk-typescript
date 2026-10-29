@@ -29,7 +29,7 @@ reporting success.
 Run it without installing (name the package: `npx ur` alone would look for a package called `ur`):
 
 ```bash
-npx --package=@ultrarouter/sdk@0.0.1 ur --help
+npx --package=@ultrarouter/sdk@0.1.0 ur --help
 ```
 
 Or install it, in a project (then run it through `npx ur` or a package script) or globally:
