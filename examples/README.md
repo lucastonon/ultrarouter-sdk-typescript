@@ -1,14 +1,24 @@
 # Examples
 
-Complete, runnable programs for the main flows. Each one reads `ULTRAROUTER_API_KEY` (and the
-optional `ULTRAROUTER_BASE_URL`) from the environment, so the same file runs against your gateway
-and, in this repository's CI, against a local mock gateway (`npm run examples`).
+Complete, runnable programs for the main flows. Each one reads `ULTRAROUTER_API_KEY` and
+`ULTRAROUTER_BASE_URL` from the environment, so the same file runs against your gateway and, in this
+repository's checks, against a local mock gateway (`npm run examples`).
+
+The package is not published to the npm registry yet. Inside a clone of this repository the
+examples import the built package by its own name, so build it first and run an example with `tsx`
+(the `openai` examples use the `openai` dev dependency):
+
+<!-- doctest: skip — needs a clone of this repository, a build and a reachable gateway -->
 
 ```bash
-npm install @ultrarouter/sdk
+npm ci && npm run build
 export ULTRAROUTER_API_KEY=ur_sk_test_...
+export ULTRAROUTER_BASE_URL=http://localhost:8080
 npx tsx examples/quickstart.ts
 ```
+
+In your own project, install the package from a tarball first (see
+[installation](../docs/installation.md#install)).
 
 Model ids are illustrative; `ur.models.list()` shows what your gateway serves.
 
@@ -41,6 +51,25 @@ Model ids are illustrative; `ur.models.list()` shows what your gateway serves.
 | [`bench.ts`](./bench.ts)                                         | Bench suites, runs and the compare gate from code.                                     |
 | [`reviewer/reviewer-adapter.ts`](./reviewer/reviewer-adapter.ts) | The reviewer adapter end to end: setup, test event, repair, health.                    |
 | [`reviewer/backfill.ts`](./reviewer/backfill.ts)                 | Backfilling historical reviewer decisions.                                             |
+
+## Plug-and-play learning
+
+Eight programs under [`learning/`](./learning/) connect an agent to the learning loop. They run the
+order-desk demonstration environment from `@ultrarouter/sdk/learning` (a deterministic toy with a
+state-based verifier: it shows the integration working, it is not evidence that learning improves
+an agent). Each reads `ULTRAROUTER_API_KEY` and `ULTRAROUTER_BASE_URL` (and optionally
+`ULTRAROUTER_MODEL`), prints a few lines and exits non-zero when the integration fails.
+
+| Example                                                                    | What it shows                                                                                                                            |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| [`learning/01-openai-client.ts`](./learning/01-openai-client.ts)           | An existing `openai` agent loop: new base URL and key, per-call request id + episode key, outcome reporting.                             |
+| [`learning/02-native-verifier.ts`](./learning/02-native-verifier.ts)       | The native SDK and a real state-based verifier; the verdict is reported with its evidence hash.                                          |
+| [`learning/03-multi-step-episode.ts`](./learning/03-multi-step-episode.ts) | A multi-step tool episode under one episode key; two concurrent tasks with identical text kept apart.                                    |
+| [`learning/04-immediate-outcome.ts`](./learning/04-immediate-outcome.ts)   | Reporting right after the final response (a `pending` receipt), then `waitForReceipt`. No sleeps.                                        |
+| [`learning/05-delayed-webhook.ts`](./learning/05-delayed-webhook.ts)       | A delayed outcome by signed webhook: verification, redelivery deduplication, a forged copy refused (needs `ULTRAROUTER_WEBHOOK_SECRET`). |
+| [`learning/06-ack-loss-retry.ts`](./learning/06-ack-loss-retry.ts)         | A lost acknowledgement plus an app-level retry: identical bytes and key, one receipt.                                                    |
+| [`learning/07-learning-controls.ts`](./learning/07-learning-controls.ts)   | Learning status, pause / resume, history, rollback, evaluations and disable, with actionable errors.                                     |
+| [`learning/08-streaming.ts`](./learning/08-streaming.ts)                   | A streaming tool loop: the request id at stream open, tool-call deltas assembled, the outcome reported.                                  |
 
 ## Type-checking
 

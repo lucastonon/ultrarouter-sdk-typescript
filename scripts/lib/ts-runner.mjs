@@ -131,6 +131,8 @@ export function runNode(dir, file, baseURL, timeoutMs = 30_000, extraEnv = {}) {
       // The mock gateway issues this signing secret to pull-transport oracles.
       UR_ORACLE_ID: 'orc_mock_1',
       UR_ORACLE_SECRET: 'mock-oracle-secret',
+      // The shared secret the delayed-webhook example signs and verifies with (a test value).
+      ULTRAROUTER_WEBHOOK_SECRET: 'example-webhook-secret',
       ...extraEnv,
     };
     const child = spawn(process.execPath, [file], {
