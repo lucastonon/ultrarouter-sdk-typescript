@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: 2da96e5963cf0ed6e07f5a03f123721550b6dd355b83f4f17080254b50db5577
+# spec-sha256: a5990ba0c05dcbe4a3798f2c1506debcbb61dadfca1d0197727ee3330af2cacc
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -38256,7 +38256,7 @@ paths:
         - "Knowledge"
   "/v1/knowledge/{id}":
     get:
-      description: "Workspace members or config:read/config:write keys. Knowledge and corrections consent required; unavailable content is omitted. Lessons include stored text and atomic metadata; citations expose metadata only. Facts expose allowlisted derived statistics and structured scope, never arbitrary bodies. Current candidates are not active or proven. No training or provider calls. Existing consent and erasure rules apply. Evidence availability refers to retained metadata, not raw source bodies; correction-body TTL does not expire derived lessons. snapshot_at is an observation time, not a durable database snapshot. IDs: fact:<fact_id> or lesson:<version_id>:<lesson_id>. Unknown, foreign or erased items return 404. Requires API-key scope: config:read or config:write."
+      description: "Workspace members or config:read/config:write keys. Knowledge and corrections consent required; unavailable content is omitted. Lessons include stored text and atomic metadata; citations expose metadata only. Facts expose allowlisted derived statistics and structured scope, never arbitrary bodies. Current candidates are not active or proven. No training or provider calls. Existing consent and erasure rules apply. Evidence availability refers to retained metadata, not raw source bodies; correction-body TTL does not expire derived lessons. snapshot_at is an observation time, not a durable database snapshot. IDs: `fact:<fact_id>` or `lesson:<version_id>:<lesson_id>`. Unknown, foreign or erased items return 404. Requires API-key scope: config:read or config:write."
       operationId: "readCompanyKnowledge"
       parameters:
         -
