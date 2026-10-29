@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: 8919285df964ea613704b3a74c5c953948fcc028f4bdfc7893af845e210b78f5
+# spec-sha256: b11bf0a70b45db39987efcaebcd40442ad2b2c0e28a1383fc8dbc6f363fd1c00
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -1624,7 +1624,7 @@ components:
               description: "The episode association of an applied teaching outcome."
               properties:
                 status:
-                  description: "`associated` — the episode holding this request carries a verdict; `pending` — a teaching outcome waiting for its episode to be recorded; `not_recorded` — no episode held the request within 15 minutes (episode memory or recording off, a held-out request, no consent); `not_applicable` — the outcome does not teach (a proxy, behavioral or mechanical signal) or was not applied."
+                  description: "`associated` — the episode holding this request carries a verdict; `pending` — a teaching outcome waiting for its episode to be recorded; `not_recorded` — the persisted request was held out and recording was intentionally suppressed, or no episode held the request within 15 minutes (episode memory or recording off, no consent); `not_applicable` — the outcome does not teach (a proxy, behavioral or mechanical signal) or was not applied."
                   enum:
                     - "associated"
                     - "pending"
@@ -1912,7 +1912,7 @@ components:
                     description: "The episode association of an applied teaching outcome."
                     properties:
                       status:
-                        description: "`associated` — the episode holding this request carries a verdict; `pending` — a teaching outcome waiting for its episode to be recorded; `not_recorded` — no episode held the request within 15 minutes (episode memory or recording off, a held-out request, no consent); `not_applicable` — the outcome does not teach (a proxy, behavioral or mechanical signal) or was not applied."
+                        description: "`associated` — the episode holding this request carries a verdict; `pending` — a teaching outcome waiting for its episode to be recorded; `not_recorded` — the persisted request was held out and recording was intentionally suppressed, or no episode held the request within 15 minutes (episode memory or recording off, no consent); `not_applicable` — the outcome does not teach (a proxy, behavioral or mechanical signal) or was not applied."
                         enum:
                           - "associated"
                           - "pending"
@@ -36918,7 +36918,7 @@ paths:
                     description: "The episode association of an applied teaching outcome."
                     properties:
                       status:
-                        description: "`associated` — the episode holding this request carries a verdict; `pending` — a teaching outcome waiting for its episode to be recorded; `not_recorded` — no episode held the request within 15 minutes (episode memory or recording off, a held-out request, no consent); `not_applicable` — the outcome does not teach (a proxy, behavioral or mechanical signal) or was not applied."
+                        description: "`associated` — the episode holding this request carries a verdict; `pending` — a teaching outcome waiting for its episode to be recorded; `not_recorded` — the persisted request was held out and recording was intentionally suppressed, or no episode held the request within 15 minutes (episode memory or recording off, no consent); `not_applicable` — the outcome does not teach (a proxy, behavioral or mechanical signal) or was not applied."
                         enum:
                           - "associated"
                           - "pending"
@@ -37231,7 +37231,7 @@ paths:
                           description: "The episode association of an applied teaching outcome."
                           properties:
                             status:
-                              description: "`associated` — the episode holding this request carries a verdict; `pending` — a teaching outcome waiting for its episode to be recorded; `not_recorded` — no episode held the request within 15 minutes (episode memory or recording off, a held-out request, no consent); `not_applicable` — the outcome does not teach (a proxy, behavioral or mechanical signal) or was not applied."
+                              description: "`associated` — the episode holding this request carries a verdict; `pending` — a teaching outcome waiting for its episode to be recorded; `not_recorded` — the persisted request was held out and recording was intentionally suppressed, or no episode held the request within 15 minutes (episode memory or recording off, no consent); `not_applicable` — the outcome does not teach (a proxy, behavioral or mechanical signal) or was not applied."
                               enum:
                                 - "associated"
                                 - "pending"
@@ -37432,7 +37432,7 @@ paths:
                         description: "The episode association of an applied teaching outcome."
                         properties:
                           status:
-                            description: "`associated` — the episode holding this request carries a verdict; `pending` — a teaching outcome waiting for its episode to be recorded; `not_recorded` — no episode held the request within 15 minutes (episode memory or recording off, a held-out request, no consent); `not_applicable` — the outcome does not teach (a proxy, behavioral or mechanical signal) or was not applied."
+                            description: "`associated` — the episode holding this request carries a verdict; `pending` — a teaching outcome waiting for its episode to be recorded; `not_recorded` — the persisted request was held out and recording was intentionally suppressed, or no episode held the request within 15 minutes (episode memory or recording off, no consent); `not_applicable` — the outcome does not teach (a proxy, behavioral or mechanical signal) or was not applied."
                             enum:
                               - "associated"
                               - "pending"

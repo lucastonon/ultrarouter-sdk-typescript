@@ -285,8 +285,9 @@ if (report.receipt !== null) {
   console.log(receipt.status); // "applied"
 }
 const callTypes = await ur.ur.callTypes.list();
-const callType = callTypes.data.find((ct) => ct.slug === 'support-reply') ??
-  await ur.ur.callTypes.create({ slug: 'support-reply' });
+const callType =
+  callTypes.data.find((ct) => ct.slug === 'support-reply') ??
+  (await ur.ur.callTypes.create({ slug: 'support-reply' }));
 console.log((await ur.ur.learning.status(callType.id)).state); // learning requires the ct_… id
 ```
 
