@@ -13,7 +13,7 @@
     "rule": "Why, in a few words."
   },
   "rules": {
-    "outcome_drop": "An outcome event is dropped only on (a) a 2xx answer whose result (the bare body, or data[0] for an artifact target) is an object with status in accepted | duplicate | conflict | rejected (delivered), or (b) a definitive refusal: a 4xx other than 401/403/408/429, whose body is {\"error\": {code, message, request_id, retryable[, provider_code]}} with code a non-empty string, message and request_id strings, retryable the boolean false and provider_code (when present) a string, and whose code is invalid_request at 400, not_found at 404 or conflict at 409. Everything else retains.",
+    "outcome_drop": "An outcome event is dropped only on (a) a 2xx answer whose result (the bare body, or data[0] for an artifact target) is an object with status in accepted | duplicate | conflict | rejected | pending (delivered; pending is the request shortcut's durable acceptance with a receipt, applied once the request lands), or (b) a definitive refusal: a 4xx other than 401/403/408/429, whose body is {\"error\": {code, message, request_id, retryable[, provider_code]}} with code a non-empty string, message and request_id strings, retryable the boolean false and provider_code (when present) a string, and whose code is invalid_request at 400, not_found at 404 or conflict at 409. Everything else retains.",
     "reviewer_drop": "A reviewer event is removed only by a 2xx answer {\"data\": [...]} holding a verdict object with its event_id and either status accepted | duplicate, or status rejected | unsupported with a string reason and repairable false. rejected | unsupported with a string reason and repairable true keeps it as a dead letter. A failed delivery never removes an event."
   },
   "reviewer_event_id": "evt_fixture_1",
@@ -1979,6 +1979,26 @@
       "expect": "drop",
       "outcome": "delivered",
       "rule": "a result with status \"rejected\": the gateway processed the event"
+    },
+    {
+      "id": "outcome.drop.2xx.result_pending",
+      "kind": "outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"id\":null,\"status\":\"pending\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":null,\"artifact_version\":null,\"reason\":null,\"receipt\":{\"id\":\"rcpt_fixture\",\"request_id\":\"req_fixture\",\"status\":\"pending\",\"channel\":\"behavioral\",\"kind\":\"accepted\"}}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "a result with status \"pending\": the gateway holds a durable receipt and applies the event once the request lands"
+    },
+    {
+      "id": "artifact-outcome.drop.2xx.result_pending",
+      "kind": "artifact-outcome",
+      "status": 202,
+      "content_type": "application/json",
+      "body": "{\"data\":[{\"id\":null,\"status\":\"pending\",\"source_event_id\":\"src_fixture\",\"source\":\"declared\",\"latency_class\":\"instant\",\"learning_use\":[\"rank\"],\"target_kind\":\"artifact\",\"canonical_target_id\":null,\"artifact_version\":null,\"reason\":null}]}",
+      "expect": "drop",
+      "outcome": "delivered",
+      "rule": "a result with status \"pending\": durably accepted, so it leaves the queue (the status set is shared by both targets)"
     },
     {
       "id": "outcome.drop.2xx.200_minimal",

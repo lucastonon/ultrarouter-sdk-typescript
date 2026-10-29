@@ -19,6 +19,7 @@ import {
   isGatewayErrorCode,
   type GatewayErrorCode,
 } from './errors.js';
+import { canonicalJson } from './context-runtime/_core/canonical-json.js';
 import type { RequestOptions } from './types.js';
 import type { OutcomeInput, OutcomeResult, OutcomeTarget } from './outcomes.js';
 
@@ -164,12 +165,18 @@ export function isDefinitiveRejection(err: unknown): boolean {
   return !taxonomy.retryable && taxonomy.status === err.status;
 }
 
+// `pending` is the request shortcut's durable acceptance: the gateway holds a receipt and applies the
+// outcome once the request it names has landed, so the event is delivered and leaves the queue.
 const OUTCOME_RESULT_STATUSES: ReadonlySet<unknown> = new Set([
   'accepted',
   'duplicate',
   'conflict',
   'rejected',
+  'pending',
 ]);
+
+/** How many delivered events {@link OutcomeQueue.enqueueStable} remembers for byte-identical replays. */
+const DELIVERED_MEMORY = 1024;
 
 /** Whether a 2xx answer is an outcome result: an object whose `status` is one the contract defines. */
 function isOutcomeResult(value: unknown): value is OutcomeResult {
@@ -199,6 +206,10 @@ export class OutcomeQueue {
   private readonly send: OutcomeSender;
   private readonly now: () => number;
   private readonly genId: () => string;
+  /** Recently delivered stable entries (id → event), so a repeat replays the identical bytes. */
+  private readonly delivered = new Map<string, FinalizedOutcomeEvent>();
+  /** Stable enqueues in flight, so concurrent repeats of one identity send once. */
+  private readonly inflight = new Map<string, Promise<OutcomeReceipt>>();
 
   /** Create a queue over a store and a sender. */
 
@@ -242,6 +253,72 @@ export class OutcomeQueue {
   }
 
   /**
+   * Like {@link enqueue}, under a caller-chosen stable entry id (so the Idempotency-Key, derived from
+   * the entry id, is stable too). A repeat of the same identity never creates a second event:
+   *
+   * - an entry with that id still in the store is replayed verbatim;
+   * - an entry delivered earlier by this queue is replayed with its original bytes (`observed_at`
+   *   included) unless the caller now sends a different payload;
+   * - a different payload under the same `source_event_id` is sent as its own entry, so the gateway
+   *   answers it as a conflict instead of it silently replacing the first;
+   * - concurrent calls for one id share one send.
+   */
+  enqueueStable(
+    entryId: string,
+    target: OutcomeTarget,
+    outcome: OutcomeInput & { source_event_id: string },
+    options?: RequestOptions,
+  ): Promise<OutcomeReceipt> {
+    const running = this.inflight.get(entryId);
+    if (running !== undefined) return running;
+    const run = this.runStable(entryId, target, outcome, options).finally(() => {
+      this.inflight.delete(entryId);
+    });
+    this.inflight.set(entryId, run);
+    return run;
+  }
+
+  private async runStable(
+    entryId: string,
+    target: OutcomeTarget,
+    outcome: OutcomeInput & { source_event_id: string },
+    options?: RequestOptions,
+  ): Promise<OutcomeReceipt> {
+    const stored = (await this.store.list()).find((e) => e.id === entryId);
+    const known = stored?.event ?? this.delivered.get(entryId);
+    if (known !== undefined) {
+      const candidate: FinalizedOutcomeEvent = {
+        ...outcome,
+        observed_at: outcome.observed_at ?? known.observed_at,
+      };
+      if (canonicalJson(candidate) !== canonicalJson(known)) {
+        // The same identity with a different payload: never overwrite the first event. Send it as
+        // its own entry; the gateway answers it as a conflict.
+        return this.enqueue(target, candidate, options);
+      }
+      if (stored !== undefined) return this.deliver(stored, options);
+      const replay: QueuedOutcome = {
+        id: entryId,
+        target,
+        event: known,
+        enqueued_at: new Date(this.now()).toISOString(),
+        attempts: 0,
+      };
+      await this.store.append(replay);
+      return this.deliver(replay, options);
+    }
+    const entry: QueuedOutcome = {
+      id: entryId,
+      target,
+      event: { ...outcome, observed_at: outcome.observed_at ?? new Date(this.now()).toISOString() },
+      enqueued_at: new Date(this.now()).toISOString(),
+      attempts: 0,
+    };
+    await this.store.append(entry);
+    return this.deliver(entry, options);
+  }
+
+  /**
    * Drain every queued outcome, replaying each stored event verbatim (same `source_event_id`, same
    * `observed_at`, same Idempotency-Key). Delivered and definitively refused entries are removed;
    * everything else stays for the next flush.
@@ -267,6 +344,16 @@ export class OutcomeQueue {
     return (await this.store.list()).length;
   }
 
+  /** Remember a delivered event (bounded, oldest forgotten first) for {@link enqueueStable}. */
+  private remember(entry: QueuedOutcome): void {
+    this.delivered.delete(entry.id);
+    this.delivered.set(entry.id, entry.event);
+    if (this.delivered.size > DELIVERED_MEMORY) {
+      const oldest = this.delivered.keys().next().value;
+      if (oldest !== undefined) this.delivered.delete(oldest);
+    }
+  }
+
   /** Send one entry VERBATIM; classify the outcome; update the store accordingly. */
   private async deliver(entry: QueuedOutcome, options?: RequestOptions): Promise<OutcomeReceipt> {
     try {
@@ -281,6 +368,7 @@ export class OutcomeQueue {
         });
       }
       await this.store.remove(entry.id);
+      this.remember(entry);
       return { status: 'delivered', entryId: entry.id, result };
     } catch (err) {
       const error =
