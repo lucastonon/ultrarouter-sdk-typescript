@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 /**
- * Size-budget assertion. Two SEPARATE entry points are measured:
+ * Size-budget assertion. Three SEPARATE entry points are measured:
  *
  * - `@ultrarouter/sdk` (core, `src/index.ts`): the fetch-based client, ZERO runtime
  * deps. Minified + gzipped it must stay under 19 kB (raised from 15 kB when the
  * plug-and-play learning surface landed: request/episode correlation, verdict reports,
  * receipts and learning controls). This is the load-bearing proof that adding the
- * context subpath did NOT bloat the client — importing the client never pulls the
- * context runtime (separate entry, tree-shaken).
+ * context and learning subpaths did NOT bloat the client — importing the client never
+ * pulls the context runtime or the learning starters (separate entries, tree-shaken).
+ * - `@ultrarouter/sdk/learning` (`src/learning.ts`): the starter outcome adapters and the
+ * order-desk demonstration environment. Pure, Web APIs only; a small budget.
  * - `@ultrarouter/sdk/context` (`src/context.ts`): the pure context runtime with `zod`
  * BUNDLED (so the published SDK keeps zero runtime deps). `node:crypto` (the
  * deterministic default hasher) stays an external builtin. It has a generous budget
@@ -35,6 +37,7 @@ const ENTRIES = [
     budget: 50 * 1024,
     external: ['node:crypto'],
   },
+  { name: '@ultrarouter/sdk/learning', entry: 'learning.ts', budget: 10 * 1024, external: [] },
 ];
 
 let failed = false;

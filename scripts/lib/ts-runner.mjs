@@ -27,7 +27,13 @@ export const SNIPPET_API_KEY = 'ur_sk_test_snippet';
 
 /** Fail early with a clear message when the package has not been built. */
 export function assertBuilt() {
-  for (const f of ['dist/index.js', 'dist/index.d.ts', 'dist/context.js', 'dist/cli/index.cjs']) {
+  for (const f of [
+    'dist/index.js',
+    'dist/index.d.ts',
+    'dist/context.js',
+    'dist/learning.js',
+    'dist/cli/index.cjs',
+  ]) {
     if (!existsSync(join(ROOT, f))) {
       throw new Error(`missing ${f}: run \`npm run build\` first`);
     }

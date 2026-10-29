@@ -1,0 +1,189 @@
+/**
+ * The order-desk demonstration environment, embedded. Identical to the shared fixture
+ * `test/fixtures/toy-env.json` (a unit test compares them), which the Python SDK carries byte for byte.
+ * It is a demonstration, not evidence that learning improves an agent.
+ */
+
+import type { OrderDeskEnvironment } from './order-desk.js';
+
+/** The order-desk environment: its tools, rules and scenarios. */
+export const ORDER_DESK: OrderDeskEnvironment = {
+  schema_version: 1,
+  name: 'order-desk',
+  notice:
+    'Deterministic demonstration environment. It shows the integration working end to end; it is not evidence that learning improves an agent.',
+  tools: [
+    {
+      name: 'lookup_order',
+      description: "Return an order's sku, quantity and status.",
+      parameters: {
+        type: 'object',
+        properties: {
+          order_id: {
+            type: 'string',
+          },
+        },
+        required: ['order_id'],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: 'check_stock',
+      description: 'Return the units of a sku currently in stock.',
+      parameters: {
+        type: 'object',
+        properties: {
+          sku: {
+            type: 'string',
+          },
+        },
+        required: ['sku'],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: 'reserve_stock',
+      description:
+        'Reserve units of a sku for an order. Fails with error INSUFFICIENT_STOCK when quantity exceeds stock.',
+      parameters: {
+        type: 'object',
+        properties: {
+          order_id: {
+            type: 'string',
+          },
+          sku: {
+            type: 'string',
+          },
+          quantity: {
+            type: 'integer',
+            minimum: 1,
+          },
+        },
+        required: ['order_id', 'sku', 'quantity'],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: 'set_order_status',
+      description: "Set an order's status.",
+      parameters: {
+        type: 'object',
+        properties: {
+          order_id: {
+            type: 'string',
+          },
+          status: {
+            type: 'string',
+            enum: ['reserved', 'backordered'],
+          },
+        },
+        required: ['order_id', 'status'],
+        additionalProperties: false,
+      },
+    },
+  ],
+  rules: {
+    reserve_stock:
+      'If quantity <= stock: stock decreases by quantity, the order\'s reserved quantity becomes quantity, return {"ok": true}. Otherwise return {"ok": false, "error": "INSUFFICIENT_STOCK", "in_stock": <stock>} and change nothing.',
+    set_order_status: 'Sets the status and returns {"ok": true}.',
+    verifier:
+      "Orders are handled in the order the task names them. An order passes when it ends with status 'reserved' and its full quantity reserved if the stock left after the earlier orders covered it, otherwise with status 'backordered' and nothing reserved. A task passes when every order it names passes.",
+  },
+  scenarios: [
+    {
+      id: 's1',
+      task: 'Please process order A-100.',
+      stock: {
+        'SKU-RED': 5,
+      },
+      orders: {
+        'A-100': {
+          sku: 'SKU-RED',
+          quantity: 2,
+          status: 'new',
+        },
+      },
+    },
+    {
+      id: 's2',
+      task: 'Please process order B-200.',
+      stock: {
+        'SKU-BLUE': 1,
+      },
+      orders: {
+        'B-200': {
+          sku: 'SKU-BLUE',
+          quantity: 3,
+          status: 'new',
+        },
+      },
+    },
+    {
+      id: 's3',
+      task: 'Process orders C-300 and C-301.',
+      stock: {
+        'SKU-GREEN': 4,
+      },
+      orders: {
+        'C-300': {
+          sku: 'SKU-GREEN',
+          quantity: 3,
+          status: 'new',
+        },
+        'C-301': {
+          sku: 'SKU-GREEN',
+          quantity: 3,
+          status: 'new',
+        },
+      },
+    },
+    {
+      id: 's4',
+      task: 'Please process order D-400.',
+      stock: {
+        'SKU-GOLD': 0,
+      },
+      orders: {
+        'D-400': {
+          sku: 'SKU-GOLD',
+          quantity: 1,
+          status: 'new',
+        },
+      },
+    },
+    {
+      id: 's5',
+      task: 'Please process order E-500.',
+      stock: {
+        'SKU-GRAY': 10,
+      },
+      orders: {
+        'E-500': {
+          sku: 'SKU-GRAY',
+          quantity: 10,
+          status: 'new',
+        },
+      },
+    },
+    {
+      id: 's6',
+      task: 'Process orders F-600 and F-601.',
+      stock: {
+        'SKU-PINK': 2,
+        'SKU-TEAL': 1,
+      },
+      orders: {
+        'F-600': {
+          sku: 'SKU-PINK',
+          quantity: 2,
+          status: 'new',
+        },
+        'F-601': {
+          sku: 'SKU-TEAL',
+          quantity: 2,
+          status: 'new',
+        },
+      },
+    },
+  ],
+};

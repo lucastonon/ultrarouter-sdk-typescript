@@ -16,6 +16,7 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
 export const ENTRIES = [
   { specifier: '@ultrarouter/sdk', file: 'src/index.ts', slug: 'sdk' },
   { specifier: '@ultrarouter/sdk/context', file: 'src/context.ts', slug: 'context' },
+  { specifier: '@ultrarouter/sdk/learning', file: 'src/learning.ts', slug: 'learning' },
 ];
 
 function program() {

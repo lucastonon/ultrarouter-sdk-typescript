@@ -15,6 +15,7 @@ interface ApiExport {
 }
 interface ApiEntry {
   specifier: string;
+  slug: string;
   exports: ApiExport[];
 }
 
@@ -27,7 +28,8 @@ describe('TSDoc coverage', () => {
         .filter((e) => e.kind !== 'default' && e.doc.trim() === '')
         .map((e) => `${e.name} (${e.source})`);
       expect(undocumented).toEqual([]);
-      expect(entry.exports.length).toBeGreaterThan(100);
+      // The two large entries carry over a hundred exports; the learning starters entry is small.
+      expect(entry.exports.length).toBeGreaterThan(entry.slug === 'learning' ? 30 : 100);
     });
 
     it(`every member of an SDK-authored interface or class in ${entry.specifier} has TSDoc`, () => {

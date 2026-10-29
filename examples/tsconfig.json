@@ -14,6 +14,7 @@
     "paths": {
       "@ultrarouter/sdk": ["../src/index.ts"],
       "@ultrarouter/sdk/context": ["../src/context.ts"],
+      "@ultrarouter/sdk/learning": ["../src/learning.ts"],
       "openai": ["../node_modules/openai"]
     }
   },

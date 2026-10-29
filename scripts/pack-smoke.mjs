@@ -8,7 +8,8 @@
  * 2. Check the type resolution of every entry point with `@arethetypeswrong/cli` (node16 + bundler).
  * 3. Create a consumer project OUTSIDE the repository (in `UR_SMOKE_DIR`, default the OS temp dir),
  *    install the tarball plus `typescript`, `@types/node` and `openai` from the npm registry.
- * 4. Against a local mock gateway: run an ESM consumer (default + named imports, the context entry,
+ * 4. Against a local mock gateway: run an ESM consumer (default + named imports, the context and
+ *    learning entries, a verdict report and its receipt,
  *    chat + stream + embeddings + typed errors + `asOpenAI(OpenAI)`), a CommonJS consumer, a strict
  *    `tsc` type-check of ESM and CommonJS consumer files, the `ur` CLI (`--help`, `--version`,
  *    `flywheel status --json`, `pack validate`), `npx` (inside the project, and `--package=` from an
@@ -38,6 +39,7 @@ const REQUIRED = [
   'docs/README.md',
   'docs/api/sdk.md',
   'docs/api/context.md',
+  'docs/api/learning.md',
   'dist/index.js',
   'dist/index.cjs',
   'dist/index.d.ts',
@@ -46,6 +48,10 @@ const REQUIRED = [
   'dist/context.cjs',
   'dist/context.d.ts',
   'dist/context.d.cts',
+  'dist/learning.js',
+  'dist/learning.cjs',
+  'dist/learning.d.ts',
+  'dist/learning.d.cts',
   'dist/cli/index.cjs',
 ];
 /** Top-level paths the tarball may contain. */
@@ -172,6 +178,7 @@ async function main(argv) {
       join(app, 'esm.mjs'),
       `import UltraRouter, { UltraRouter as Named, ModelUnpricedError, VERSION, GATEWAY_ERROR_CODES } from '@ultrarouter/sdk';
 import { fromMessages, toMessages, compile, ULTRAROUTER_PROFILE, loadPack } from '@ultrarouter/sdk/context';
+import { createOrderDesk, runVerifier } from '@ultrarouter/sdk/learning';
 import OpenAI from 'openai';
 import assert from 'node:assert/strict';
 
@@ -201,13 +208,25 @@ assert.deepEqual(toMessages(fromMessages(messages).manifest), messages);
 assert.equal(typeof compile, 'function');
 assert.equal(ULTRAROUTER_PROFILE.name, 'ultrarouter');
 assert.equal(typeof loadPack, 'function');
+// The learning surface: correlation, a verified verdict reported at once, its receipt applied.
+const desk = createOrderDesk('s1');
+desk.call('reserve_stock', { order_id: 'A-100', sku: 'SKU-RED', quantity: 2 });
+desk.call('set_order_status', { order_id: 'A-100', status: 'reserved' });
+const verdict = await runVerifier(() => desk.verify().verdict === 'pass');
+assert.equal(verdict.verdict, 'pass');
+const asked = await ur.chat.completions.create({ messages: [{ role: 'user', content: desk.task }] }, { episodeKey: 'smoke-episode' });
+assert.match(asked.requestId, /^req_/);
+const report = await ur.ur.outcomes.report(asked.requestId, { verdict: verdict.verdict, source: 'verifier' });
+assert.equal(report.status, 'delivered');
+const applied = await ur.ur.outcomes.waitForReceipt(report.receipt.id, { pollIntervalMs: 10 });
+assert.equal(applied.status, 'applied');
 console.log('esm ok');
 `,
     );
     const esm = await run(process.execPath, ['esm.mjs'], { cwd: app, env });
     check(
       esm.code === 0 && esm.out.includes('esm ok'),
-      'ESM import: chat + stream + embeddings + typed error + asOpenAI(OpenAI) + context entry',
+      'ESM import: chat + stream + embeddings + typed error + asOpenAI(OpenAI) + context entry + learning entry + report/receipt',
       esm.out,
     );
 
@@ -216,8 +235,11 @@ console.log('esm ok');
       join(app, 'cjs.cjs'),
       `const sdk = require('@ultrarouter/sdk');
 const ctx = require('@ultrarouter/sdk/context');
+const learning = require('@ultrarouter/sdk/learning');
 const assert = require('node:assert/strict');
 assert.equal(typeof sdk.UltraRouter, 'function');
+assert.equal(learning.createOrderDesk('s2').verify().verdict, 'fail');
+assert.equal(typeof sdk.mintRequestId(), 'string');
 assert.equal(sdk.default, sdk.UltraRouter);
 assert.equal(typeof ctx.fromMessages, 'function');
 const ur = new sdk.UltraRouter({ defaultModel: 'openai/gpt-5.2-mini' });
@@ -233,7 +255,7 @@ ur.chat.completions.create({ messages: [{ role: 'user', content: 'cjs smoke' }] 
     const cjs = await run(process.execPath, ['cjs.cjs'], { cwd: app, env });
     check(
       cjs.code === 0 && cjs.out.includes('cjs ok'),
-      'CommonJS require: client + context entry + a chat call',
+      'CommonJS require: client + context entry + learning entry + a chat call',
       cjs.out,
     );
 
@@ -242,8 +264,15 @@ ur.chat.completions.create({ messages: [{ role: 'user', content: 'cjs smoke' }] 
       join(app, 'consumer.mts'),
       `import UltraRouter, { type ChatCompletion, type ChatCompletionChunk, UltraRouterError, isUltraRouterError } from '@ultrarouter/sdk';
 import { compile, type Envelope, type Module } from '@ultrarouter/sdk/context';
+import { createOrderDesk, type OrderDeskVerdict, type WebhookReceiver } from '@ultrarouter/sdk/learning';
 
 const ur = new UltraRouter({ apiKey: 'ur_sk_test_types', defaultModel: 'openai/gpt-5.2-mini' });
+export const deskVerdict: OrderDeskVerdict = createOrderDesk('s1').verify();
+export type Receiver = WebhookReceiver;
+export async function report(): Promise<false> {
+  const r = await ur.ur.outcomes.report('req_1', { verdict: 'pass', source: 'self_rating' });
+  return r.teaches;
+}
 export async function main(): Promise<string | null | undefined> {
   const res: ChatCompletion = await ur.chat.completions.create({ messages: [{ role: 'user', content: 'hi' }] });
   const stream = await ur.chat.completions.create({ stream: true, messages: [{ role: 'user', content: 'hi' }] });
@@ -273,7 +302,9 @@ export const envelopeOk: (e: Envelope, m: Module) => unknown = (e, m) => compile
       join(app, 'consumer.cts'),
       `import sdk = require('@ultrarouter/sdk');
 import ctx = require('@ultrarouter/sdk/context');
+import learning = require('@ultrarouter/sdk/learning');
 const ur = new sdk.UltraRouter({ apiKey: 'ur_sk_test_types' });
+export const desk: learning.OrderDesk = learning.createOrderDesk('s1');
 export const p: Promise<sdk.ModelsListResponse> = ur.models.list();
 export const lifted: ctx.LiftedManifest = ctx.fromMessages([{ role: 'user', content: 'hi' }]);
 `,

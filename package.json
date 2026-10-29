@@ -57,6 +57,16 @@
         "default": "./dist/context.cjs"
       }
     },
+    "./learning": {
+      "import": {
+        "types": "./dist/learning.d.ts",
+        "default": "./dist/learning.js"
+      },
+      "require": {
+        "types": "./dist/learning.d.cts",
+        "default": "./dist/learning.cjs"
+      }
+    },
     "./package.json": "./package.json"
   },
   "bin": {
