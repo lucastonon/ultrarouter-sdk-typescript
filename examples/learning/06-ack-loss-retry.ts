@@ -4,8 +4,13 @@
  * the same Idempotency-Key and the same bytes; your code then retries the whole report call too. The
  * gateway still holds exactly one outcome, so learning consumes it once.
  *
+ * The task requires exactly OK after trimming; an empty or wrong answer reports failure.
+ *
  * Every report carries a source_event_id derived from (request id, verdict, source, your key), and
  * the durable queue replays the identical event, so retries are duplicates by construction.
+ *
+ * The example resolves or creates order-desk (config:read/write) and sends its slug on every call.
+ * Enable learning separately for its ct_... ID after full workspace learning consent.
  *
  * Run: ULTRAROUTER_API_KEY=ur_sk_test_... ULTRAROUTER_BASE_URL=http://localhost:8080 \
  *      npx tsx examples/learning/06-ack-loss-retry.ts
@@ -36,11 +41,19 @@ const lossyFetch: FetchLike = async (url, init) => {
 };
 
 const ur = new UltraRouter({ defaultModel: model, fetch: lossyFetch, maxRetries: 2 });
+// Keep traffic and learning controls on the same call type (config:read/write required).
+const callTypes = await ur.ur.callTypes.list();
+const callType =
+  callTypes.data.find((ct) => ct.slug === 'order-desk') ??
+  (await ur.ur.callTypes.create({ slug: 'order-desk' }));
+
 const res = await ur.chat.completions.create({
-  messages: [{ role: 'user', content: 'Please process order A-100.' }],
+  call_type: callType.slug,
+  messages: [{ role: 'user', content: 'Say OK.' }],
 });
 
-const params = { verdict: 'pass', source: 'verifier', idempotencyKey: 'order-a100-check' } as const;
+const verdict = res.choices[0]?.message.content?.trim() === 'OK' ? 'pass' : 'fail';
+const params = { verdict, source: 'verifier', idempotencyKey: 'exact-ok-check' } as const;
 const first = await ur.ur.outcomes.report(res.requestId, params);
 // Your own retry policy (a crash-and-resume, a job retry) calls report again with the same input.
 const retried = await ur.ur.outcomes.report(res.requestId, params);

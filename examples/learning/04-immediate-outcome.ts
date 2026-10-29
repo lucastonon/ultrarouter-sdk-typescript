@@ -4,6 +4,9 @@
  * (`pending`, with a receipt) and applied once the request lands. There is no sleep and no retry
  * loop here: `waitForReceipt` polls the public receipt route with bounded backoff, and is optional.
  *
+ * The example resolves or creates order-desk (config:read/write) and sends its slug on every call.
+ * Enable learning separately for its ct_... ID after full workspace learning consent.
+ *
  * Run: ULTRAROUTER_API_KEY=ur_sk_test_... ULTRAROUTER_BASE_URL=http://localhost:8080 \
  *      npx tsx examples/learning/04-immediate-outcome.ts
  * Expected output:
@@ -16,6 +19,11 @@ import { createOrderDesk, orderDeskTools } from '@ultrarouter/sdk/learning';
 const ur = new UltraRouter({
   defaultModel: process.env.ULTRAROUTER_MODEL ?? 'openai/gpt-5.2-mini',
 });
+// Keep traffic and learning controls on the same call type (config:read/write required).
+const callTypes = await ur.ur.callTypes.list();
+const callType =
+  callTypes.data.find((ct) => ct.slug === 'order-desk') ??
+  (await ur.ur.callTypes.create({ slug: 'order-desk' }));
 
 type ToolCall = { id: string; function: { name: string; arguments: string } };
 
@@ -26,7 +34,7 @@ let finalRequestId = '';
 let finishedAt = 0;
 for (let step = 0; step < 12; step += 1) {
   const res = await ur.chat.completions.create(
-    { messages, tools: orderDeskTools() },
+    { call_type: callType.slug, messages, tools: orderDeskTools() },
     { episodeKey },
   );
   finalRequestId = res.requestId;

@@ -261,7 +261,24 @@ async function main(argv) {
 
     for (const r of runnable) {
       const entry = r.isTs ? transpile(dir, r.name) : r.name;
+      const requestStart = gw.requests.length;
       const result = await runNode(dir, entry, gw.url);
+      const requests = gw.requests.slice(requestStart);
+      const wrongId = requests.find((req) =>
+        /^\/v1\/call-types\/(?!ct_)[^/]+\/learning(?:\/|$)/.test(req.path),
+      );
+      const unassigned =
+        r.label.startsWith('docs/plug-and-play-learning.md:') &&
+        requests.some(
+          (req) => req.path === '/v1/chat/completions' && req.body?.call_type !== 'support-reply',
+        );
+      if (wrongId || unassigned)
+        failures.push({
+          label: r.label,
+          detail: wrongId
+            ? 'learning controls must use the ct_... ID'
+            : 'learning traffic must declare its call-type slug',
+        });
       ran += 1;
       if (result.code !== 0) {
         failures.push({

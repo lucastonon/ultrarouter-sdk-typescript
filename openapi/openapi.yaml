@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: b11bf0a70b45db39987efcaebcd40442ad2b2c0e28a1383fc8dbc6f363fd1c00
+# spec-sha256: 8780a8c93354811cdf149d410a642199a5159af2390cc022428c073758c3624f
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -6897,7 +6897,7 @@ components:
               minimum: 1
               type: "integer"
             mode:
-              description: "`evaluate`: a candidate must win a prospective randomized evaluation against the incumbent under a rule frozen when the evaluation starts. `manual`: a candidate waits for an owner/admin promote or reject. `immediate`: publication is activation (the legacy behaviour)."
+              description: "`evaluate`: a candidate must win a prospective randomized evaluation against the incumbent under a rule frozen when the evaluation starts; it serves a randomized share of eligible episodes during that comparison. `manual`: a candidate waits for an owner/admin promote or reject. `immediate`: publication is activation (the legacy behaviour)."
               enum:
                 - "evaluate"
                 - "manual"
@@ -10436,7 +10436,7 @@ components:
                 - "latest_verified_at"
               type: "object"
             governed:
-              description: "Publication is not activation: candidates serve only once promoted."
+              description: "Uses a configured promotion policy. In evaluate mode, candidates receive a randomized share of eligible episodes before any active-version change."
               type: "boolean"
             last_evaluation:
               description: "The newest evaluation (any decision)."
@@ -10751,7 +10751,7 @@ components:
                   minimum: 1
                   type: "integer"
                 mode:
-                  description: "`evaluate`: a candidate must win a prospective randomized evaluation against the incumbent under a rule frozen when the evaluation starts. `manual`: a candidate waits for an owner/admin promote or reject. `immediate`: publication is activation (the legacy behaviour)."
+                  description: "`evaluate`: a candidate must win a prospective randomized evaluation against the incumbent under a rule frozen when the evaluation starts; it serves a randomized share of eligible episodes during that comparison. `manual`: a candidate waits for an owner/admin promote or reject. `immediate`: publication is activation (the legacy behaviour)."
                   enum:
                     - "evaluate"
                     - "manual"
@@ -11204,7 +11204,7 @@ components:
           minimum: 1
           type: "integer"
         mode:
-          description: "`evaluate`: a candidate must win a prospective randomized evaluation against the incumbent under a rule frozen when the evaluation starts. `manual`: a candidate waits for an owner/admin promote or reject. `immediate`: publication is activation (the legacy behaviour)."
+          description: "`evaluate`: a candidate must win a prospective randomized evaluation against the incumbent under a rule frozen when the evaluation starts; it serves a randomized share of eligible episodes during that comparison. `manual`: a candidate waits for an owner/admin promote or reject. `immediate`: publication is activation (the legacy behaviour)."
           enum:
             - "evaluate"
             - "manual"
@@ -11558,7 +11558,7 @@ components:
             - "latest_verified_at"
           type: "object"
         governed:
-          description: "Publication is not activation: candidates serve only once promoted."
+          description: "Uses a configured promotion policy. In evaluate mode, candidates receive a randomized share of eligible episodes before any active-version change."
           type: "boolean"
         last_evaluation:
           description: "The newest evaluation (any decision)."
@@ -11873,7 +11873,7 @@ components:
               minimum: 1
               type: "integer"
             mode:
-              description: "`evaluate`: a candidate must win a prospective randomized evaluation against the incumbent under a rule frozen when the evaluation starts. `manual`: a candidate waits for an owner/admin promote or reject. `immediate`: publication is activation (the legacy behaviour)."
+              description: "`evaluate`: a candidate must win a prospective randomized evaluation against the incumbent under a rule frozen when the evaluation starts; it serves a randomized share of eligible episodes during that comparison. `manual`: a candidate waits for an owner/admin promote or reject. `immediate`: publication is activation (the legacy behaviour)."
               enum:
                 - "evaluate"
                 - "manual"
@@ -17999,7 +17999,7 @@ paths:
                         description: "`epm1` — the pure rule version a stored setting is parsed under."
                         type: "string"
                       self_serve:
-                        description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate, served only once promoted."
+                        description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate. In evaluate mode it receives a randomized share of eligible episodes before the policy can make it the active version."
                         type: "boolean"
                       source_call_type_id:
                         nullable: true
@@ -18200,7 +18200,7 @@ paths:
                         description: "`epm1` — the pure rule version a stored setting is parsed under."
                         type: "string"
                       self_serve:
-                        description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate, served only once promoted."
+                        description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate. In evaluate mode it receives a randomized share of eligible episodes before the policy can make it the active version."
                         type: "boolean"
                       source_call_type_id:
                         nullable: true
@@ -18469,7 +18469,7 @@ paths:
                         description: "`epm1` — the pure rule version a stored setting is parsed under."
                         type: "string"
                       self_serve:
-                        description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate, served only once promoted."
+                        description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate. In evaluate mode it receives a randomized share of eligible episodes before the policy can make it the active version."
                         type: "boolean"
                       source_call_type_id:
                         nullable: true
@@ -18575,7 +18575,7 @@ paths:
                         description: "`epm1` — the pure rule version a stored setting is parsed under."
                         type: "string"
                       self_serve:
-                        description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate, served only once promoted."
+                        description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate. In evaluate mode it receives a randomized share of eligible episodes before the policy can make it the active version."
                         type: "boolean"
                       source_call_type_id:
                         nullable: true
@@ -18755,7 +18755,7 @@ paths:
         - "Learning"
   "/v1/call-types/{id}/learning/enable":
     post:
-      description: "Turns learning on with a reflection model, a promotion policy and a recipe. Requires the workspace’s corrections and knowledge consent (409 `conflict`, message `corrections_consent_required` if either is missing). The owner grants both through the dashboard Allow learning opt-in or the session-authenticated `PUT /v1/workspaces/{id}/self-learning` with `{\"enabled\":true}`; a bearer key cannot grant workspace consent. Also requires a reflection model that resolves to a WORKSPACE-OWNED offer — a custom provider or a provider the workspace stored its own key for (400 `invalid_request`, message `reflection_model_not_workspace_owned`). No staff grant is needed. A published version is a candidate; it serves only once the policy promotes it. Re-enabling updates the policy; a running evaluation keeps its frozen rule. Owner/admin session or a `config:write` key. Dual auth: an api key (`config:read` to read, `config:write` to change) or an owner/admin session with the `X-UR-Workspace` header; a viewer may read only. A call type of another workspace is a 404. Requires API-key scope: config:write."
+      description: "Turns learning on with a reflection model, a promotion policy and a recipe. Requires the workspace’s corrections and knowledge consent (409 `conflict`, message `corrections_consent_required` if either is missing). The owner grants both through the dashboard Allow learning opt-in or the session-authenticated `PUT /v1/workspaces/{id}/self-learning` with `{\"enabled\":true}`; a bearer key cannot grant workspace consent. Also requires a reflection model that resolves to a WORKSPACE-OWNED offer — a custom provider or a provider the workspace stored its own key for (400 `invalid_request`, message `reflection_model_not_workspace_owned`). No staff grant is needed. A published version is a candidate. In evaluate mode it receives a randomized share of eligible episodes during comparison; only a win makes it the active version. Re-enabling updates the policy; a running evaluation keeps its frozen rule. Owner/admin session or a `config:write` key. Dual auth: an api key (`config:read` to read, `config:write` to change) or an owner/admin session with the `X-UR-Workspace` header; a viewer may read only. A call type of another workspace is a 404. Requires API-key scope: config:write."
       operationId: "enableLearning"
       parameters:
         -

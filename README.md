@@ -273,8 +273,15 @@ call type. A report is accepted even before the gateway has finished writing the
 import UltraRouter, { mintEpisodeKey } from '@ultrarouter/sdk';
 
 const ur = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini' });
+const callTypes = await ur.ur.callTypes.list();
+const callType =
+  callTypes.data.find((ct) => ct.slug === 'support-reply') ??
+  (await ur.ur.callTypes.create({ slug: 'support-reply' }));
 const res = await ur.chat.completions.create(
-  { messages: [{ role: 'user', content: 'Please process order A-100.' }] },
+  {
+    call_type: callType.slug,
+    messages: [{ role: 'user', content: 'Please process order A-100.' }],
+  },
   { episodeKey: mintEpisodeKey() }, // one key per task; every step carries it
 );
 
@@ -284,10 +291,6 @@ if (report.receipt !== null) {
   const receipt = await ur.ur.outcomes.waitForReceipt(report.receipt.id, { timeoutMs: 10_000 });
   console.log(receipt.status); // "applied"
 }
-const callTypes = await ur.ur.callTypes.list();
-const callType =
-  callTypes.data.find((ct) => ct.slug === 'support-reply') ??
-  (await ur.ur.callTypes.create({ slug: 'support-reply' }));
 console.log((await ur.ur.learning.status(callType.id)).state); // learning requires the ct_… id
 ```
 

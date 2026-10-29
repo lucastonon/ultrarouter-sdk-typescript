@@ -397,7 +397,7 @@ function verifySignature(secret, timestamp, rawBody, signature) {
 
 /**
  * Start the mock gateway on 127.0.0.1.
- * @param {{ port?: number }} [options]
+ * @param {{ port?: number, sayOkReply?: string }} [options]
  * @returns {Promise<{ url: string, port: number, requests: object[], close: () => Promise<void> }>}
  */
 export async function startMockGateway(options = {}) {
@@ -867,7 +867,10 @@ export async function startMockGateway(options = {}) {
     learn.onServed(rid.id, episodeKey);
 
     const question = lastUserText(body.messages);
-    let content = `Mock reply to: ${question.slice(0, 80)}`;
+    let content =
+      question === 'Say OK.'
+        ? (options.sayOkReply ?? 'OK')
+        : `Mock reply to: ${question.slice(0, 80)}`;
     let toolCalls;
     let finish = 'stop';
     const wantsTools =

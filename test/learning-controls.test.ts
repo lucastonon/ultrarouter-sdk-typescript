@@ -109,7 +109,7 @@ describe('routes', () => {
     ]);
   });
 
-  it('accepts a slug and encodes ids', async () => {
+  it('URL-encodes caller-provided identifiers without claiming gateway acceptance', async () => {
     const r = recording();
     await client(r.fetch).ur.learning.version('support reply', 'epb/2');
     expect(r.calls[0]!.url).toBe(

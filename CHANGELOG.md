@@ -9,6 +9,15 @@ contain breaking changes; they are always listed under **Changed** or **Removed*
 
 The version in `package.json` is now `0.1.0`: these changes ship as the 0.1.0 release.
 
+### Fixed
+
+- The acknowledgement-loss example verifies the exact answer instead of hardcoding success;
+  negative executions check wrong non-empty and empty answers report failure.
+- Learning examples now resolve a call type before traffic and send its slug on every call; controls
+  use its `ct_...` ID. The controls-only example refuses a missing ID or slug before any request.
+  Setup instructions require both knowledge and corrections consent, granted by an owner/admin.
+  The guide explains limited candidate exposure during randomized evaluation before activation.
+
 ### Added
 
 - **Plug-and-play learning** (new guide: `docs/plug-and-play-learning.md`; eight runnable programs in

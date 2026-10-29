@@ -5,6 +5,9 @@
  *
  * The task runs in the order-desk demonstration environment (a toy, not evidence of efficacy).
  *
+ * The example resolves or creates order-desk (config:read/write) and sends its slug on every call.
+ * Enable learning separately for its ct_... ID after full workspace learning consent.
+ *
  * Run: ULTRAROUTER_API_KEY=ur_sk_test_... ULTRAROUTER_BASE_URL=http://localhost:8080 \
  *      npx tsx examples/learning/01-openai-client.ts
  * Expected output (the verdict depends on the model):
@@ -27,6 +30,13 @@ if (baseURL === undefined || apiKey === undefined) {
 }
 const model = process.env.ULTRAROUTER_MODEL ?? 'openai/gpt-5.2-mini';
 
+const ur = new UltraRouter();
+// Keep traffic and learning controls on the same call type (config:read/write required).
+const callTypes = await ur.ur.callTypes.list();
+const callType =
+  callTypes.data.find((ct) => ct.slug === 'order-desk') ??
+  (await ur.ur.callTypes.create({ slug: 'order-desk' }));
+
 // 1. The only change to your OpenAI client: point it at the gateway.
 const openai = new OpenAI({ baseURL: `${baseURL.replace(/\/+$/, '')}/v1`, apiKey });
 
@@ -41,7 +51,7 @@ while (steps < 12) {
   const requestId = mintRequestId();
   const { data, response } = await openai.chat.completions
     .create(
-      { model, messages, tools: orderDeskTools() },
+      { model, messages, tools: orderDeskTools(), ...{ call_type: callType.slug } },
       { headers: correlationHeaders({ requestId, episodeKey }) },
     )
     .withResponse();
@@ -60,7 +70,6 @@ console.log(`steps: ${String(steps)} · episode ${episodeKey} · last request ${
 
 // 3. Verify against the real state, then report once, on the final request of the episode.
 const verdict = desk.verify();
-const ur = new UltraRouter();
 const report = await ur.ur.outcomes.report(lastRequestId, {
   verdict: verdict.verdict,
   source: 'verifier',

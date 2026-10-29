@@ -28,6 +28,26 @@ serves them; an older gateway answers `not_found`.
 - [Pitfalls](#pitfalls)
 - [Related](#related)
 
+## Route learning traffic to the configured call type
+
+Learning controls require a `ct_…` ID; inference uses that call type's **slug** in `call_type`.
+Resolve or create the type before sending traffic (`config:read`, and `config:write` to create):
+
+```ts
+import UltraRouter from '@ultrarouter/sdk';
+
+const ur = new UltraRouter();
+const { data } = await ur.ur.callTypes.list();
+const ct =
+  data.find((item) => item.slug === 'support-reply') ??
+  (await ur.ur.callTypes.create({ slug: 'support-reply' }));
+console.log(ct.id, ct.slug); // ID for learning controls; slug for inference
+```
+
+The traffic snippets below use `support-reply`. Enable learning separately for its ID after the
+full workspace opt-in described under Learning controls. The runnable order-desk examples perform
+the same lookup before their first call.
+
 ## Correlation: request ids and episodes
 
 Every chat completion and embeddings result carries `requestId`: the id the gateway echoes on the
@@ -48,7 +68,10 @@ one episode and share one verdict.
 ```ts
 import UltraRouter, { mintEpisodeKey, mintRequestId } from '@ultrarouter/sdk';
 
-const ur = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini' });
+const ur = new UltraRouter({
+  defaults: { callType: 'support-reply' },
+  defaultModel: 'openai/gpt-5.2-mini',
+});
 const episodeKey = mintEpisodeKey(); // one per task
 
 const requestId = mintRequestId(); // known before the call returns
@@ -59,7 +82,11 @@ const res = await ur.chat.completions.create(
 console.log(res.requestId === requestId, res.ur.request_id);
 
 // Or let the client mint every id.
-const minting = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini', requestIds: 'client' });
+const minting = new UltraRouter({
+  defaults: { callType: 'support-reply' },
+  defaultModel: 'openai/gpt-5.2-mini',
+  requestIds: 'client',
+});
 const stream = await minting.chat.completions.create({
   stream: true,
   messages: [{ role: 'user', content: 'Count to three.' }],
@@ -96,7 +123,10 @@ in this repository), and exported as `OUTCOME_VERDICTS`.
 ```ts
 import UltraRouter from '@ultrarouter/sdk';
 
-const ur = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini' });
+const ur = new UltraRouter({
+  defaults: { callType: 'support-reply' },
+  defaultModel: 'openai/gpt-5.2-mini',
+});
 const res = await ur.chat.completions.create({
   messages: [{ role: 'user', content: 'Extract the invoice total as JSON.' }],
 });
@@ -156,7 +186,10 @@ as a `conflict` instead of counting twice.
 ```ts
 import UltraRouter from '@ultrarouter/sdk';
 
-const ur = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini' });
+const ur = new UltraRouter({
+  defaults: { callType: 'support-reply' },
+  defaultModel: 'openai/gpt-5.2-mini',
+});
 const res = await ur.chat.completions.create({ messages: [{ role: 'user', content: 'hi' }] });
 
 const params = { verdict: 'pass', source: 'verifier', idempotencyKey: 'unit-suite' } as const;
@@ -208,7 +241,10 @@ and with an `aborted` error when the signal fires. Transient failures between re
 ```ts
 import UltraRouter from '@ultrarouter/sdk';
 
-const ur = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini' });
+const ur = new UltraRouter({
+  defaults: { callType: 'support-reply' },
+  defaultModel: 'openai/gpt-5.2-mini',
+});
 const res = await ur.chat.completions.create(
   { messages: [{ role: 'user', content: 'Please process order E-500.' }] },
   { episodeKey: 'order-E-500' },
@@ -244,7 +280,10 @@ test suite: exit code 0 passes, another code fails, a process killed by a signal
 import UltraRouter from '@ultrarouter/sdk';
 import { runVerifier, verdictFromCommand } from '@ultrarouter/sdk/learning';
 
-const ur = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini' });
+const ur = new UltraRouter({
+  defaults: { callType: 'support-reply' },
+  defaultModel: 'openai/gpt-5.2-mini',
+});
 const res = await ur.chat.completions.create({
   messages: [{ role: 'user', content: 'Write a function that adds two numbers.' }],
 });
@@ -335,7 +374,10 @@ again under the same identity, which can never count twice. The secret comes fro
 import UltraRouter from '@ultrarouter/sdk';
 import { createWebhookReceiver, signWebhook } from '@ultrarouter/sdk/learning';
 
-const ur = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini' });
+const ur = new UltraRouter({
+  defaults: { callType: 'support-reply' },
+  defaultModel: 'openai/gpt-5.2-mini',
+});
 const res = await ur.chat.completions.create({
   messages: [{ role: 'user', content: 'Draft the shipping notice for order 4711.' }],
 });
@@ -363,7 +405,7 @@ With Node's `http` module, collect the body as a string before calling `handle`
 
 ## Learning controls
 
-`ur.ur.learning` steers learning for one call type (a `ct_…` id or a slug). Reads need a key with
+`ur.ur.learning` steers learning for one call type (the `ct_…` id, not its slug). Reads need a key with
 `config:read`; changes need `config:write` (or an owner/admin session).
 
 | Method                                                             | Does                                                                                                  |
@@ -403,7 +445,8 @@ verified, consumed, `incorporated_active`, `backlog` — arrived is not incorpor
 `usage` (tokens and failed calls, separately from cash) and `outcome_receipts` by state.
 
 A candidate becomes active according to the promotion mode: under `evaluate`, a randomized
-evaluation against the incumbent decided by a rule frozen before it starts (a negative or
+evaluation serves the candidate on its randomly assigned share of eligible episodes and the incumbent
+on the other arm. A rule frozen before the comparison decides activation (a negative or
 inconclusive result keeps the incumbent); under `manual`, your promote or reject; under
 `immediate`, publication is activation.
 
@@ -430,7 +473,11 @@ refusal stays a plain `UltraRouterError`.
 import UltraRouter, { LearningError } from '@ultrarouter/sdk';
 
 const ur = new UltraRouter();
-const callType = 'support-reply';
+const { data } = await ur.ur.callTypes.list();
+const ct =
+  data.find((item) => item.slug === 'support-reply') ??
+  (await ur.ur.callTypes.create({ slug: 'support-reply' }));
+const callType = ct.id; // controls require the ID, not ct.slug
 try {
   const enabled = await ur.ur.learning.enable(callType, {
     reflection_model: 'openai/gpt-5.2',
@@ -480,7 +527,10 @@ improves an agent.
 import UltraRouter, { type ChatMessage } from '@ultrarouter/sdk';
 import { createOrderDesk, orderDeskTools } from '@ultrarouter/sdk/learning';
 
-const ur = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini' });
+const ur = new UltraRouter({
+  defaults: { callType: 'support-reply' },
+  defaultModel: 'openai/gpt-5.2-mini',
+});
 const desk = createOrderDesk('s3');
 const messages: ChatMessage[] = [{ role: 'user', content: desk.task }];
 let finalRequestId = '';
@@ -534,7 +584,11 @@ const openai = ur.asOpenAI(OpenAI); // or new OpenAI({ baseURL: `${gateway}/v1`,
 const requestId = mintRequestId();
 const { data, response } = await openai.chat.completions
   .create(
-    { model: 'openai/gpt-5.2-mini', messages: [{ role: 'user', content: 'Process order A-100.' }] },
+    {
+      ...{ call_type: 'support-reply' },
+      model: 'openai/gpt-5.2-mini',
+      messages: [{ role: 'user', content: 'Process order A-100.' }],
+    },
     { headers: correlationHeaders({ requestId, episodeKey: 'order-A-100' }) },
   )
   .withResponse();
@@ -553,7 +607,11 @@ Streaming tool loops assemble tool-call deltas by `index` (arguments may arrive 
 ```ts
 import UltraRouter from '@ultrarouter/sdk';
 
-const ur = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini', requestIds: 'client' });
+const ur = new UltraRouter({
+  defaults: { callType: 'support-reply' },
+  defaultModel: 'openai/gpt-5.2-mini',
+  requestIds: 'client',
+});
 const stream = await ur.chat.completions.create({
   stream: true,
   messages: [{ role: 'user', content: 'Summarize order A-100 in one line.' }],

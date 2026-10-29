@@ -7,6 +7,9 @@
  *
  * The secret comes from ULTRAROUTER_WEBHOOK_SECRET (shared with the sender; never logged).
  *
+ * The example resolves or creates order-desk (config:read/write) and sends its slug on every call.
+ * Enable learning separately for its ct_... ID after full workspace learning consent.
+ *
  * Run: ULTRAROUTER_API_KEY=ur_sk_test_... ULTRAROUTER_BASE_URL=http://localhost:8080 \
  *      ULTRAROUTER_WEBHOOK_SECRET=change-me npx tsx examples/learning/05-delayed-webhook.ts
  * Expected output:
@@ -26,11 +29,16 @@ if (secret === undefined || secret === '') throw new Error('set ULTRAROUTER_WEBH
 const ur = new UltraRouter({
   defaultModel: process.env.ULTRAROUTER_MODEL ?? 'openai/gpt-5.2-mini',
 });
+// Keep traffic and learning controls on the same call type (config:read/write required).
+const callTypes = await ur.ur.callTypes.list();
+const callType =
+  callTypes.data.find((ct) => ct.slug === 'order-desk') ??
+  (await ur.ur.callTypes.create({ slug: 'order-desk' }));
 
 // 1. The agent's turn: one call; keep its request id with your order reference.
 const desk = createOrderDesk('s4');
 const messages: ChatMessage[] = [{ role: 'user', content: `${desk.task} Reply with one line.` }];
-const res = await ur.chat.completions.create({ messages });
+const res = await ur.chat.completions.create({ call_type: callType.slug, messages });
 const pending = { orderId: 'D-400', requestId: res.requestId };
 console.log(`request ${pending.requestId} finished; the outcome arrives later by webhook`);
 

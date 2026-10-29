@@ -152,7 +152,7 @@ export const LEARNING_ERROR_ACTIONS: Readonly<Record<LearningErrorReason, string
     'The learning provider refused for quota. Learning retries with backoff on its own; resume it once the quota is raised.',
   budget_exhausted:
     'The learning budget is spent. Raise the budget or wait for the next period, then resume learning.',
-  not_found: 'Check the call type id (or slug) and the version id.',
+  not_found: 'Check the ct_... call type id (not its slug) and the version id.',
   forbidden:
     'Use a key with the config:write scope (config:read for reads) or an owner/admin session.',
 };

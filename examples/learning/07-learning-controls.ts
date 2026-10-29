@@ -7,12 +7,14 @@
  * promotion policy, a version conflict, not found, forbidden) is a LearningError carrying the
  * reason, the gateway's named refusal and what to do.
  *
- * Needs a key with config:write (config:read for reads), the workspace's corrections consent on,
+ * Needs a key with config:write (config:read for reads), the workspace's full learning opt-in (knowledge and corrections consent),
  * and a reflection model the workspace owns (a custom provider, or a provider it stored its own key
- * for). Use a call type you can experiment with: this example ends with learning disabled for it.
+ * for). An owner/admin grants consent on the dashboard Learning page or through the signed-in
+ * session PUT /v1/workspaces/{id}/self-learning with {"enabled":true}; API keys cannot grant it.
+ * Use a call type you can experiment with: this example ends with learning disabled for it.
  *
  * Run: ULTRAROUTER_API_KEY=ur_sk_test_... ULTRAROUTER_BASE_URL=http://localhost:8080 \
- *      ULTRAROUTER_CALL_TYPE=ct_... ULTRAROUTER_REFLECTION_MODEL=openai/gpt-5.2 \
+ *      ULTRAROUTER_CALL_TYPE_ID=ct_... ULTRAROUTER_REFLECTION_MODEL=openai/gpt-5.2 \
  *      npx tsx examples/learning/07-learning-controls.ts
  * Expected output (the numbers depend on your traffic):
  *   status: learning · active epb_… · candidate epb_… (evaluating) · evidence 31 verified / 23 incorporated
@@ -25,8 +27,13 @@
  */
 import UltraRouter, { LearningError } from '@ultrarouter/sdk';
 
+const callType = process.env.ULTRAROUTER_CALL_TYPE_ID;
+if (callType === undefined || !/^ct_[A-Za-z0-9_-]+$/.test(callType)) {
+  throw new Error(
+    'set ULTRAROUTER_CALL_TYPE_ID to the ct_... ID from callTypes.list(), not a slug',
+  );
+}
 const ur = new UltraRouter();
-const callType = process.env.ULTRAROUTER_CALL_TYPE ?? 'learning-controls-demo';
 const reflectionModel = process.env.ULTRAROUTER_REFLECTION_MODEL ?? 'openai/gpt-5.2';
 const learning = ur.ur.learning;
 

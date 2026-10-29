@@ -103,9 +103,13 @@ import UltraRouter, { LearningError, mintEpisodeKey } from '@ultrarouter/sdk';
 import { createOrderDesk } from '@ultrarouter/sdk/learning';
 
 const ur = new UltraRouter({ defaultModel: 'openai/gpt-5.2-mini' });
+const callTypes = await ur.ur.callTypes.list();
+const callType =
+  callTypes.data.find((ct) => ct.slug === 'support-reply') ??
+  (await ur.ur.callTypes.create({ slug: 'support-reply' }));
 const desk = createOrderDesk('s1'); // a deterministic demo environment with a real verifier
 const res = await ur.chat.completions.create(
-  { messages: [{ role: 'user', content: desk.task }] },
+  { call_type: callType.slug, messages: [{ role: 'user', content: desk.task }] },
   { episodeKey: mintEpisodeKey() }, // the same key on every step of one task; a new key per task
 );
 
@@ -119,10 +123,6 @@ const report = await ur.ur.outcomes.report(res.requestId, {
 console.log(report.status, report.result?.status); // "delivered" "pending" (applied once the request lands)
 
 try {
-  const callTypes = await ur.ur.callTypes.list();
-  const callType =
-    callTypes.data.find((ct) => ct.slug === 'support-reply') ??
-    (await ur.ur.callTypes.create({ slug: 'support-reply' }));
   console.log((await ur.ur.learning.status(callType.id)).state); // learning requires the ct_… id
 } catch (err) {
   if (err instanceof LearningError) console.log(err.reason, err.action);
