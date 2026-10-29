@@ -123,6 +123,15 @@ durable queue for `ur.ur.outcomes.flush()`), or `rejected` (the gateway definiti
 event; see `error`). It never throws for a delivery failure; it throws `invalid_request` before
 sending anything for a malformed request id, verdict, source or option.
 
+| Gateway answer                                            | `report` resolves                                            |
+| --------------------------------------------------------- | ------------------------------------------------------------ |
+| 202, `result.status` `accepted`, `duplicate` or `pending` | `delivered`, with `result` and its `receipt`                 |
+| 404 `request_not_found: …` (an unknown gateway-minted id) | `rejected`; nothing will ever apply it                       |
+| 409 `conflict` (a different payload under the same key)   | `rejected`; the first event stands                           |
+| 429 `outcome_backlog_full` (`Retry-After: 30`)            | `queued` once the transport's retries are spent; flush later |
+| 500 (recording failed; retry)                             | `queued`; the next flush replays the identical event         |
+| timeout, connection failure, other 5xx                    | `queued`                                                     |
+
 ## Retries never double-report
 
 Every report carries a `source_event_id` derived from the request id, the verdict, the source and
@@ -166,17 +175,27 @@ outcome can arrive before the request it names. It is then accepted durably: `re
 `pending` and `receipt` describes it. The gateway applies it when the request lands; nothing on
 your side waits or sleeps.
 
-| Receipt `status` | Meaning                                                                                    |
-| ---------------- | ------------------------------------------------------------------------------------------ |
-| `pending`        | Accepted; waiting for the request to land.                                                 |
-| `applied`        | Recorded.                                                                                  |
-| `rejected`       | Refused; `reason` says why.                                                                |
-| `failed`         | Could not be applied.                                                                      |
-| `expired`        | The request never landed in time (`request_not_found`: unknown, or not in your workspace). |
+A receipt (`object: "outcome_receipt"`, id `ocr_…`) carries the request id, the channel and kind
+as sent, the `source_event_id`, and, once applied, the recorded `outcome_event_id`, its
+`outcome_status` (`accepted` the first time, `duplicate` when it was already recorded) and the
+`artifact_id`. `expires_at` is its next deadline.
 
-An applied outcome also says how it relates to the episode (`episode`): `associated` (it is the
-episode's verdict), `pending`, `not_recorded`, or `not_applicable` (it does not teach, or the
-request has no episode).
+| Receipt `status` | Meaning                                                                                             |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| `pending`        | Accepted; waiting for the request to be recorded.                                                   |
+| `applied`        | Recorded.                                                                                           |
+| `rejected`       | Refused once the request was known; `reason` says why.                                              |
+| `failed`         | Recording kept hitting an internal error.                                                           |
+| `expired`        | No request with this id appeared in your workspace within 15 minutes (`reason: request_not_found`). |
+
+`episode` says how an applied teaching outcome relates to the request's episode: `status` is
+`associated` (the episode carries a verdict; `trace_id` names it), `pending` (waiting for the
+episode to be recorded), `not_recorded` (no episode held the request in time: episode recording
+off, a held-out request, no consent) or `not_applicable` (the outcome does not teach: a proxy,
+behavioral or mechanical signal). `verdict` says what the outcome did: `recorded` (it is the
+episode's verdict), `kept_earlier` (the first verdict wins), `revised` (a `supersedes` revision
+before any learned version used the episode) or `revised_after_incorporation` (recorded and
+counted; the episode is not silently unlearned).
 
 `ur.ur.outcomes.receipt(id)` and `ur.ur.outcomes.receiptsForRequest(requestId)` read the public
 receipt routes. `ur.ur.outcomes.waitForReceipt(id, { timeoutMs, signal })` polls one with bounded
@@ -203,7 +222,7 @@ if (report.receipt !== null) {
     timeoutMs: 10_000,
     signal: AbortSignal.timeout(15_000),
   });
-  console.log(receipt.status, receipt.episode); // "applied" "associated"
+  console.log(receipt.status, receipt.episode.status, receipt.episode.verdict); // applied associated recorded
 }
 ```
 
@@ -343,40 +362,64 @@ With Node's `http` module, collect the body as a string before calling `handle`
 ## Learning controls
 
 `ur.ur.learning` steers learning for one call type (a `ct_…` id or a slug). Reads need a key with
-`config:read`; changes need `config:write` (or an owner/admin session); promote and reject need an
-owner or admin.
+`config:read`; changes need `config:write` (or an owner/admin session).
 
-| Method                                                             | Does                                                                                                                                 |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `status(callTypeId)`                                               | State, provider, active and candidate versions, evaluation, evidence (arrived / verified / incorporated / pending), backlog, budget. |
-| `enable(callTypeId, { reflection_model, promotion?, recipe? })`    | Self-serve enable. Needs the workspace's corrections consent and a provider for `reflection_model`.                                  |
-| `pause(callTypeId)` / `resume(callTypeId)`                         | Stop learning and evaluation decisions while the active version keeps serving; start again.                                          |
-| `disable(callTypeId)`                                              | The kill switch: no learned version is served.                                                                                       |
-| `versions(callTypeId)` / `version(callTypeId, versionId)`          | The history with each version's state; one version's lessons and provenance.                                                         |
-| `rollback(callTypeId, { version_id, reason? })`                    | Point the active version at an exact earlier version.                                                                                |
-| `promote(callTypeId, versionId)` / `reject(callTypeId, versionId)` | Manual decisions on a candidate.                                                                                                     |
-| `evaluations(callTypeId)`                                          | Evaluations with their frozen rule, arms, interval and decision.                                                                     |
+| Method                                                             | Does                                                                                                  |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `status(callTypeId)`                                               | The `learning` status (below).                                                                        |
+| `enable(callTypeId, params)`                                       | Self-serve enable (below).                                                                            |
+| `pause(callTypeId)` / `resume(callTypeId)`                         | Stop reflecting and evaluating while the active version keeps serving; start again.                   |
+| `disable(callTypeId)`                                              | The kill switch: no learned version is served.                                                        |
+| `versions(callTypeId)` / `version(callTypeId, versionId)`          | The history (`epb_…` versions with their state); one version's lessons, transitions and reflection.   |
+| `rollback(callTypeId, { version_id? })`                            | Point the active version at an earlier version; without `version_id`, the one active before this one. |
+| `promote(callTypeId, versionId)` / `reject(callTypeId, versionId)` | Manual decisions; a running evaluation of that version stops.                                         |
+| `evaluations(callTypeId)`                                          | Evaluations (`lev_…`) with their frozen rule, arms, difference and decision.                          |
 
-A candidate becomes active according to the promotion mode: `evaluate` (a randomized evaluation
-against the incumbent, decided by a rule frozen before it starts; a negative or inconclusive result
-keeps the incumbent), `manual`, or `immediate` (publication is activation). States you may see:
-`not_enabled`, `active`, `paused`, `disabled`, `unavailable` (no usable learning provider; there is
-no fallback to another provider), `quota_exhausted` and `budget_exhausted`.
+Every control resolves a `learning_control` result: the `action`, whether it `changed` anything
+(controls are idempotent), the `version_id` it acted on, a `stopped_evaluation_id`, and the
+resulting status as `learning`.
 
-A refusal you can act on rejects with a `LearningError` (an `UltraRouterError`) whose `reason` names
-it and whose `action` says what to do:
+**Enable.** `enable(callTypeId, { reflection_model, lessons_mode?, lessons_k?, promotion?, recipe? })`
+needs the workspace's corrections consent and a `reflection_model` that resolves to a
+workspace-owned offer: one of your custom providers, or a provider your workspace stored its own
+key for. There is no platform or paid fallback. `promotion` is an object of policy changes merged
+over the current policy: `mode` (`evaluate`, `manual` or `immediate`), `objective` (`success` or
+`cost_noninferior`), `min_verified_per_arm`, `max_verified_per_arm`, `alpha`, `min_effect_pp`,
+`noninferiority_margin_pp`, `candidate_share` and `max_duration_hours`. `recipe` chooses the
+learner's `validator`, `generation` and `observations`.
 
-| `reason`               | Typical cause                                        |
-| ---------------------- | ---------------------------------------------------- |
-| `missing_consent`      | The workspace's corrections consent is off.          |
-| `provider_unavailable` | No provider key for the reflection model.            |
-| `quota_exhausted`      | The learning provider refused for quota.             |
-| `budget_exhausted`     | The learning budget is spent.                        |
-| `not_found`            | Unknown call type or version.                        |
-| `forbidden`            | The key lacks the scope, or the role is not allowed. |
+**Status.** `state` is `off`, `collecting` (enabled, waiting for evidence), `learning` (a
+reflection is due or an evaluation runs), `paused`, `disabled`, `unavailable` (consent, provider or
+repeated failures), `quota_exhausted` or `budget_exhausted` (refused for resources and retried with
+backoff), with a `reason` code. The status also carries the `recipe`, the `reflection` model and
+whether its provider is available, the `promotion` policy, the `active_version` and
+`latest_candidate`, the running `evaluation` and the `last_evaluation`, `evidence` (recorded,
+verified, consumed, `incorporated_active`, `backlog` — arrived is not incorporated), `budget`,
+`usage` (tokens and failed calls, separately from cash) and `outcome_receipts` by state.
 
-`LEARNING_ERROR_CODES` lists the gateway codes each reason is recognised from; any other refusal
-stays a plain `UltraRouterError`.
+A candidate becomes active according to the promotion mode: under `evaluate`, a randomized
+evaluation against the incumbent decided by a rule frozen before it starts (a negative or
+inconclusive result keeps the incumbent); under `manual`, your promote or reject; under
+`immediate`, publication is activation.
+
+A refusal you can act on rejects with a `LearningError` (an `UltraRouterError`). The gateway names
+the refusal as the first token of its message; the error carries it as `refusal`, its parenthesized
+sub-reason as `detail`, the actionable `reason`, and the `action` to take:
+
+| `reason`               | `refusal` (status)                                                                                    | Typical cause                                                                                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `missing_consent`      | `corrections_consent_required` (409)                                                                  | The workspace's corrections consent is off.                                                                                                          |
+| `provider_unavailable` | `reflection_model_not_workspace_owned` (400)                                                          | `detail`: `no_offer`, `platform_offer_only`, `no_workspace_key`, `model_denied_by_policy`, `workspace_funding_not_byok`, `workspace_funding_frozen`. |
+| `not_enabled`          | `learning_not_enabled` (409)                                                                          | A control before `enable`.                                                                                                                           |
+| `invalid_promotion`    | `promotion_invalid` (400)                                                                             | `detail` names the out-of-range policy field.                                                                                                        |
+| `version_conflict`     | `no_rollback_target`, `rollback_target_not_earlier`, `version_already_active`, `version_active` (409) | The version is not in a state the control can act on.                                                                                                |
+| `not_found`            | `not_found` (404)                                                                                     | Unknown call type or version.                                                                                                                        |
+| `forbidden`            | `permission` (403)                                                                                    | The key lacks the scope, or the role is not allowed.                                                                                                 |
+
+`quota_exhausted` and `budget_exhausted` are reasons too (a `spend_cap_exceeded` refusal maps to
+`budget_exhausted`), but learning normally reports them as states, not refusals.
+`LEARNING_ERROR_CODES` lists the refusals and codes each reason is recognised from; any other
+refusal stays a plain `UltraRouterError`.
 
 ```ts
 import UltraRouter, { LearningError } from '@ultrarouter/sdk';
@@ -384,25 +427,30 @@ import UltraRouter, { LearningError } from '@ultrarouter/sdk';
 const ur = new UltraRouter();
 const callType = 'support-reply';
 try {
-  const status = await ur.ur.learning.enable(callType, {
+  const enabled = await ur.ur.learning.enable(callType, {
     reflection_model: 'openai/gpt-5.2',
-    promotion: { mode: 'evaluate', objective: 'success' },
+    promotion: { mode: 'evaluate', objective: 'success', min_verified_per_arm: 30 },
   });
-  console.log(status.state, status.active?.id, status.candidate?.state, status.evidence);
+  const status = enabled.learning;
+  console.log(status.state, status.active_version?.id, status.latest_candidate?.state);
+  console.log(
+    status.evidence.verified,
+    status.evidence.incorporated_active,
+    status.outcome_receipts,
+  );
 
-  await ur.ur.learning.pause(callType);
-  await ur.ur.learning.resume(callType);
+  console.log((await ur.ur.learning.pause(callType)).learning.state); // "paused"
+  console.log((await ur.ur.learning.resume(callType)).changed); // true
 
   const history = await ur.ur.learning.versions(callType);
-  const earlier = history.data.find((v) => v.state === 'retired');
-  if (earlier !== undefined) {
-    const rolled = await ur.ur.learning.rollback(callType, { version_id: earlier.id });
-    console.log('serving', rolled.active?.id);
+  if (history.data.some((v) => v.state === 'retired')) {
+    const rolled = await ur.ur.learning.rollback(callType); // to the previously active version
+    console.log('serving', rolled.version_id);
   }
   const [latest] = (await ur.ur.learning.evaluations(callType)).data;
-  console.log(latest?.decision, latest?.candidate, latest?.incumbent);
+  console.log(latest?.decision, latest?.arms.candidate, latest?.difference);
 } catch (err) {
-  if (err instanceof LearningError) console.error(err.reason, '-', err.action);
+  if (err instanceof LearningError) console.error(err.reason, err.refusal, err.detail, err.action);
   else throw err;
 }
 ```

@@ -100,6 +100,56 @@ export const COVERAGE = {
     methods: ['ur.callTypes.verifiedMemory.disable'],
     tests: ['test/resources.test.ts', 'test/surface.test.ts'],
   },
+  // Learning controls (per call type)
+  getLearningStatus: {
+    methods: ['ur.learning.status'],
+    tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
+  },
+  enableLearning: {
+    methods: ['ur.learning.enable'],
+    tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
+  },
+  pauseLearning: {
+    methods: ['ur.learning.pause'],
+    tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
+  },
+  resumeLearning: {
+    methods: ['ur.learning.resume'],
+    tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
+  },
+  disableLearning: {
+    methods: ['ur.learning.disable'],
+    tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
+  },
+  listLearningVersions: {
+    methods: ['ur.learning.versions'],
+    tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
+  },
+  getLearningVersion: {
+    methods: ['ur.learning.version'],
+    tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
+  },
+  rollbackLearning: {
+    methods: ['ur.learning.rollback'],
+    tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
+  },
+  promoteLearningVersion: {
+    methods: ['ur.learning.promote'],
+    tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
+  },
+  rejectLearningVersion: {
+    methods: ['ur.learning.reject'],
+    tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
+  },
+  listLearningEvaluations: {
+    methods: ['ur.learning.evaluations'],
+    tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
+  },
+  // Episode memory: a lab-authorised lever (staff grant) with no dedicated method; reach it with
+  // `ur.request()`. Customers enable learning through `ur.learning.enable` instead.
+  getEpisodeMemory: { methods: [], tests: [] },
+  enableEpisodeMemory: { methods: [], tests: [] },
+  disableEpisodeMemory: { methods: [], tests: [] },
   // Feedback, generation, audit readiness
   submitFeedback: {
     methods: ['ur.requests.feedback'],
@@ -193,8 +243,16 @@ export const COVERAGE = {
     tests: ['test/flywheel.test.ts', 'test/surface.test.ts'],
   },
   recordRequestOutcome: {
-    methods: ['ur.outcomes.record'],
-    tests: ['test/flywheel.test.ts', 'test/surface.test.ts'],
+    methods: ['ur.outcomes.record', 'ur.outcomes.report'],
+    tests: ['test/flywheel.test.ts', 'test/outcome-report.test.ts', 'test/surface.test.ts'],
+  },
+  getOutcomeReceipt: {
+    methods: ['ur.outcomes.receipt', 'ur.outcomes.waitForReceipt'],
+    tests: ['test/outcome-receipts.test.ts', 'test/surface.test.ts'],
+  },
+  listRequestOutcomeReceipts: {
+    methods: ['ur.outcomes.receiptsForRequest'],
+    tests: ['test/outcome-receipts.test.ts', 'test/surface.test.ts'],
   },
   recordOutcomesBatch: {
     methods: ['ur.outcomes.batch'],
@@ -327,6 +385,17 @@ export const COVERAGE = {
   listPromptCandidates: { methods: [], tests: [] },
   decidePromptCandidate: { methods: [], tests: [] },
   // Workspace administration (dashboard session)
+  // These owner-session operations use the typed request escape hatch; API keys do not grant access.
+  activateAdaptiveRollout: { methods: [], tests: [] },
+  revokeAdaptiveRollout: { methods: [], tests: [] },
+  getPrepaidAccount: { methods: [], tests: [] },
+  createCreditCheckout: { methods: [], tests: [] },
+  setPrepaidFunding: { methods: [], tests: [] },
+  cancelProRenewal: { methods: [], tests: [] },
+  createProCheckout: { methods: [], tests: [] },
+  updateApiKey: { methods: [], tests: [] },
+  getSelfLearning: { methods: [], tests: [] },
+  putSelfLearning: { methods: [], tests: [] },
   acceptInvitation: { methods: [], tests: [] },
   createWorkspace: { methods: [], tests: [] },
   renameWorkspace: { methods: [], tests: [] },

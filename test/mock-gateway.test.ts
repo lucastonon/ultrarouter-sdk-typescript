@@ -45,12 +45,48 @@ function bodyFor(method: string, template: string): unknown {
   if (template === '/v1/artifacts/{id}/outcomes')
     return { outcomes: [{ channel: 'mechanical', kind: 'schema_valid' }] };
   if (template === '/v1/call-types') return { slug: 'support' };
+  if (template === '/v1/requests/{id}/outcomes')
+    return { channel: 'mechanical', kind: 'schema_valid' };
+  if (template === '/v1/call-types/{id}/learning/enable')
+    return { reflection_model: 'openai/gpt-5.2', promotion: { mode: 'evaluate' } };
   return method === 'get' || method === 'delete' ? undefined : {};
 }
 
 function concrete(template: string): string {
   if (template === '/v1/models/{id}') return '/v1/models/openai/gpt-5.2-mini';
+  // Learning routes: a call type of its own per route, and the seeded candidate version.
+  if (template.startsWith('/v1/call-types/{id}/learning')) {
+    const callType = `ct_${template.replace(/[^a-z]+/g, '_')}`;
+    return template.replace('{id}', callType).replace('{version_id}', 'epb_mock_3');
+  }
   return template.replace(/\{[^}]+\}/g, 'x_1');
+}
+
+/**
+ * State a route needs before it can answer 2xx: the learning controls act on an enabled call type,
+ * and a receipt read needs a receipt. Returns the concrete path to call.
+ */
+async function prepare(template: string, headers: Record<string, string>): Promise<string> {
+  const path = concrete(template);
+  const json = { ...headers, 'content-type': 'application/json' };
+  if (template.startsWith('/v1/call-types/{id}/learning/') && !template.endsWith('/enable')) {
+    const base = path.slice(0, path.indexOf('/learning') + '/learning'.length);
+    await fetch(`${gw.url}${base}/enable`, {
+      method: 'POST',
+      headers: json,
+      body: JSON.stringify({ reflection_model: 'openai/gpt-5.2' }),
+    });
+  }
+  if (template === '/v1/outcome-receipts/{id}') {
+    const res = await fetch(`${gw.url}/v1/requests/req_c_receipt/outcomes`, {
+      method: 'POST',
+      headers: json,
+      body: JSON.stringify({ channel: 'computable', kind: 'oracle_pass', source_event_id: 'e1' }),
+    });
+    const created = (await res.json()) as { receipt: { id: string } };
+    return `/v1/outcome-receipts/${created.receipt.id}`;
+  }
+  return path;
 }
 
 function signedHeaders(
@@ -86,7 +122,8 @@ describe('the mock gateway answers every published operation with a schema-valid
         Object.assign(headers, signedHeaders(KEY, raw ?? '', 'reviewer'));
       if (/oracles\/\{id\}\/(jobs\/claim|verdicts)$/.test(template))
         Object.assign(headers, signedHeaders(MOCK_ORACLE_SECRET as string, raw ?? '', 'oracle'));
-      const res = await fetch(`${gw.url}${concrete(template)}`, {
+      const target = await prepare(template, { authorization: `Bearer ${KEY}` });
+      const res = await fetch(`${gw.url}${target}`, {
         method: method.toUpperCase(),
         headers,
         ...(raw !== undefined ? { body: raw } : {}),

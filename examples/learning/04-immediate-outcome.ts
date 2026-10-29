@@ -8,7 +8,7 @@
  *      npx tsx examples/learning/04-immediate-outcome.ts
  * Expected output:
  *   reported 0 ms after the final response · gateway answered pending (or accepted)
- *   receipt rcpt_… applied · episode associated
+ *   receipt ocr_… applied · episode associated (recorded)
  */
 import UltraRouter, { mintEpisodeKey, type ChatMessage } from '@ultrarouter/sdk';
 import { createOrderDesk, orderDeskTools } from '@ultrarouter/sdk/learning';
@@ -64,6 +64,9 @@ if (report.status !== 'delivered' || report.receipt === null) {
     timeoutMs: 30_000,
     signal: AbortSignal.timeout(60_000),
   });
-  console.log(`receipt ${final.id} ${final.status} · episode ${final.episode ?? 'unknown'}`);
+  const episode = final.episode;
+  console.log(
+    `receipt ${final.id} ${final.status} · episode ${episode.status}${episode.verdict === null ? '' : ` (${episode.verdict})`}`,
+  );
   if (final.status !== 'applied') process.exitCode = 1;
 }

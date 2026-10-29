@@ -235,7 +235,7 @@ npm run test:integration  # against a REAL gateway; skipped unless ULTRAROUTER_A
   byte-for-byte with the Python SDK too; `test/order-desk.test.ts` pins their SHA-256 and
   `test/outcome-report.test.ts` checks `OUTCOME_VERDICTS` against the first. Change them in both SDKs
   together.
-- The request/response types of the outcome-receipt and learning routes are written by hand in
-  `src/outcome-receipts.ts` and `src/learning-controls.ts` until those routes are in
-  `openapi/openapi.yaml`; then alias them from the generated schemas and add the operations to
-  `scripts/lib/coverage-map.mjs`.
+- `LearningError` maps a learning refusal by the gateway's named refusal (the first `snake_case`
+  token of the error message, with an optional `(detail)`), then by the error code
+  (`LEARNING_ERROR_CODES` in `src/learning-controls.ts`); keep the table in step with the Python
+  SDK.

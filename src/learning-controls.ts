@@ -1,227 +1,98 @@
 /**
  * Learning controls for one call type: `ur.ur.learning.*` over `/v1/call-types/{id}/learning*`.
  *
- * Learning turns verified outcomes into candidate adaptations, evaluates each candidate against the
- * version currently serving (the incumbent), and promotes it only when the frozen decision rule
- * says so. These controls read that state and steer it: enable, pause, resume, disable, version
- * history, rollback to an exact earlier version, and manual promote / reject.
+ * Learning turns verified outcomes into candidate versions, evaluates each candidate against the
+ * version currently serving (the incumbent), and promotes it only when the promotion policy says so.
+ * These controls read that state and steer it: enable, pause, resume, disable, version history,
+ * rollback to an exact earlier version, and manual promote / reject.
  *
- * The request and response types are written by hand ahead of the published API description and
- * are kept in this one module so they can be replaced by the generated ones without touching
- * callers. Fields may be added; the open string unions accept values a newer gateway introduces.
+ * Every shape is aliased from the generated OpenAPI types, so it cannot drift from the contract.
  */
 
 import { UltraRouterError } from './errors.js';
+import type { components } from './generated/types.js';
+import type { OperationRequestBody, OperationResponse } from './resources.js';
+
+type Schemas = components['schemas'];
+
+/** `GET /v1/call-types/{id}/learning`: a call type's learning status (`object: "learning"`). */
+export type LearningStatus = Schemas['LearningStatus'];
 
 /**
- * The learning state of a call type. `not_enabled` and `disabled` serve no learned version;
- * `active` learns and serves; `paused` keeps serving the active version but stops learning and
- * evaluation; `unavailable` has no usable learning provider; `quota_exhausted` and
- * `budget_exhausted` are stopped by a provider quota or the learning budget (never silently).
+ * The learning state: `off`, `collecting` (enabled, waiting for evidence), `learning` (a reflection
+ * is due or an evaluation runs), `paused`, `disabled` (the kill switch), `unavailable` (consent,
+ * provider or repeated failures), `quota_exhausted` / `budget_exhausted` (refused for resources and
+ * retried with backoff — never silent).
  */
-export type LearningState =
-  | 'not_enabled'
-  | 'active'
-  | 'paused'
-  | 'disabled'
-  | 'unavailable'
-  | 'quota_exhausted'
-  | 'budget_exhausted'
-  | (string & {});
+export type LearningState = LearningStatus['state'];
+
+/** The result of every learning control: what happened plus the resulting status. */
+export type LearningControlResult = Schemas['LearningControlResponse'];
+
+/** The control a {@link LearningControlResult} reports. */
+export type LearningControlAction = LearningControlResult['action'];
+
+/** The full promotion policy (as the status reports it). */
+export type LearningPromotionPolicy = Schemas['LearningPromotionPolicy'];
 
 /**
- * How a candidate becomes active: `evaluate` (randomized evaluation against the incumbent under a
- * rule frozen before it starts), `manual` (an owner or admin promotes or rejects it) or `immediate`
+ * How a candidate becomes active: `evaluate` (a randomized evaluation against the incumbent under a
+ * rule frozen when it starts), `manual` (an owner or admin promotes or rejects it) or `immediate`
  * (publication is activation).
  */
-export type LearningPromotionMode = 'evaluate' | 'manual' | 'immediate';
+export type LearningPromotionMode = LearningPromotionPolicy['mode'];
 
 /**
- * What an evaluation must show: `success` (better task success) or `cost_noninferior` (lower cost
- * without losing more success than the declared margin).
+ * What an evaluation must show: `success` (a higher whole-task success rate) or `cost_noninferior`
+ * (a lower mean cost with success not worse than the declared margin).
  */
-export type LearningObjective = 'success' | 'cost_noninferior';
+export type LearningObjective = LearningPromotionPolicy['objective'];
 
-/** A learned version's state. Versions are immutable; only their state moves. */
-export type LearningVersionState =
-  'candidate' | 'evaluating' | 'active' | 'retired' | 'rejected' | 'superseded' | (string & {});
+/**
+ * `ur.ur.learning.enable(callTypeId, params)`: `reflection_model` (required; it must resolve to a
+ * workspace-owned offer), and optionally `lessons_mode`, `lessons_k`, `promotion` (an object of
+ * policy changes merged over the current policy) and `recipe`.
+ */
+export type EnableLearningParams = Schemas['EnableLearningRequest'];
 
-/** An evaluation's decision; `running` until it decides. */
-export type LearningEvaluationDecision =
-  | 'running'
-  | 'promoted'
-  | 'retained'
-  | 'inconclusive'
-  | 'rejected'
-  | 'stopped_budget'
-  | 'stopped_manual'
-  | (string & {});
+/** `ur.ur.learning.rollback(callTypeId, params)`: the earlier `version_id` (default: the previous one). */
+export type LearningRollbackParams = OperationRequestBody<'rollbackLearning'>;
 
-/** A promotion policy: the mode and, for `evaluate`, the objective. */
-export interface LearningPromotionPolicy {
-  /** How a candidate becomes active. */
-  mode: LearningPromotionMode;
-  /** What an evaluation must show (for `evaluate`). */
-  objective?: LearningObjective | undefined;
-}
+/** A learned version as the history reports it (`object: "learning_version"`, id `epb_…`). */
+export type LearningVersion = Schemas['LearningVersion'];
 
-/** `ur.ur.learning.enable(callTypeId, params)`: the self-serve enable request. */
-export interface EnableLearningParams {
-  /** The model (one your workspace has configured) that writes candidate adaptations. */
-  reflection_model: string;
-  /** The promotion policy, or just its mode (default `evaluate`). */
-  promotion?: LearningPromotionMode | LearningPromotionPolicy | undefined;
-  /** A named learning recipe (default: the gateway's default recipe). */
-  recipe?: string | undefined;
-}
+/** A version's state. Versions are immutable; only their state moves. */
+export type LearningVersionState = LearningVersion['state'];
 
-/** A short reference to a learned version inside a status. */
-export interface LearningVersionRef {
-  /** The version id. */
-  id: string;
-  /** The version state. */
-  state: LearningVersionState;
-  /** When the version was created (ISO-8601). */
-  created_at?: string;
-}
-
-/** Evidence counts: outcomes that arrived, were verified, were incorporated, and are still pending. */
-export interface LearningEvidenceCounts {
-  /** Outcomes that arrived. */
-  arrived: number;
-  /** Outcomes verified against an episode. */
-  verified: number;
-  /** Verified outcomes already used to learn. */
-  incorporated: number;
-  /** Outcomes still waiting (for example on a pending receipt). */
-  pending: number;
-}
-
-/** `GET /v1/call-types/{id}/learning`: the learning status of one call type. */
-export interface LearningStatus {
-  /** The call type id. */
-  call_type_id: string;
-  /** The learning state. */
-  state: LearningState;
-  /** A stable machine reason for the state, when there is one (for example `provider_missing`). */
-  reason?: string | null;
-  /** The learning provider: the reflection model and whether it is usable. */
-  provider?: { model: string | null; state?: string } | null;
-  /** The promotion policy. */
-  promotion?: LearningPromotionPolicy | null;
-  /** The version serving now (the incumbent), or `null`. */
-  active?: LearningVersionRef | null;
-  /** The newest candidate, or `null`. */
-  candidate?: LearningVersionRef | null;
-  /** The running or latest evaluation, or `null`. */
-  evaluation?: LearningEvaluation | null;
-  /** Evidence counts. */
-  evidence?: LearningEvidenceCounts;
-  /** Outcomes waiting to be learned from. */
-  backlog?: number | null;
-  /** The learning budget: its state and what is left. */
-  budget?: { state: 'ok' | 'exhausted' | (string & {}); remaining_usd?: number | null } | null;
-}
-
-/** One learned version in the history. */
-export interface LearningVersion {
-  /** The version id. */
-  id: string;
-  /** The version state. */
-  state: LearningVersionState;
-  /** Why the version is in this state (a stable machine code), when known. */
-  state_reason?: string | null;
-  /** The version this one was derived from, or `null`. */
-  parent_version_id?: string | null;
-  /** The number of lessons in the version. */
-  lesson_count?: number;
-  /** The evaluation that decided this version, when one did. */
-  evaluation_id?: string | null;
-  /** When the version was created (ISO-8601). */
-  created_at: string;
-}
+/** A short reference to a version inside a status (`active_version`, `latest_candidate`). */
+export type LearningVersionRef = NonNullable<LearningStatus['active_version']>;
 
 /** `GET /v1/call-types/{id}/learning/versions`: the version history, newest first. */
-export interface LearningVersionList {
-  /** The versions. */
-  data: LearningVersion[];
-}
-
-/** One lesson of a learned version. */
-export interface LearningLesson {
-  /** The lesson id (stable across versions). */
-  id: string;
-  /** The lesson text. */
-  text: string;
-  /** The tool the lesson is scoped to, or `null` for general guidance. */
-  tool?: string | null;
-  /** How many evidence cases support it. */
-  evidence_count?: number;
-}
+export type LearningVersionList = OperationResponse<'listLearningVersions'>;
 
 /** `GET /v1/call-types/{id}/learning/versions/{version_id}`: one version, its lessons and provenance. */
-export interface LearningVersionDetail extends LearningVersion {
-  /** The lessons. */
-  lessons: LearningLesson[];
-  /** A summary of where the lessons came from. */
-  provenance?: { episodes: number; outcomes: number } | null;
-}
+export type LearningVersionDetail = Schemas['LearningVersionDetail'];
+
+/** One lesson of a learned version. */
+export type LearningLesson = LearningVersionDetail['lessons'][number];
+
+/** One prospective randomized evaluation (`object: "learning_evaluation"`, id `lev_…`). */
+export type LearningEvaluation = Schemas['LearningEvaluation'];
+
+/** An evaluation's decision; every decision except `promoted` keeps the incumbent. */
+export type LearningEvaluationDecision = LearningEvaluation['decision'];
 
 /** One arm's evidence in an evaluation. */
-export interface LearningArmEvidence {
-  /** The version the arm served. */
-  version_id: string | null;
-  /** Episodes with a verified verdict. */
-  verified: number;
-  /** Verified episodes that passed. */
-  passed: number;
-  /** Episodes whose verdict stayed unknown. */
-  unknown?: number;
-}
-
-/** One prospective evaluation of a candidate against the incumbent. */
-export interface LearningEvaluation {
-  /** The evaluation id. */
-  id: string;
-  /** The decision (`running` until decided). */
-  decision: LearningEvaluationDecision;
-  /** Why it decided, when it has. */
-  reason?: string | null;
-  /** The objective, frozen when the evaluation started. */
-  objective?: LearningObjective;
-  /** The decision rule, frozen when the evaluation started. */
-  rule?: Record<string, unknown>;
-  /** The candidate arm. */
-  candidate?: LearningArmEvidence;
-  /** The incumbent arm. */
-  incumbent?: LearningArmEvidence;
-  /** The one-sided interval on (candidate − incumbent) success, in percentage points. */
-  interval?: { lower: number | null; upper: number | null } | null;
-  /** When it started (ISO-8601). */
-  started_at?: string;
-  /** When it decided (ISO-8601), else `null`. */
-  decided_at?: string | null;
-}
+export type LearningArmEvidence = LearningEvaluation['arms']['candidate'];
 
 /** `GET /v1/call-types/{id}/learning/evaluations`: evaluations, newest first. */
-export interface LearningEvaluationList {
-  /** The evaluations. */
-  data: LearningEvaluation[];
-}
+export type LearningEvaluationList = OperationResponse<'listLearningEvaluations'>;
 
-/** `ur.ur.learning.rollback(callTypeId, params)`: point the active version at an earlier one. */
-export interface LearningRollbackParams {
-  /** The exact earlier version to serve. */
-  version_id: string;
-  /** Why (recorded with the audit event). */
-  reason?: string | undefined;
-}
+/** Evidence counts: recorded, verified, consumed, incorporated by the active version, backlog. */
+export type LearningEvidence = LearningStatus['evidence'];
 
-/** `ur.ur.learning.promote` / `reject`: an optional reason for the manual decision. */
-export interface LearningDecisionParams {
-  /** Why (recorded with the audit event). */
-  reason?: string | undefined;
-}
+/** Outcome receipts attributed to the call type, by state. */
+export type LearningReceiptCounts = LearningStatus['outcome_receipts'];
 
 // ─────────────────────────────── actionable errors ───────────────────────────────
 
@@ -229,28 +100,34 @@ export interface LearningDecisionParams {
 export type LearningErrorReason =
   | 'missing_consent'
   | 'provider_unavailable'
+  | 'not_enabled'
+  | 'invalid_promotion'
+  | 'version_conflict'
   | 'quota_exhausted'
   | 'budget_exhausted'
   | 'not_found'
   | 'forbidden';
 
-/** The gateway error codes each {@link LearningErrorReason} is recognised from. */
+/**
+ * The refusals each {@link LearningErrorReason} is recognised from: a named refusal (the first
+ * token of the gateway's message, e.g. `corrections_consent_required: …` or
+ * `reflection_model_not_workspace_owned (no_workspace_key): …`), else the error code.
+ */
 export const LEARNING_ERROR_CODES: Readonly<Record<LearningErrorReason, readonly string[]>> = {
-  missing_consent: [
-    'consent_required',
-    'corrections_consent_required',
-    'learning_consent_required',
+  missing_consent: ['corrections_consent_required'],
+  provider_unavailable: ['reflection_model_not_workspace_owned'],
+  not_enabled: ['learning_not_enabled'],
+  invalid_promotion: ['promotion_invalid'],
+  version_conflict: [
+    'version_already_active',
+    'version_active',
+    'no_rollback_target',
+    'rollback_target_not_earlier',
   ],
-  provider_unavailable: [
-    'learning_provider_unavailable',
-    'reflection_provider_unavailable',
-    'learning_unavailable',
-    'provider_unavailable',
-  ],
-  quota_exhausted: ['quota_exhausted', 'provider_quota_exhausted', 'learning_quota_exhausted'],
-  budget_exhausted: ['budget_exhausted', 'learning_budget_exhausted', 'spend_cap_exceeded'],
+  quota_exhausted: ['quota_exhausted'],
+  budget_exhausted: ['budget_exhausted', 'spend_cap_exceeded'],
   not_found: ['not_found'],
-  forbidden: ['permission', 'forbidden'],
+  forbidden: ['permission'],
 };
 
 /** What to do about each {@link LearningErrorReason}. */
@@ -258,29 +135,44 @@ export const LEARNING_ERROR_ACTIONS: Readonly<Record<LearningErrorReason, string
   missing_consent:
     "A workspace owner or admin must turn on the workspace's corrections consent before learning can be enabled.",
   provider_unavailable:
-    'Configure a provider key for the reflection model in this workspace (learning never falls back to another provider), then retry.',
+    'Give the reflection model a workspace-owned offer (one of your custom providers, or a provider your workspace stored its own key for); learning never falls back to a platform provider. `detail` names what is missing.',
+  not_enabled: 'Enable learning for this call type first (ur.ur.learning.enable).',
+  invalid_promotion:
+    'Fix the promotion policy: `detail` names the field or combination that is out of range.',
+  version_conflict:
+    'Read the version history (ur.ur.learning.versions): a rollback needs an earlier, non-active version (or a previous active one), and promote / reject act on a candidate that is not already active.',
   quota_exhausted:
-    'The learning provider refused for quota. Learning resumes on its own after the provider quota resets, or resume it once the quota is raised.',
+    'The learning provider refused for quota. Learning retries with backoff on its own; resume it once the quota is raised.',
   budget_exhausted:
     'The learning budget is spent. Raise the budget or wait for the next period, then resume learning.',
   not_found: 'Check the call type id (or slug) and the version id.',
   forbidden:
-    'Use a key with the config:write scope (config:read for reads) or an owner/admin session; promote and reject need an owner or admin.',
+    'Use a key with the config:write scope (config:read for reads) or an owner/admin session.',
 };
 
 /**
- * A learning control refused for a reason you can act on: `reason` names it and `action` says what
- * to do. It is an {@link UltraRouterError}, so `code`, `status`, `requestId` and `retryable` are the
- * gateway's.
+ * A learning control refused for a reason you can act on: `reason` names it, `refusal` is the
+ * gateway's named refusal (or code), `detail` its parenthesized sub-reason when there is one, and
+ * `action` says what to do. It is an {@link UltraRouterError}, so `code`, `status`, `requestId` and
+ * `retryable` are the gateway's.
  */
 export class LearningError extends UltraRouterError {
   /** Why the control was refused. */
   readonly reason: LearningErrorReason;
+  /** The named refusal (the first token of the message, e.g. `no_rollback_target`) or the error code. */
+  readonly refusal: string;
+  /** The parenthesized sub-reason (e.g. `no_workspace_key`), or `null`. */
+  readonly detail: string | null;
   /** What to do about it. */
   readonly action: string;
 
   /** Wrap a gateway error with its learning reason. */
-  constructor(cause: UltraRouterError, reason: LearningErrorReason) {
+  constructor(
+    cause: UltraRouterError,
+    reason: LearningErrorReason,
+    refusal: string,
+    detail: string | null,
+  ) {
     super({
       code: cause.code,
       message: `${cause.message} (${LEARNING_ERROR_ACTIONS[reason]})`,
@@ -292,27 +184,46 @@ export class LearningError extends UltraRouterError {
     });
     this.name = 'LearningError';
     this.reason = reason;
+    this.refusal = refusal;
+    this.detail = detail;
     this.action = LEARNING_ERROR_ACTIONS[reason];
   }
 }
 
-/** The {@link LearningErrorReason} for a gateway error code, or `null`. */
-export function learningErrorReason(code: string): LearningErrorReason | null {
+/**
+ * The named refusal a gateway message starts with: a `snake_case` token (at least one underscore),
+ * optionally followed by a parenthesized sub-reason, then `:` or the end. `null` for anything else.
+ */
+export function parseLearningRefusal(
+  message: string,
+): { refusal: string; detail: string | null } | null {
+  const m = /^([a-z][a-z0-9]*(?:_[a-z0-9]+)+)(?:\s*\(([a-z0-9_]+)\))?(?=\s*(?::|$))/.exec(message);
+  if (m === null) return null;
+  return { refusal: m[1] as string, detail: m[2] ?? null };
+}
+
+/** The {@link LearningErrorReason} for a named refusal or an error code, or `null`. */
+export function learningErrorReason(token: string): LearningErrorReason | null {
   for (const [reason, codes] of Object.entries(LEARNING_ERROR_CODES)) {
-    if (codes.includes(code)) return reason as LearningErrorReason;
+    if (codes.includes(token)) return reason as LearningErrorReason;
   }
   return null;
 }
 
 /**
- * Turn a gateway refusal of a learning control into a {@link LearningError} when its code is one of
- * {@link LEARNING_ERROR_CODES}; anything else (a transport failure, an unrecognised code) is returned
- * unchanged.
+ * Turn a gateway refusal of a learning control into a {@link LearningError}: the named refusal at
+ * the start of the message decides first, then the error code. Anything else (a transport failure,
+ * an unrecognised refusal) is returned unchanged.
  */
 export function toLearningError(err: unknown): unknown {
   if (!(err instanceof UltraRouterError) || err instanceof LearningError || err.status === 0) {
     return err;
   }
-  const reason = learningErrorReason(err.code);
-  return reason === null ? err : new LearningError(err, reason);
+  const named = parseLearningRefusal(err.message);
+  const byName = named === null ? null : learningErrorReason(named.refusal);
+  if (byName !== null && named !== null) {
+    return new LearningError(err, byName, named.refusal, named.detail);
+  }
+  const byCode = learningErrorReason(err.code);
+  return byCode === null ? err : new LearningError(err, byCode, err.code, null);
 }

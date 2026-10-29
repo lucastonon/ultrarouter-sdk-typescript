@@ -7,20 +7,49 @@
  * asynchronous). The gateway then answers `status: "pending"` with a receipt and applies the outcome
  * once the request lands, so a client never has to wait or sleep before reporting.
  *
- * These types are written by hand ahead of the published API description and are kept in this one
- * module so they can be replaced by the generated ones without touching callers. Fields may be added.
+ * Every shape is aliased from the generated OpenAPI types, so it cannot drift from the contract.
  */
 
 import { UltraRouterError } from './errors.js';
-import type { OutcomeChannel, OutcomeResult } from './outcomes.js';
+import type { OperationResponse } from './resources.js';
+
+/** One outcome receipt (`object: "outcome_receipt"`, id `ocr_…`). */
+export type OutcomeReceiptRecord = OperationResponse<'getOutcomeReceipt'>;
 
 /**
- * A receipt's lifecycle: `pending` until its request lands, then exactly one final state —
- * `applied` (recorded), `rejected` (refused, see `reason`), `failed` (could not be applied) or
- * `expired` (its request never landed in time; an unknown or foreign request id ends here too,
- * indistinguishable from an unknown one).
+ * A receipt's lifecycle: `pending` until its request is recorded, then exactly one final state —
+ * `applied` (recorded), `rejected` (refused, see `reason`), `failed` (recording kept hitting an
+ * internal error) or `expired` (no request with this id appeared in your workspace within 15
+ * minutes; `reason: "request_not_found"`, indistinguishable from an unknown id).
  */
-export type OutcomeReceiptState = 'pending' | 'applied' | 'rejected' | 'failed' | 'expired';
+export type OutcomeReceiptState = OutcomeReceiptRecord['status'];
+
+/** The episode association of an applied teaching outcome: `{ status, trace_id, verdict }`. */
+export type OutcomeReceiptEpisode = OutcomeReceiptRecord['episode'];
+
+/**
+ * How an outcome relates to the request's episode: `associated` (the episode carries a verdict),
+ * `pending` (a teaching outcome waiting for its episode to be recorded), `not_recorded` (no episode
+ * held the request in time) or `not_applicable` (the outcome does not teach, or was not applied).
+ */
+export type OutcomeEpisodeAssociation = OutcomeReceiptEpisode['status'];
+
+/**
+ * What an outcome did to its episode: `recorded` (it is the verdict), `kept_earlier` (the first
+ * verdict wins), `revised` (a `supersedes` revision before the episode was learned from) or
+ * `revised_after_incorporation` (recorded and counted, never silently unlearned); `null` until
+ * associated.
+ */
+export type OutcomeEpisodeVerdict = OutcomeReceiptEpisode['verdict'];
+
+/** `GET /v1/requests/{id}/outcome-receipts`: every receipt for one request, oldest first. */
+export type OutcomeReceiptList = OperationResponse<'listRequestOutcomeReceipts'>;
+
+/**
+ * The answer of `POST /v1/requests/{id}/outcomes`: the outcome result (`accepted`, `duplicate`, or
+ * `pending` while the request has not been recorded yet) plus its durable `receipt`.
+ */
+export type RequestOutcomeResult = OperationResponse<'recordRequestOutcome'>;
 
 /** The final receipt states: {@link OutcomeReceiptState} values other than `pending`. */
 export const TERMINAL_RECEIPT_STATES: readonly OutcomeReceiptState[] = [
@@ -34,61 +63,6 @@ export const TERMINAL_RECEIPT_STATES: readonly OutcomeReceiptState[] = [
 export function isTerminalReceiptState(state: string): boolean {
   return (TERMINAL_RECEIPT_STATES as readonly string[]).includes(state);
 }
-
-/**
- * How an applied outcome relates to the request's episode: `associated` (it is the episode's
- * verdict), `pending` (the episode record has not landed yet), `not_recorded` (it never landed in
- * time) or `not_applicable` (the outcome does not teach, or the request has no episode).
- */
-export type OutcomeEpisodeAssociation =
-  'associated' | 'pending' | 'not_recorded' | 'not_applicable';
-
-/** One outcome receipt as the gateway reports it. */
-export interface OutcomeReceiptRecord {
-  /** The receipt id. */
-  id: string;
-  /** The request the outcome names. */
-  request_id: string;
-  /** The receipt state. */
-  status: OutcomeReceiptState;
-  /** A stable machine reason for a non-applied state (for example `request_not_found`), else `null`. */
-  reason?: string | null;
-  /** How the outcome relates to the request's episode. */
-  episode?: OutcomeEpisodeAssociation | null;
-  /** The outcome channel. */
-  channel: OutcomeChannel | (string & {});
-  /** The channel kind. */
-  kind: string;
-  /** The idempotency discriminator the outcome was reported with. */
-  source_event_id?: string | null;
-  /** The recorded outcome event, once applied. */
-  outcome_event_id?: string | null;
-  /** When the receipt was created (ISO-8601). */
-  created_at?: string;
-  /** When the receipt last changed (ISO-8601). */
-  updated_at?: string;
-  /** When the outcome was applied (ISO-8601), else `null`. */
-  applied_at?: string | null;
-  /** The receipt's next deadline (ISO-8601). */
-  expires_at?: string | null;
-}
-
-/** `GET /v1/requests/{id}/outcome-receipts`: every receipt for one request, oldest first. */
-export interface OutcomeReceiptList {
-  /** The receipts. */
-  data: OutcomeReceiptRecord[];
-}
-
-/**
- * The answer of `POST /v1/requests/{id}/outcomes`: the outcome result, where `status` may also be
- * `pending` (accepted durably, applied once the request lands), plus the durable receipt.
- */
-export type RequestOutcomeResult = Omit<OutcomeResult, 'status'> & {
-  /** `pending` (durably accepted, not applied yet), or one of the outcome result statuses. */
-  status: OutcomeResult['status'] | 'pending';
-  /** The durable receipt for this outcome. */
-  receipt?: OutcomeReceiptRecord;
-};
 
 /** Options for `ur.ur.outcomes.waitForReceipt`. */
 export interface WaitForReceiptOptions {
@@ -142,36 +116,22 @@ export function isOutcomeReceiptRecord(value: unknown): value is OutcomeReceiptR
   return isRecord(value) && typeof value.id === 'string' && typeof value.status === 'string';
 }
 
-/** Read one receipt from a response body: a bare receipt or one wrapped as `{ receipt }`. */
-export function parseOutcomeReceipt(body: unknown): OutcomeReceiptRecord {
-  const candidate = isRecord(body) && isRecord(body.receipt) ? body.receipt : body;
-  if (!isOutcomeReceiptRecord(candidate)) {
-    throw new UltraRouterError({
-      code: 'invalid_response',
-      message: 'the receipt route answered without a recognisable receipt',
-      status: 0,
-      retryable: false,
-    });
-  }
-  return candidate;
+function invalid(message: string): UltraRouterError {
+  return new UltraRouterError({ code: 'invalid_response', message, status: 0, retryable: false });
 }
 
-/** Read a receipt list from a response body: `{ data: [...] }`, `{ receipts: [...] }` or a bare array. */
-export function parseOutcomeReceiptList(body: unknown): OutcomeReceiptList {
-  const items = Array.isArray(body)
-    ? body
-    : isRecord(body) && Array.isArray(body.data)
-      ? body.data
-      : isRecord(body) && Array.isArray(body.receipts)
-        ? body.receipts
-        : null;
-  if (items === null || !items.every(isOutcomeReceiptRecord)) {
-    throw new UltraRouterError({
-      code: 'invalid_response',
-      message: 'the receipts route answered without a recognisable receipt list',
-      status: 0,
-      retryable: false,
-    });
+/** Check a receipt response body; a body that is not a receipt is a typed `invalid_response`. */
+export function parseOutcomeReceipt(body: unknown): OutcomeReceiptRecord {
+  if (!isOutcomeReceiptRecord(body)) {
+    throw invalid('the receipt route answered without a recognisable receipt');
   }
-  return { data: items };
+  return body;
+}
+
+/** Check a receipt-list response body (`{ object: "list", data: [...] }`). */
+export function parseOutcomeReceiptList(body: unknown): OutcomeReceiptList {
+  if (!isRecord(body) || !Array.isArray(body.data) || !body.data.every(isOutcomeReceiptRecord)) {
+    throw invalid('the receipts route answered without a recognisable receipt list');
+  }
+  return body as OutcomeReceiptList;
 }

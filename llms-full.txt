@@ -616,10 +616,10 @@ npm run test:integration  # against a REAL gateway; skipped unless ULTRAROUTER_A
   byte-for-byte with the Python SDK too; `test/order-desk.test.ts` pins their SHA-256 and
   `test/outcome-report.test.ts` checks `OUTCOME_VERDICTS` against the first. Change them in both SDKs
   together.
-- The request/response types of the outcome-receipt and learning routes are written by hand in
-  `src/outcome-receipts.ts` and `src/learning-controls.ts` until those routes are in
-  `openapi/openapi.yaml`; then alias them from the generated schemas and add the operations to
-  `scripts/lib/coverage-map.mjs`.
+- `LearningError` maps a learning refusal by the gateway's named refusal (the first `snake_case`
+  token of the error message, with an optional `(detail)`), then by the error code
+  (`LEARNING_ERROR_CODES` in `src/learning-controls.ts`); keep the table in step with the Python
+  SDK.
 
 <!-- file: docs/README.md -->
 
@@ -3429,6 +3429,15 @@ durable queue for `ur.ur.outcomes.flush()`), or `rejected` (the gateway definiti
 event; see `error`). It never throws for a delivery failure; it throws `invalid_request` before
 sending anything for a malformed request id, verdict, source or option.
 
+| Gateway answer                                            | `report` resolves                                            |
+| --------------------------------------------------------- | ------------------------------------------------------------ |
+| 202, `result.status` `accepted`, `duplicate` or `pending` | `delivered`, with `result` and its `receipt`                 |
+| 404 `request_not_found: …` (an unknown gateway-minted id) | `rejected`; nothing will ever apply it                       |
+| 409 `conflict` (a different payload under the same key)   | `rejected`; the first event stands                           |
+| 429 `outcome_backlog_full` (`Retry-After: 30`)            | `queued` once the transport's retries are spent; flush later |
+| 500 (recording failed; retry)                             | `queued`; the next flush replays the identical event         |
+| timeout, connection failure, other 5xx                    | `queued`                                                     |
+
 ## Retries never double-report
 
 Every report carries a `source_event_id` derived from the request id, the verdict, the source and
@@ -3472,17 +3481,27 @@ outcome can arrive before the request it names. It is then accepted durably: `re
 `pending` and `receipt` describes it. The gateway applies it when the request lands; nothing on
 your side waits or sleeps.
 
-| Receipt `status` | Meaning                                                                                    |
-| ---------------- | ------------------------------------------------------------------------------------------ |
-| `pending`        | Accepted; waiting for the request to land.                                                 |
-| `applied`        | Recorded.                                                                                  |
-| `rejected`       | Refused; `reason` says why.                                                                |
-| `failed`         | Could not be applied.                                                                      |
-| `expired`        | The request never landed in time (`request_not_found`: unknown, or not in your workspace). |
+A receipt (`object: "outcome_receipt"`, id `ocr_…`) carries the request id, the channel and kind
+as sent, the `source_event_id`, and, once applied, the recorded `outcome_event_id`, its
+`outcome_status` (`accepted` the first time, `duplicate` when it was already recorded) and the
+`artifact_id`. `expires_at` is its next deadline.
 
-An applied outcome also says how it relates to the episode (`episode`): `associated` (it is the
-episode's verdict), `pending`, `not_recorded`, or `not_applicable` (it does not teach, or the
-request has no episode).
+| Receipt `status` | Meaning                                                                                             |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| `pending`        | Accepted; waiting for the request to be recorded.                                                   |
+| `applied`        | Recorded.                                                                                           |
+| `rejected`       | Refused once the request was known; `reason` says why.                                              |
+| `failed`         | Recording kept hitting an internal error.                                                           |
+| `expired`        | No request with this id appeared in your workspace within 15 minutes (`reason: request_not_found`). |
+
+`episode` says how an applied teaching outcome relates to the request's episode: `status` is
+`associated` (the episode carries a verdict; `trace_id` names it), `pending` (waiting for the
+episode to be recorded), `not_recorded` (no episode held the request in time: episode recording
+off, a held-out request, no consent) or `not_applicable` (the outcome does not teach: a proxy,
+behavioral or mechanical signal). `verdict` says what the outcome did: `recorded` (it is the
+episode's verdict), `kept_earlier` (the first verdict wins), `revised` (a `supersedes` revision
+before any learned version used the episode) or `revised_after_incorporation` (recorded and
+counted; the episode is not silently unlearned).
 
 `ur.ur.outcomes.receipt(id)` and `ur.ur.outcomes.receiptsForRequest(requestId)` read the public
 receipt routes. `ur.ur.outcomes.waitForReceipt(id, { timeoutMs, signal })` polls one with bounded
@@ -3509,7 +3528,7 @@ if (report.receipt !== null) {
     timeoutMs: 10_000,
     signal: AbortSignal.timeout(15_000),
   });
-  console.log(receipt.status, receipt.episode); // "applied" "associated"
+  console.log(receipt.status, receipt.episode.status, receipt.episode.verdict); // applied associated recorded
 }
 ```
 
@@ -3649,40 +3668,64 @@ With Node's `http` module, collect the body as a string before calling `handle`
 ## Learning controls
 
 `ur.ur.learning` steers learning for one call type (a `ct_…` id or a slug). Reads need a key with
-`config:read`; changes need `config:write` (or an owner/admin session); promote and reject need an
-owner or admin.
+`config:read`; changes need `config:write` (or an owner/admin session).
 
-| Method                                                             | Does                                                                                                                                 |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `status(callTypeId)`                                               | State, provider, active and candidate versions, evaluation, evidence (arrived / verified / incorporated / pending), backlog, budget. |
-| `enable(callTypeId, { reflection_model, promotion?, recipe? })`    | Self-serve enable. Needs the workspace's corrections consent and a provider for `reflection_model`.                                  |
-| `pause(callTypeId)` / `resume(callTypeId)`                         | Stop learning and evaluation decisions while the active version keeps serving; start again.                                          |
-| `disable(callTypeId)`                                              | The kill switch: no learned version is served.                                                                                       |
-| `versions(callTypeId)` / `version(callTypeId, versionId)`          | The history with each version's state; one version's lessons and provenance.                                                         |
-| `rollback(callTypeId, { version_id, reason? })`                    | Point the active version at an exact earlier version.                                                                                |
-| `promote(callTypeId, versionId)` / `reject(callTypeId, versionId)` | Manual decisions on a candidate.                                                                                                     |
-| `evaluations(callTypeId)`                                          | Evaluations with their frozen rule, arms, interval and decision.                                                                     |
+| Method                                                             | Does                                                                                                  |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `status(callTypeId)`                                               | The `learning` status (below).                                                                        |
+| `enable(callTypeId, params)`                                       | Self-serve enable (below).                                                                            |
+| `pause(callTypeId)` / `resume(callTypeId)`                         | Stop reflecting and evaluating while the active version keeps serving; start again.                   |
+| `disable(callTypeId)`                                              | The kill switch: no learned version is served.                                                        |
+| `versions(callTypeId)` / `version(callTypeId, versionId)`          | The history (`epb_…` versions with their state); one version's lessons, transitions and reflection.   |
+| `rollback(callTypeId, { version_id? })`                            | Point the active version at an earlier version; without `version_id`, the one active before this one. |
+| `promote(callTypeId, versionId)` / `reject(callTypeId, versionId)` | Manual decisions; a running evaluation of that version stops.                                         |
+| `evaluations(callTypeId)`                                          | Evaluations (`lev_…`) with their frozen rule, arms, difference and decision.                          |
 
-A candidate becomes active according to the promotion mode: `evaluate` (a randomized evaluation
-against the incumbent, decided by a rule frozen before it starts; a negative or inconclusive result
-keeps the incumbent), `manual`, or `immediate` (publication is activation). States you may see:
-`not_enabled`, `active`, `paused`, `disabled`, `unavailable` (no usable learning provider; there is
-no fallback to another provider), `quota_exhausted` and `budget_exhausted`.
+Every control resolves a `learning_control` result: the `action`, whether it `changed` anything
+(controls are idempotent), the `version_id` it acted on, a `stopped_evaluation_id`, and the
+resulting status as `learning`.
 
-A refusal you can act on rejects with a `LearningError` (an `UltraRouterError`) whose `reason` names
-it and whose `action` says what to do:
+**Enable.** `enable(callTypeId, { reflection_model, lessons_mode?, lessons_k?, promotion?, recipe? })`
+needs the workspace's corrections consent and a `reflection_model` that resolves to a
+workspace-owned offer: one of your custom providers, or a provider your workspace stored its own
+key for. There is no platform or paid fallback. `promotion` is an object of policy changes merged
+over the current policy: `mode` (`evaluate`, `manual` or `immediate`), `objective` (`success` or
+`cost_noninferior`), `min_verified_per_arm`, `max_verified_per_arm`, `alpha`, `min_effect_pp`,
+`noninferiority_margin_pp`, `candidate_share` and `max_duration_hours`. `recipe` chooses the
+learner's `validator`, `generation` and `observations`.
 
-| `reason`               | Typical cause                                        |
-| ---------------------- | ---------------------------------------------------- |
-| `missing_consent`      | The workspace's corrections consent is off.          |
-| `provider_unavailable` | No provider key for the reflection model.            |
-| `quota_exhausted`      | The learning provider refused for quota.             |
-| `budget_exhausted`     | The learning budget is spent.                        |
-| `not_found`            | Unknown call type or version.                        |
-| `forbidden`            | The key lacks the scope, or the role is not allowed. |
+**Status.** `state` is `off`, `collecting` (enabled, waiting for evidence), `learning` (a
+reflection is due or an evaluation runs), `paused`, `disabled`, `unavailable` (consent, provider or
+repeated failures), `quota_exhausted` or `budget_exhausted` (refused for resources and retried with
+backoff), with a `reason` code. The status also carries the `recipe`, the `reflection` model and
+whether its provider is available, the `promotion` policy, the `active_version` and
+`latest_candidate`, the running `evaluation` and the `last_evaluation`, `evidence` (recorded,
+verified, consumed, `incorporated_active`, `backlog` — arrived is not incorporated), `budget`,
+`usage` (tokens and failed calls, separately from cash) and `outcome_receipts` by state.
 
-`LEARNING_ERROR_CODES` lists the gateway codes each reason is recognised from; any other refusal
-stays a plain `UltraRouterError`.
+A candidate becomes active according to the promotion mode: under `evaluate`, a randomized
+evaluation against the incumbent decided by a rule frozen before it starts (a negative or
+inconclusive result keeps the incumbent); under `manual`, your promote or reject; under
+`immediate`, publication is activation.
+
+A refusal you can act on rejects with a `LearningError` (an `UltraRouterError`). The gateway names
+the refusal as the first token of its message; the error carries it as `refusal`, its parenthesized
+sub-reason as `detail`, the actionable `reason`, and the `action` to take:
+
+| `reason`               | `refusal` (status)                                                                                    | Typical cause                                                                                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `missing_consent`      | `corrections_consent_required` (409)                                                                  | The workspace's corrections consent is off.                                                                                                          |
+| `provider_unavailable` | `reflection_model_not_workspace_owned` (400)                                                          | `detail`: `no_offer`, `platform_offer_only`, `no_workspace_key`, `model_denied_by_policy`, `workspace_funding_not_byok`, `workspace_funding_frozen`. |
+| `not_enabled`          | `learning_not_enabled` (409)                                                                          | A control before `enable`.                                                                                                                           |
+| `invalid_promotion`    | `promotion_invalid` (400)                                                                             | `detail` names the out-of-range policy field.                                                                                                        |
+| `version_conflict`     | `no_rollback_target`, `rollback_target_not_earlier`, `version_already_active`, `version_active` (409) | The version is not in a state the control can act on.                                                                                                |
+| `not_found`            | `not_found` (404)                                                                                     | Unknown call type or version.                                                                                                                        |
+| `forbidden`            | `permission` (403)                                                                                    | The key lacks the scope, or the role is not allowed.                                                                                                 |
+
+`quota_exhausted` and `budget_exhausted` are reasons too (a `spend_cap_exceeded` refusal maps to
+`budget_exhausted`), but learning normally reports them as states, not refusals.
+`LEARNING_ERROR_CODES` lists the refusals and codes each reason is recognised from; any other
+refusal stays a plain `UltraRouterError`.
 
 ```ts
 import UltraRouter, { LearningError } from '@ultrarouter/sdk';
@@ -3690,25 +3733,30 @@ import UltraRouter, { LearningError } from '@ultrarouter/sdk';
 const ur = new UltraRouter();
 const callType = 'support-reply';
 try {
-  const status = await ur.ur.learning.enable(callType, {
+  const enabled = await ur.ur.learning.enable(callType, {
     reflection_model: 'openai/gpt-5.2',
-    promotion: { mode: 'evaluate', objective: 'success' },
+    promotion: { mode: 'evaluate', objective: 'success', min_verified_per_arm: 30 },
   });
-  console.log(status.state, status.active?.id, status.candidate?.state, status.evidence);
+  const status = enabled.learning;
+  console.log(status.state, status.active_version?.id, status.latest_candidate?.state);
+  console.log(
+    status.evidence.verified,
+    status.evidence.incorporated_active,
+    status.outcome_receipts,
+  );
 
-  await ur.ur.learning.pause(callType);
-  await ur.ur.learning.resume(callType);
+  console.log((await ur.ur.learning.pause(callType)).learning.state); // "paused"
+  console.log((await ur.ur.learning.resume(callType)).changed); // true
 
   const history = await ur.ur.learning.versions(callType);
-  const earlier = history.data.find((v) => v.state === 'retired');
-  if (earlier !== undefined) {
-    const rolled = await ur.ur.learning.rollback(callType, { version_id: earlier.id });
-    console.log('serving', rolled.active?.id);
+  if (history.data.some((v) => v.state === 'retired')) {
+    const rolled = await ur.ur.learning.rollback(callType); // to the previously active version
+    console.log('serving', rolled.version_id);
   }
   const [latest] = (await ur.ur.learning.evaluations(callType)).data;
-  console.log(latest?.decision, latest?.candidate, latest?.incumbent);
+  console.log(latest?.decision, latest?.arms.candidate, latest?.difference);
 } catch (err) {
-  if (err instanceof LearningError) console.error(err.reason, '-', err.action);
+  if (err instanceof LearningError) console.error(err.reason, err.refusal, err.detail, err.action);
   else throw err;
 }
 ```
@@ -7148,10 +7196,17 @@ illustrative.
 
 Every operation in the published OpenAPI document (`openapi/openapi.yaml`) and how this SDK reaches it. Generated by `scripts/gen-docs.mjs` from `scripts/lib/coverage-map.mjs`; `test/coverage-map.test.ts` keeps it complete.
 
-- 147 operations; 84 accept an API key (or no auth), 63 need a dashboard session.
-- 69 have a dedicated SDK method. Every API-key operation is also callable, fully typed, with [`ur.request()`](./typed-requests.md).
+- 173 operations; 100 accept an API key (or no auth), 73 need a dashboard session.
+- 82 have a dedicated SDK method. Every API-key operation is also callable, fully typed, with [`ur.request()`](./typed-requests.md).
 - Dashboard-session operations (workspace administration, consents, model policy, provider keys) are not callable with an API key; use the dashboard.
 - Every operation is exercised against the local mock gateway with schema validation in `test/mock-gateway.test.ts`; generic `ur.request()` behaviour is proven in `test/resources.test.ts`.
+
+## Adaptive optimization
+
+| Operation | Auth | SDK | CLI | Tests |
+| --- | --- | --- | --- | --- |
+| `POST /v1/workspaces/{id}/adaptive-rollouts/activate` (activateAdaptiveRollout) | dashboard session | dashboard only |  |  |
+| `POST /v1/workspaces/{id}/adaptive-rollouts/revoke` (revokeAdaptiveRollout) | dashboard session | dashboard only |  |  |
 
 ## API keys
 
@@ -7159,6 +7214,7 @@ Every operation in the published OpenAPI document (`openapi/openapi.yaml`) and h
 | --- | --- | --- | --- | --- |
 | `GET /v1/workspaces/{id}/api-keys` (listApiKeys) | dashboard session | dashboard only |  |  |
 | `POST /v1/workspaces/{id}/api-keys` (createApiKey) | dashboard session | dashboard only |  |  |
+| `PATCH /v1/workspaces/{id}/api-keys/{keyId}` (updateApiKey) | dashboard session | dashboard only |  |  |
 | `DELETE /v1/workspaces/{id}/api-keys/{keyId}` (revokeApiKey) | dashboard session | dashboard only |  |  |
 | `POST /v1/workspaces/{id}/api-keys/{keyId}/roll` (rollApiKey) | dashboard session | dashboard only |  |  |
 
@@ -7186,6 +7242,16 @@ Every operation in the published OpenAPI document (`openapi/openapi.yaml`) and h
 | `POST /v1/bench/suites/{slug}/runs` (triggerBenchRun) | API key | `ur.bench.run()` | `ur bench run` | `test/bench.test.ts`, `test/surface.test.ts` |
 | `GET /v1/bench/suites/{slug}/status` (getBenchSuiteStatus) | API key | `ur.bench.status()` |  | `test/bench.test.ts`, `test/surface.test.ts` |
 
+## Billing
+
+| Operation | Auth | SDK | CLI | Tests |
+| --- | --- | --- | --- | --- |
+| `GET /v1/workspaces/{id}/billing/account` (getPrepaidAccount) | dashboard session | dashboard only |  |  |
+| `POST /v1/workspaces/{id}/billing/credit-checkout` (createCreditCheckout) | dashboard session | dashboard only |  |  |
+| `POST /v1/workspaces/{id}/billing/funding` (setPrepaidFunding) | dashboard session | dashboard only |  |  |
+| `POST /v1/workspaces/{id}/billing/pro-cancel` (cancelProRenewal) | dashboard session | dashboard only |  |  |
+| `POST /v1/workspaces/{id}/billing/pro-checkout` (createProCheckout) | dashboard session | dashboard only |  |  |
+
 ## Call types
 
 | Operation | Auth | SDK | CLI | Tests |
@@ -7194,6 +7260,9 @@ Every operation in the published OpenAPI document (`openapi/openapi.yaml`) and h
 | `POST /v1/call-types` (createCallType) | API key | `ur.callTypes.create()` |  | `test/surface.test.ts` |
 | `GET /v1/call-types/{id}` (getCallType) | API key | `ur.callTypes.get()` |  | `test/surface.test.ts`, `test/path-encoding.test.ts` |
 | `PATCH /v1/call-types/{id}` (updateCallType) | API key | `ur.callTypes.update()` |  | `test/surface.test.ts`, `test/path-encoding.test.ts` |
+| `GET /v1/call-types/{id}/episode-memory` (getEpisodeMemory) | API key | `ur.request('get', '/v1/call-types/{id}/episode-memory')` |  |  |
+| `POST /v1/call-types/{id}/episode-memory/disable` (disableEpisodeMemory) | API key | `ur.request('post', '/v1/call-types/{id}/episode-memory/disable')` |  |  |
+| `POST /v1/call-types/{id}/episode-memory/enable` (enableEpisodeMemory) | API key | `ur.request('post', '/v1/call-types/{id}/episode-memory/enable')` |  |  |
 | `GET /v1/call-types/{id}/evals` (listCallTypeEvals) | API key | `ur.callTypes.listEvals()` |  | `test/resources.test.ts`, `test/surface.test.ts` |
 | `POST /v1/call-types/{id}/evals` (enqueueCallTypeEval) | API key | `ur.callTypes.enqueueEval()` |  | `test/client.test.ts`, `test/surface.test.ts` |
 | `GET /v1/call-types/{id}/prompts` (listHostedPrompts) | API key | `ur.callTypes.prompts.list()` |  | `test/resources.test.ts`, `test/surface.test.ts` |
@@ -7304,10 +7373,14 @@ Every operation in the published OpenAPI document (`openapi/openapi.yaml`) and h
 | `GET /v1/imports/{id}` (getImport) | API key | `ur.imports.get()` |  | `test/flywheel.test.ts`, `test/surface.test.ts` |
 | `POST /v1/imports/{id}/cancel` (cancelImport) | API key | `ur.imports.cancel()` |  | `test/flywheel.test.ts`, `test/surface.test.ts` |
 | `GET /v1/improvement-reads` (listImprovementReads) | API key | `ur.improvementReads.list()` |  | `test/resources.test.ts`, `test/surface.test.ts` |
+| `GET /v1/outcome-receipts/{id}` (getOutcomeReceipt) | API key | `ur.outcomes.receipt()`, `ur.outcomes.waitForReceipt()` |  | `test/outcome-receipts.test.ts`, `test/surface.test.ts` |
 | `POST /v1/outcomes/batch` (recordOutcomesBatch) | API key | `ur.outcomes.batch()` | `ur outcomes import` | `test/flywheel.test.ts`, `test/surface.test.ts` |
 | `GET /v1/outcomes/pending` (listPendingOutcomes) | API key | `ur.outcomes.pending()` | `ur outcomes pending` | `test/flywheel.test.ts`, `test/surface.test.ts` |
-| `POST /v1/requests/{id}/outcomes` (recordRequestOutcome) | API key | `ur.outcomes.record()` |  | `test/flywheel.test.ts`, `test/surface.test.ts` |
+| `GET /v1/requests/{id}/outcome-receipts` (listRequestOutcomeReceipts) | API key | `ur.outcomes.receiptsForRequest()` |  | `test/outcome-receipts.test.ts`, `test/surface.test.ts` |
+| `POST /v1/requests/{id}/outcomes` (recordRequestOutcome) | API key | `ur.outcomes.record()`, `ur.outcomes.report()` |  | `test/flywheel.test.ts`, `test/outcome-report.test.ts`, `test/surface.test.ts` |
 | `PATCH /v1/workspaces/{id}/flywheel-consents` (patchFlywheelConsents) | dashboard session | dashboard only |  |  |
+| `GET /v1/workspaces/{id}/self-learning` (getSelfLearning) | dashboard session | dashboard only |  |  |
+| `PUT /v1/workspaces/{id}/self-learning` (putSelfLearning) | dashboard session | dashboard only |  |  |
 | `GET /v1/workspaces/{id}/site-brief` (getSiteBrief) | dashboard session | dashboard only |  |  |
 | `PUT /v1/workspaces/{id}/site-brief` (putSiteBrief) | dashboard session | dashboard only |  |  |
 | `GET /v1/workspaces/{id}/training` (getTrainingStatus) | dashboard session | dashboard only |  |  |
@@ -7332,6 +7405,22 @@ Every operation in the published OpenAPI document (`openapi/openapi.yaml`) and h
 | Operation | Auth | SDK | CLI | Tests |
 | --- | --- | --- | --- | --- |
 | `GET /v1/key` (getKey) | API key | `ur.key.get()` |  | `test/resources.test.ts`, `test/surface.test.ts` |
+
+## Learning
+
+| Operation | Auth | SDK | CLI | Tests |
+| --- | --- | --- | --- | --- |
+| `GET /v1/call-types/{id}/learning` (getLearningStatus) | API key | `ur.learning.status()` |  | `test/learning-controls.test.ts`, `test/surface.test.ts` |
+| `POST /v1/call-types/{id}/learning/disable` (disableLearning) | API key | `ur.learning.disable()` |  | `test/learning-controls.test.ts`, `test/surface.test.ts` |
+| `POST /v1/call-types/{id}/learning/enable` (enableLearning) | API key | `ur.learning.enable()` |  | `test/learning-controls.test.ts`, `test/surface.test.ts` |
+| `GET /v1/call-types/{id}/learning/evaluations` (listLearningEvaluations) | API key | `ur.learning.evaluations()` |  | `test/learning-controls.test.ts`, `test/surface.test.ts` |
+| `POST /v1/call-types/{id}/learning/pause` (pauseLearning) | API key | `ur.learning.pause()` |  | `test/learning-controls.test.ts`, `test/surface.test.ts` |
+| `POST /v1/call-types/{id}/learning/resume` (resumeLearning) | API key | `ur.learning.resume()` |  | `test/learning-controls.test.ts`, `test/surface.test.ts` |
+| `POST /v1/call-types/{id}/learning/rollback` (rollbackLearning) | API key | `ur.learning.rollback()` |  | `test/learning-controls.test.ts`, `test/surface.test.ts` |
+| `GET /v1/call-types/{id}/learning/versions` (listLearningVersions) | API key | `ur.learning.versions()` |  | `test/learning-controls.test.ts`, `test/surface.test.ts` |
+| `GET /v1/call-types/{id}/learning/versions/{version_id}` (getLearningVersion) | API key | `ur.learning.version()` |  | `test/learning-controls.test.ts`, `test/surface.test.ts` |
+| `POST /v1/call-types/{id}/learning/versions/{version_id}/promote` (promoteLearningVersion) | API key | `ur.learning.promote()` |  | `test/learning-controls.test.ts`, `test/surface.test.ts` |
+| `POST /v1/call-types/{id}/learning/versions/{version_id}/reject` (rejectLearningVersion) | API key | `ur.learning.reject()` |  | `test/learning-controls.test.ts`, `test/surface.test.ts` |
 
 ## Members
 
@@ -7426,16 +7515,26 @@ supersedes? })`: a `pass` / `fail` verdict from a `verifier`, `business_rule`, `
     carries a `source_event_id` derived from the request, verdict, source and caller key
     (`reportSourceEventId`) and goes through the durable queue under that identity, so a lost
     acknowledgement, a flush, a repeated call or a restarted process never double-reports.
-  - Outcome receipts: `ur.outcomes.receipt(id)`, `ur.outcomes.receiptsForRequest(requestId)` and
+  - Outcome receipts (`ocr_…`): `ur.outcomes.receipt(id)` (`GET /v1/outcome-receipts/{id}`),
+    `ur.outcomes.receiptsForRequest(requestId)` (`GET /v1/requests/{id}/outcome-receipts`) and
     `ur.outcomes.waitForReceipt(id, { timeoutMs, signal })` (bounded exponential backoff over the
-    public receipt route; `ReceiptWaitTimeoutError`; cancellable with an `AbortSignal`).
-  - Learning controls per call type: `ur.learning.status`, `enable`, `pause`, `resume`, `disable`,
-    `versions`, `version`, `rollback`, `promote`, `reject` and `evaluations`. A refusal you can act
-    on (missing consent, no learning provider, provider quota, learning budget, not found,
-    forbidden) is a `LearningError` with a `reason` and an `action`.
-  - The request and response types of the receipt and learning routes are hand-written
-    (`src/outcome-receipts.ts`, `src/learning-controls.ts`) until the routes are in the published
-    API description; fields may be added.
+    public receipt route; `ReceiptWaitTimeoutError`; cancellable with an `AbortSignal`). A receipt
+    carries its `status` (`pending`, `applied`, `rejected`, `failed`, `expired`), `reason`,
+    `outcome_status`, `artifact_id`, `expires_at` and its `episode` association
+    (`{ status, trace_id, verdict }`); a report's `result` is the request shortcut's answer
+    (`accepted`, `duplicate` or `pending`) with its receipt.
+  - Learning controls per call type: `ur.learning.status` (the `learning` status: state, recipe,
+    reflection provider, promotion policy, active version, latest candidate, evaluations, evidence,
+    budget, usage, outcome receipts), `enable` (`reflection_model`, `lessons_mode`, `lessons_k`,
+    `promotion` as an object of policy changes, `recipe`), `pause`, `resume`, `disable`,
+    `versions`, `version`, `rollback` (`version_id` optional: the previously active version),
+    `promote`, `reject` and `evaluations`. Every control resolves a `learning_control` result.
+    A refusal you can act on is a `LearningError` with a `reason`, the gateway's named `refusal`
+    (the first token of its message), its `detail` and an `action`: `missing_consent`,
+    `provider_unavailable` (`reflection_model_not_workspace_owned (<detail>)`), `not_enabled`,
+    `invalid_promotion`, `version_conflict`, `quota_exhausted`, `budget_exhausted`, `not_found`,
+    `forbidden`.
+  - Every receipt and learning type is aliased from the generated OpenAPI types.
 - A new entry point, `@ultrarouter/sdk/learning`, with starter outcome adapters: `runVerifier` and
   `verdictFromCommand` (a computable check or a command's exit code becomes a verdict plus an
   evidence hash), `validateOutput` (a zod schema or a JSON-Schema subset plus business rules), and
@@ -7444,6 +7543,13 @@ supersedes? })`: a `pass` / `fail` verdict from a `verifier`, `business_rule`, `
   `ULTRAROUTER_WEBHOOK_SECRET`); and `createOrderDesk`, a deterministic four-tool demonstration
   environment with a state-based verifier (`test/fixtures/toy-env.json`, shared with the Python
   SDK). The environment demonstrates the integration; it is not evidence of efficacy.
+- The OpenAPI document is resynced. Besides the receipt and learning routes, it adds the
+  lab-authorised episode-memory routes (`GET /v1/call-types/{id}/episode-memory`, `…/enable`,
+  `…/disable`), the per-key default call type (`PATCH /v1/workspaces/{id}/api-keys/{keyId}`), the
+  workspace self-learning switch (`GET` / `PUT /v1/workspaces/{id}/self-learning`), adaptive
+  rollouts and prepaid billing; these have no dedicated method and are reached with
+  `ur.request()` (most need an owner session, not an API key). Batch outcome rows may now be
+  `pending` with a receipt.
 
 - The bounded-experiment RUN surface under `ur.flywheel.experiments`, for a key with the
   `flywheel:experiment:run` scope: `enrol(experimentId, { phase, pair_key, slot })` enrols one

@@ -419,3 +419,44 @@ describe('preflight, useLearned, getPrompt and request()', () => {
     expect(last().path).toBe('/v1/flywheel/plans');
   });
 });
+
+describe('plug-and-play learning surface', () => {
+  it('ur.outcomes.report / ur.outcomes.receipt / ur.outcomes.receiptsForRequest / ur.outcomes.waitForReceipt', async () => {
+    const res = await ur.chat.completions.create(
+      { messages: [{ role: 'user', content: 'surface task' }] },
+      { episodeKey: 'surface-episode' },
+    );
+    const report = await ur.ur.outcomes.report(res.requestId, {
+      verdict: 'pass',
+      source: 'verifier',
+    });
+    expect(report.result).toMatchObject({ object: 'outcome', status: 'pending' });
+    const receipt = await ur.ur.outcomes.receipt(report.receipt!.id);
+    expect(receipt).toMatchObject({ object: 'outcome_receipt', status: 'applied' });
+    const listed = await ur.ur.outcomes.receiptsForRequest(res.requestId);
+    expect(listed.data.map((r) => r.id)).toEqual([report.receipt!.id]);
+    const final = await ur.ur.outcomes.waitForReceipt(report.receipt!.id, { pollIntervalMs: 1 });
+    expect(final.episode.status).toBe('associated');
+  });
+
+  it('ur.learning.status / enable / pause / resume / versions / version / evaluations / rollback / promote / reject / disable', async () => {
+    const id = 'ct_surface';
+    expect((await ur.ur.learning.status(id)).state).toBe('off');
+    expect((await ur.ur.learning.enable(id, { reflection_model: 'openai/gpt-5.2' })).action).toBe(
+      'enable',
+    );
+    expect((await ur.ur.learning.pause(id)).learning.paused).toBe(true);
+    expect((await ur.ur.learning.resume(id)).learning.paused).toBe(false);
+    expect((await ur.ur.learning.versions(id)).data).toHaveLength(3);
+    expect((await ur.ur.learning.version(id, 'epb_mock_1')).object).toBe('learning_version');
+    expect((await ur.ur.learning.evaluations(id)).data[0]?.object).toBe('learning_evaluation');
+    expect((await ur.ur.learning.rollback(id, { version_id: 'epb_mock_1' })).version_id).toBe(
+      'epb_mock_1',
+    );
+    expect((await ur.ur.learning.reject(id, 'epb_mock_3')).action).toBe('reject');
+    expect((await ur.ur.learning.promote(id, 'epb_mock_2')).learning.active_version?.id).toBe(
+      'epb_mock_2',
+    );
+    expect((await ur.ur.learning.disable(id)).learning.state).toBe('disabled');
+  });
+});

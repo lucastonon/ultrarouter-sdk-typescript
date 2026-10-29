@@ -63,11 +63,10 @@ import { applyLearnedContext, type LearnedMessage } from './learned-placement.js
 import {
   toLearningError,
   type EnableLearningParams,
-  type LearningDecisionParams,
+  type LearningControlResult,
   type LearningEvaluationList,
   type LearningRollbackParams,
   type LearningStatus,
-  type LearningVersion,
   type LearningVersionDetail,
   type LearningVersionList,
 } from './learning-controls.js';
@@ -569,54 +568,64 @@ export interface OutcomesResource {
 }
 
 /**
- * `ur.ur.learning`: learning controls for one call type (`/v1/call-types/{id}/learning*`). A refusal
- * you can act on (missing consent, no learning provider, provider quota, learning budget, not found,
- * forbidden) rejects with a `LearningError` naming the `reason` and the `action`.
+ * `ur.ur.learning`: learning controls for one call type (`/v1/call-types/{id}/learning*`; a `ct_…`
+ * id or a slug). Every control resolves a {@link LearningControlResult}: what happened (`changed`,
+ * `version_id`, `stopped_evaluation_id`) plus the resulting status (`learning`). A refusal you can
+ * act on (missing consent, no workspace-owned reflection provider, learning not enabled, an invalid
+ * promotion policy, a version conflict, not found, forbidden) rejects with a `LearningError`
+ * naming the `reason`, the gateway's `refusal`, its `detail` and the `action`.
  */
 export interface LearningResource {
-  /** Read the learning status: state, provider, active and candidate versions, evaluation, evidence, backlog, budget. */
+  /**
+   * Read the status: state, recipe, reflection provider, promotion policy, active version, latest
+   * candidate, running and last evaluation, evidence, budget, usage and outcome receipts.
+   */
   status: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
-  /** Enable learning (self-serve; needs corrections consent and a `config:write` key or an owner/admin). */
+  /**
+   * Enable learning (self-serve: an owner/admin or a `config:write` key, with the workspace's
+   * corrections consent on and a workspace-owned offer for `reflection_model`).
+   */
   enable: (
     callTypeId: string,
     params: EnableLearningParams,
     options?: RequestOptions,
-  ) => Promise<LearningStatus>;
-  /** Pause: stop learning and evaluation decisions, keep serving the active version. */
-  pause: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
-  /** Resume a paused (or quota / budget stopped) call type. */
-  resume: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
+  ) => Promise<LearningControlResult>;
+  /** Pause: stop reflecting and evaluating, keep serving the active version. */
+  pause: (callTypeId: string, options?: RequestOptions) => Promise<LearningControlResult>;
+  /** Resume a paused call type (and reset the bounded retries after quota / budget refusals). */
+  resume: (callTypeId: string, options?: RequestOptions) => Promise<LearningControlResult>;
   /** Disable: stop serving learned versions (the kill switch). */
-  disable: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
+  disable: (callTypeId: string, options?: RequestOptions) => Promise<LearningControlResult>;
   /** List the version history with each version's state, newest first. */
   versions: (callTypeId: string, options?: RequestOptions) => Promise<LearningVersionList>;
-  /** Read one version: its lessons and a provenance summary. */
+  /** Read one version: its lessons, transitions and the body-free reflection receipt. */
   version: (
     callTypeId: string,
     versionId: string,
     options?: RequestOptions,
   ) => Promise<LearningVersionDetail>;
-  /** Point the active version at an exact earlier version. */
+  /**
+   * Point the active version at an exact earlier version (`version_id`), or, without one, at the
+   * version that was active immediately before the current one.
+   */
   rollback: (
     callTypeId: string,
-    params: LearningRollbackParams,
+    params?: LearningRollbackParams,
     options?: RequestOptions,
-  ) => Promise<LearningStatus>;
-  /** Promote a candidate by hand (owner/admin). */
+  ) => Promise<LearningControlResult>;
+  /** Promote a version by hand (owner/admin); a running evaluation of it stops. */
   promote: (
     callTypeId: string,
     versionId: string,
-    params?: LearningDecisionParams,
     options?: RequestOptions,
-  ) => Promise<LearningVersion>;
+  ) => Promise<LearningControlResult>;
   /** Reject a candidate by hand (owner/admin); the incumbent keeps serving. */
   reject: (
     callTypeId: string,
     versionId: string,
-    params?: LearningDecisionParams,
     options?: RequestOptions,
-  ) => Promise<LearningVersion>;
-  /** List evaluations with their frozen rule, arms, interval and decision, newest first. */
+  ) => Promise<LearningControlResult>;
+  /** List evaluations with their frozen rule, arms, difference and decision, newest first. */
   evaluations: (callTypeId: string, options?: RequestOptions) => Promise<LearningEvaluationList>;
 }
 
@@ -1648,7 +1657,9 @@ export class UltraRouter {
       plan.event,
       options,
     );
-    const result = queued.status === 'delivered' ? (queued.result as RequestOutcomeResult) : null;
+    // The request shortcut answers the outcome result with its receipt (`status` may be `pending`).
+    const result =
+      queued.status === 'delivered' ? (queued.result as unknown as RequestOutcomeResult) : null;
     const reported: OutcomeReported = {
       status: queued.status,
       requestId,
@@ -1747,13 +1758,13 @@ export class UltraRouter {
     return {
       status: (id, o = {}) => call<LearningStatus>('GET', `/v1/call-types/${seg(id)}/learning`, o),
       enable: (id, params, o = {}) =>
-        call<LearningStatus>('POST', `/v1/call-types/${seg(id)}/learning/enable`, o, params),
+        call<LearningControlResult>('POST', `/v1/call-types/${seg(id)}/learning/enable`, o, params),
       pause: (id, o = {}) =>
-        call<LearningStatus>('POST', `/v1/call-types/${seg(id)}/learning/pause`, o, {}),
+        call<LearningControlResult>('POST', `/v1/call-types/${seg(id)}/learning/pause`, o),
       resume: (id, o = {}) =>
-        call<LearningStatus>('POST', `/v1/call-types/${seg(id)}/learning/resume`, o, {}),
+        call<LearningControlResult>('POST', `/v1/call-types/${seg(id)}/learning/resume`, o),
       disable: (id, o = {}) =>
-        call<LearningStatus>('POST', `/v1/call-types/${seg(id)}/learning/disable`, o, {}),
+        call<LearningControlResult>('POST', `/v1/call-types/${seg(id)}/learning/disable`, o),
       versions: (id, o = {}) =>
         call<LearningVersionList>('GET', `/v1/call-types/${seg(id)}/learning/versions`, o),
       version: (id, versionId, o = {}) =>
@@ -1762,21 +1773,24 @@ export class UltraRouter {
           `/v1/call-types/${seg(id)}/learning/versions/${seg(versionId)}`,
           o,
         ),
-      rollback: (id, params, o = {}) =>
-        call<LearningStatus>('POST', `/v1/call-types/${seg(id)}/learning/rollback`, o, params),
-      promote: (id, versionId, params = {}, o = {}) =>
-        call<LearningVersion>(
+      rollback: (id, params = {}, o = {}) =>
+        call<LearningControlResult>(
           'POST',
-          `/v1/call-types/${seg(id)}/learning/versions/${seg(versionId)}/promote`,
+          `/v1/call-types/${seg(id)}/learning/rollback`,
           o,
           params,
         ),
-      reject: (id, versionId, params = {}, o = {}) =>
-        call<LearningVersion>(
+      promote: (id, versionId, o = {}) =>
+        call<LearningControlResult>(
+          'POST',
+          `/v1/call-types/${seg(id)}/learning/versions/${seg(versionId)}/promote`,
+          o,
+        ),
+      reject: (id, versionId, o = {}) =>
+        call<LearningControlResult>(
           'POST',
           `/v1/call-types/${seg(id)}/learning/versions/${seg(versionId)}/reject`,
           o,
-          params,
         ),
       evaluations: (id, o = {}) =>
         call<LearningEvaluationList>('GET', `/v1/call-types/${seg(id)}/learning/evaluations`, o),

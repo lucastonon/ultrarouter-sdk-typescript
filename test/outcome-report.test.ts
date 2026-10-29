@@ -388,6 +388,105 @@ describe('immediate reporting', () => {
     expect(report.result?.status).toBe('pending');
     expect(report.receipt).toMatchObject({ status: 'pending', request_id: res.requestId });
     const applied = await ur.ur.outcomes.waitForReceipt(report.receipt!.id, { pollIntervalMs: 1 });
-    expect(applied).toMatchObject({ status: 'applied', episode: 'associated' });
+    expect(applied).toMatchObject({
+      status: 'applied',
+      outcome_status: 'accepted',
+      episode: { status: 'associated', verdict: 'recorded' },
+    });
+  });
+});
+
+describe('the gateway answers a report can get', () => {
+  const envelope = (code: string, message: string, retryable: boolean) => ({
+    error: { code, message, request_id: 'req_e', retryable },
+  });
+
+  it('an unknown gateway-minted request id is refused at once (404 request_not_found): rejected', async () => {
+    const r = await client().ur.outcomes.report('req_01HZZZZZZZZZZZZZZZZZZZZZZZ', {
+      verdict: 'pass',
+      source: 'verifier',
+    });
+    expect(r.status).toBe('rejected');
+    expect(r.error?.code).toBe('not_found');
+    expect(r.error?.message).toMatch(/^request_not_found:/);
+  });
+
+  it('a client-minted id that never shows up expires on its receipt', async () => {
+    const ur = client();
+    const r = await ur.ur.outcomes.report('req_c_never_served', {
+      verdict: 'pass',
+      source: 'verifier',
+    });
+    expect(r.result?.status).toBe('pending');
+    const final = await ur.ur.outcomes.waitForReceipt(r.receipt!.id, { pollIntervalMs: 1 });
+    expect(final).toMatchObject({ status: 'expired', reason: 'request_not_found' });
+  });
+
+  it('the first teaching verdict of an episode is recorded; a later one keeps the earlier', async () => {
+    const ur = client();
+    const a = await ur.chat.completions.create(
+      { messages: [{ role: 'user', content: 'step 1' }] },
+      { episodeKey: 'ep-two-verdicts' },
+    );
+    const b = await ur.chat.completions.create(
+      { messages: [{ role: 'user', content: 'step 2' }] },
+      { episodeKey: 'ep-two-verdicts' },
+    );
+    const first = await ur.ur.outcomes.report(a.requestId, { verdict: 'pass', source: 'verifier' });
+    const second = await ur.ur.outcomes.report(b.requestId, { verdict: 'fail', source: 'webhook' });
+    const one = await ur.ur.outcomes.waitForReceipt(first.receipt!.id, { pollIntervalMs: 1 });
+    const two = await ur.ur.outcomes.waitForReceipt(second.receipt!.id, { pollIntervalMs: 1 });
+    expect(one.episode).toMatchObject({ status: 'associated', verdict: 'recorded' });
+    expect(two.episode).toMatchObject({ status: 'associated', verdict: 'kept_earlier' });
+    expect(one.episode.trace_id).toBe(two.episode.trace_id);
+    const proxy = await ur.ur.outcomes.report(a.requestId, {
+      verdict: 'pass',
+      source: 'self_rating',
+    });
+    expect(proxy.receipt?.episode.status).toBe('not_applicable');
+  });
+
+  it('429 outcome_backlog_full and a 500 keep the event queued for a later flush', async () => {
+    for (const [status, body, headers] of [
+      [
+        429,
+        envelope('outcome_backlog_full', 'outcome_backlog_full: too many pending outcomes', true),
+        { 'retry-after': '30' },
+      ],
+      [500, envelope('internal', 'apply failed; retry', false), {}],
+    ] as const) {
+      const store = new MemoryOutcomeStore();
+      let calls = 0;
+      const ur = new UltraRouter({
+        apiKey: 'k',
+        baseURL: 'http://gw',
+        maxRetries: 0,
+        outcomeStore: store,
+        fetch: async () => {
+          calls += 1;
+          return Response.json(body, { status, headers });
+        },
+      });
+      const r = await ur.ur.outcomes.report('req_1', { verdict: 'pass', source: 'verifier' });
+      expect([r.status, r.error?.code, calls]).toEqual(['queued', body.error.code, 1]);
+      expect(store.list()).toHaveLength(1);
+    }
+  });
+
+  it('409 conflict (a different payload under the same key) drops the event as rejected', async () => {
+    const store = new MemoryOutcomeStore();
+    const ur = new UltraRouter({
+      apiKey: 'k',
+      baseURL: 'http://gw',
+      maxRetries: 0,
+      outcomeStore: store,
+      fetch: async () =>
+        Response.json(envelope('conflict', 'idempotency_conflict: different payload', false), {
+          status: 409,
+        }),
+    });
+    const r = await ur.ur.outcomes.report('req_1', { verdict: 'pass', source: 'verifier' });
+    expect([r.status, r.error?.code]).toEqual(['rejected', 'conflict']);
+    expect(store.list()).toHaveLength(0);
   });
 });
