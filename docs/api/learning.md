@@ -54,9 +54,9 @@ class OrderDesk
 | `namedOrders(): string[]` | The order ids the task names, in the order it names them. |
 | `state(): { stock: Record<string, number>; orders: Record<string, OrderDeskOrderState> }` | The current state: stock per SKU and each order with its reserved units. |
 | `calls(): { tool: string; ok: boolean }[]` | The tool calls made so far: name and whether it succeeded. |
-| `call(tool: string, rawArgs: unknown): OrderDeskToolResult` | Run one tool. Unknown tools and invalid arguments answer an error and change nothing. - `lookup_order` → `{ ok, order_id, sku, quantity, status }` (`UNKNOWN_ORDER`). - `check_stock` → `{ ok, sku, in_stock }` (`UNKNOWN_SKU`). - `reserve_stock` → `{ ok: true }` when `quantity` ≤ stock: the stock drops by `quantity` and the order's reserved units become `quantity`; else `{ ok: false, error: 'INSUFFICIENT_STOCK', in_stock }` with nothing changed (`UNKNOWN_ORDER`, `SKU_MISMATCH` when the SKU is not the order's). - `set_order_status` → `{ ok: true }` for `reserved` or `backordered` (`UNKNOWN_ORDER`). |
-| `callJson(tool: string, argumentsJson: string): string` | `call` with JSON arguments and a JSON answer (what a chat tool loop passes around). |
-| `verify(): OrderDeskVerdict` | The state-based verifier. Orders are handled in the order the task names them: an order is expected `reserved` with its full quantity when the stock left after the earlier orders covers it, otherwise `backordered` with nothing reserved. The task passes when every named order does. |
+| `call(tool: string, rawArgs: unknown): OrderDeskToolResult` | Run one tool. Unknown tools and invalid arguments answer an error and change nothing. - `lookup_order` → `{ ok, order_id, sku, quantity, status }` (`UNKNOWN_ORDER`). - `check_stock` → `{ ok, sku, in_stock }` (`UNKNOWN_SKU`). - `reserve_stock` → `{ ok: true }` when `quantity` ≤ stock: the stock drops by `quantity` and the order's reserved units become `quantity`; else `{ ok: false, error: 'INSUFFICIENT_STOCK', in_stock }` with nothing changed (`UNKNOWN_ORDER`, `SKU_MISMATCH` when the SKU is not the order's, `ALREADY_RESERVED` when the order already has a reservation). - `set_order_status` → `{ ok: true }` for `reserved` or `backordered` (`UNKNOWN_ORDER`). |
+| `callJson(tool: string, argumentsJson: string): string` | `call` with JSON arguments and a JSON answer (what a chat tool loop passes around). An unknown tool answers `UNKNOWN_TOOL` before its arguments are read; unparseable arguments answer `INVALID_ARGUMENTS`. |
+| `verify(): OrderDeskVerdict` | The state-based verifier. Orders are handled in the order the task names them: an order is expected `reserved` with its full quantity when the stock left after the earlier orders covers it, otherwise `backordered` with nothing reserved. The task passes when every named order does AND each SKU's final stock equals its starting stock minus the units reserved for it. |
 
 ## Functions
 
@@ -516,8 +516,8 @@ interface OrderDeskVerdict {
 
 | Member | Description |
 | --- | --- |
-| `verdict: 'pass' \| 'fail'` | `pass` when every named order passed, else `fail`. |
-| `reasons: string[]` | One reason per failing order (`<order>: expected <state>, got <status>/<reserved>`). |
+| `verdict: 'pass' \| 'fail'` | `pass` when every named order passed and every SKU's stock is consistent, else `fail`. |
+| `reasons: string[]` | One reason per failing order (`<order>: expected <state>, got <status>/<reserved>`), then one per inconsistent SKU (`<sku>: expected stock <n>, got <m>`). |
 | `evidenceHash: string` | `sha256:<hex>` over the canonical JSON of the final state. |
 | `orders: OrderDeskOrderCheck[]` | Every named order's check, in task order. |
 

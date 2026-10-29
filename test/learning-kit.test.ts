@@ -344,6 +344,28 @@ describe('the webhook receiver', () => {
     ]);
   });
 
+  it('without observed_at in the payload, reports the signed timestamp (identical across handlers)', async () => {
+    const reporters = [fakeReporter(), fakeReporter()];
+    const d = await delivery(
+      { event_id: 'evt_t', request_id: 'req_abc', verdict: 'fail' },
+      { at: NOW_S - 42 },
+    );
+    for (const reporter of reporters) {
+      const rx = createWebhookReceiver({ reporter, secret: SECRET, now: () => NOW_MS });
+      expect((await rx.handle(d)).status).toBe('reported');
+    }
+    const expected = new Date((NOW_S - 42) * 1000).toISOString();
+    expect(expected).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.000Z$/);
+    for (const reporter of reporters) {
+      expect(reporter.calls[0]?.params).toEqual({
+        verdict: 'fail',
+        source: 'webhook',
+        idempotencyKey: 'evt_t',
+        observedAt: expected,
+      });
+    }
+  });
+
   it('reads headers from a Headers object and from a lower- or mixed-case record', async () => {
     const reporter = fakeReporter();
     const rx = createWebhookReceiver({ reporter, secret: SECRET, now: () => NOW_MS });

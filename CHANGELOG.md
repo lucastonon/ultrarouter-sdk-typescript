@@ -52,9 +52,11 @@ supersedes? })`: a `pass` / `fail` verdict from a `verifier`, `business_rule`, `
   evidence hash), `validateOutput` (a zod schema or a JSON-Schema subset plus business rules), and
   `createWebhookReceiver` (HMAC-SHA256 signatures verified in constant time inside a timestamp
   window, redeliveries deduplicated by event id through an atomic claim store, the secret read from
-  `ULTRAROUTER_WEBHOOK_SECRET`); and `createOrderDesk`, a deterministic four-tool demonstration
-  environment with a state-based verifier (`test/fixtures/toy-env.json`, shared with the Python
-  SDK). The environment demonstrates the integration; it is not evidence of efficacy.
+  `ULTRAROUTER_WEBHOOK_SECRET`, and the signed timestamp used as `observedAt` when the payload has
+  none); and `createOrderDesk`, a deterministic four-tool demonstration environment with a
+  state-based verifier (`test/fixtures/toy-env.json`, shared with the Python SDK: a second
+  reservation of an order is `ALREADY_RESERVED`, and every SKU's final stock must match what was
+  reserved). The environment demonstrates the integration; it is not evidence of efficacy.
 - The OpenAPI document is resynced. Besides the receipt and learning routes, it adds the
   lab-authorised episode-memory routes (`GET /v1/call-types/{id}/episode-memory`, `…/enable`,
   `…/disable`), the per-key default call type (`PATCH /v1/workspaces/{id}/api-keys/{keyId}`), the

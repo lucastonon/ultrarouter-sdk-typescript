@@ -83,11 +83,20 @@ export const ORDER_DESK: OrderDeskEnvironment = {
     },
   ],
   rules: {
+    order_of_orders:
+      "The orders a task names are the scenario's order ids, ordered by their first appearance in the task text.",
+    lookup_order:
+      'Returns {"ok": true, "order_id", "sku", "quantity", "status"}; an unknown id returns {"ok": false, "error": "UNKNOWN_ORDER"}.',
+    check_stock:
+      'Returns {"ok": true, "sku", "in_stock"}; an unknown sku returns {"ok": false, "error": "UNKNOWN_SKU"}.',
     reserve_stock:
-      'If quantity <= stock: stock decreases by quantity, the order\'s reserved quantity becomes quantity, return {"ok": true}. Otherwise return {"ok": false, "error": "INSUFFICIENT_STOCK", "in_stock": <stock>} and change nothing.',
-    set_order_status: 'Sets the status and returns {"ok": true}.',
+      'If the order is unknown: UNKNOWN_ORDER. If sku differs from the order\'s sku: SKU_MISMATCH. If the order already has a reservation: ALREADY_RESERVED. If quantity <= stock: stock decreases by quantity, the order\'s reserved quantity becomes quantity, return {"ok": true}. Otherwise return {"ok": false, "error": "INSUFFICIENT_STOCK", "in_stock": <stock>}. Every error changes nothing.',
+    set_order_status:
+      'Sets the status and returns {"ok": true}; an unknown order returns UNKNOWN_ORDER.',
+    malformed_calls:
+      'Missing or mistyped arguments return {"ok": false, "error": "INVALID_ARGUMENTS"}; an unknown tool name returns {"ok": false, "error": "UNKNOWN_TOOL"}. Neither changes anything.',
     verifier:
-      "Orders are handled in the order the task names them. An order passes when it ends with status 'reserved' and its full quantity reserved if the stock left after the earlier orders covered it, otherwise with status 'backordered' and nothing reserved. A task passes when every order it names passes.",
+      "Orders are handled in the order the task names them. An order passes when it ends with status 'reserved' and its full quantity reserved if the stock left after the earlier orders covered it, otherwise with status 'backordered' and nothing reserved. A task passes when every order it names passes AND each sku's final stock equals its starting stock minus the quantities reserved for it.",
   },
   scenarios: [
     {

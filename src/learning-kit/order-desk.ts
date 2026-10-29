@@ -93,9 +93,12 @@ export interface OrderDeskOrderCheck {
 
 /** The verifier's verdict for one episode. */
 export interface OrderDeskVerdict {
-  /** `pass` when every named order passed, else `fail`. */
+  /** `pass` when every named order passed and every SKU's stock is consistent, else `fail`. */
   verdict: 'pass' | 'fail';
-  /** One reason per failing order (`<order>: expected <state>, got <status>/<reserved>`). */
+  /**
+   * One reason per failing order (`<order>: expected <state>, got <status>/<reserved>`), then one
+   * per inconsistent SKU (`<sku>: expected stock <n>, got <m>`).
+   */
   reasons: string[];
   /** `sha256:<hex>` over the canonical JSON of the final state. */
   evidenceHash: string;
@@ -121,6 +124,7 @@ export function orderDeskScenarios(): OrderDeskScenario[] {
 }
 
 const STATUSES = ['reserved', 'backordered'];
+const TOOL_NAMES = ORDER_DESK.tools.map((t) => t.name);
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -204,7 +208,7 @@ export class OrderDesk {
    * - `reserve_stock` → `{ ok: true }` when `quantity` ≤ stock: the stock drops by `quantity` and the
    *   order's reserved units become `quantity`; else `{ ok: false, error: 'INSUFFICIENT_STOCK',
    *   in_stock }` with nothing changed (`UNKNOWN_ORDER`, `SKU_MISMATCH` when the SKU is not the
-   *   order's).
+   *   order's, `ALREADY_RESERVED` when the order already has a reservation).
    * - `set_order_status` → `{ ok: true }` for `reserved` or `backordered` (`UNKNOWN_ORDER`).
    */
   call(tool: string, rawArgs: unknown): OrderDeskToolResult {
@@ -213,19 +217,23 @@ export class OrderDesk {
     return result;
   }
 
-  /** {@link call} with JSON arguments and a JSON answer (what a chat tool loop passes around). */
+  /**
+   * {@link call} with JSON arguments and a JSON answer (what a chat tool loop passes around). An
+   * unknown tool answers `UNKNOWN_TOOL` before its arguments are read; unparseable arguments answer
+   * `INVALID_ARGUMENTS`.
+   */
   callJson(tool: string, argumentsJson: string): string {
     let parsed: unknown;
     try {
       parsed = JSON.parse(argumentsJson === '' ? '{}' : argumentsJson);
     } catch {
-      this.log.push({ tool, ok: false });
-      return JSON.stringify(INVALID);
+      parsed = undefined;
     }
     return JSON.stringify(this.call(tool, parsed));
   }
 
   private dispatch(tool: string, raw: unknown): OrderDeskToolResult {
+    if (!TOOL_NAMES.includes(tool)) return { ok: false, error: 'UNKNOWN_TOOL' };
     switch (tool) {
       case 'lookup_order': {
         const a = args(raw, ['order_id']);
@@ -253,6 +261,7 @@ export class OrderDesk {
         const order = this.orders[a.order_id as string];
         if (order === undefined) return UNKNOWN_ORDER;
         if (order.sku !== a.sku) return { ok: false, error: 'SKU_MISMATCH' };
+        if (order.reserved > 0) return { ok: false, error: 'ALREADY_RESERVED' };
         const quantity = a.quantity as number;
         const units = this.stock[order.sku] ?? 0;
         if (quantity > units) return { ok: false, error: 'INSUFFICIENT_STOCK', in_stock: units };
@@ -276,7 +285,8 @@ export class OrderDesk {
   /**
    * The state-based verifier. Orders are handled in the order the task names them: an order is
    * expected `reserved` with its full quantity when the stock left after the earlier orders covers
-   * it, otherwise `backordered` with nothing reserved. The task passes when every named order does.
+   * it, otherwise `backordered` with nothing reserved. The task passes when every named order does
+   * AND each SKU's final stock equals its starting stock minus the units reserved for it.
    */
   verify(): OrderDeskVerdict {
     const left: Record<string, number> = { ...this.scenario.stock };
@@ -296,6 +306,17 @@ export class OrderDesk {
     const reasons = checks
       .filter((c) => !c.pass)
       .map((c) => `${c.orderId}: expected ${c.expected}, got ${c.status}/${String(c.reserved)}`);
+    const reserved: Record<string, number> = {};
+    for (const order of Object.values(this.orders)) {
+      reserved[order.sku] = (reserved[order.sku] ?? 0) + order.reserved;
+    }
+    for (const [sku, start] of Object.entries(this.scenario.stock)) {
+      const expectedStock = start - (reserved[sku] ?? 0);
+      const actual = this.stock[sku] ?? 0;
+      if (actual !== expectedStock) {
+        reasons.push(`${sku}: expected stock ${String(expectedStock)}, got ${String(actual)}`);
+      }
+    }
     return {
       verdict: reasons.length === 0 ? 'pass' : 'fail',
       reasons,

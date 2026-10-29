@@ -321,7 +321,9 @@ A delayed outcome often comes from another system (an order shipped, a ticket st
 evidence_hash? }`; pass `parse` for your own shape);
 5. the event id claimed in a dedupe store (in-process `MemoryWebhookDedupeStore` by default;
    implement `WebhookDedupeStore` over Redis or a unique row to share it across processes);
-6. the verdict reported with the event id as the `idempotencyKey`.
+6. the verdict reported with the event id as the `idempotencyKey` and, when the payload has no
+   `observed_at`, the signed timestamp as `observedAt`, so two processes handling the same delivery
+   send byte-identical events.
 
 `handle` resolves the HTTP status to answer the sender with: `reported` and `duplicate` are 200,
 `rejected` is 401 (signature, timestamp) or 400 (payload), and `deferred` is 503 when the gateway did
@@ -462,8 +464,11 @@ SKU, a few orders, and four tools (`lookup_order`, `check_stock`, `reserve_stock
 `set_order_status`; `orderDeskTools()` returns them as OpenAI function definitions). The verifier
 reads only the final state: orders are handled in the order the task names them, and each must end
 `reserved` with its full quantity when the stock left after the earlier orders covers it, otherwise
-`backordered` with nothing reserved. Its six scenarios come from a fixture shared with the Python
-SDK (`test/fixtures/toy-env.json`).
+`backordered` with nothing reserved; and every SKU's final stock must equal its starting stock minus
+what was reserved for it. A second reservation of the same order is refused (`ALREADY_RESERVED`),
+as are an unknown order or SKU, a SKU that is not the order's, and malformed arguments; every
+refusal changes nothing. Its rules and six scenarios come from a fixture shared with the Python SDK
+(`test/fixtures/toy-env.json`).
 
 It shows the integration working end to end. It is a demonstration, not evidence that learning
 improves an agent.

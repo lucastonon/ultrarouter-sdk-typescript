@@ -31,7 +31,7 @@ describe('the shared fixtures', () => {
       'e55e452d5e5374ad07ac13ab7e9b44978425151d902a620edc2586a4e9633e1e',
     );
     expect(sha256(fixturePath('toy-env.json'))).toBe(
-      'd4f15f727ea39962a1198411b605a7ba00e718db1d358f27d397499095915864',
+      'c868940d540331a66d0120ee54f071e6f0c1f9728bf43cf51445ba429c0a51d5',
     );
   });
 
@@ -121,6 +121,52 @@ describe('the tools', () => {
     expect(desk.state()).toEqual(before);
   });
 
+  it('reserve_stock refuses a second reservation of the same order (ALREADY_RESERVED)', () => {
+    const desk = createOrderDesk('s5');
+    expect(desk.call('reserve_stock', { order_id: 'E-500', sku: 'SKU-GRAY', quantity: 4 })).toEqual(
+      {
+        ok: true,
+      },
+    );
+    const before = desk.state();
+    expect(desk.call('reserve_stock', { order_id: 'E-500', sku: 'SKU-GRAY', quantity: 6 })).toEqual(
+      {
+        ok: false,
+        error: 'ALREADY_RESERVED',
+      },
+    );
+    expect(desk.state()).toEqual(before);
+    // A partial reservation is not the full quantity: the verifier fails it.
+    desk.call('set_order_status', { order_id: 'E-500', status: 'reserved' });
+    expect(desk.verify().reasons).toEqual(['E-500: expected reserved, got reserved/4']);
+  });
+
+  it('checks the error order: unknown order, then SKU mismatch, then already reserved, then stock', () => {
+    const desk = createOrderDesk('s3');
+    expect(desk.call('reserve_stock', { order_id: 'Z-1', sku: 'SKU-RED', quantity: 9 })).toEqual({
+      ok: false,
+      error: 'UNKNOWN_ORDER',
+    });
+    expect(desk.call('reserve_stock', { order_id: 'C-300', sku: 'SKU-RED', quantity: 9 })).toEqual({
+      ok: false,
+      error: 'SKU_MISMATCH',
+    });
+    desk.call('reserve_stock', { order_id: 'C-300', sku: 'SKU-GREEN', quantity: 3 });
+    expect(
+      desk.call('reserve_stock', { order_id: 'C-300', sku: 'SKU-GREEN', quantity: 99 }),
+    ).toEqual({
+      ok: false,
+      error: 'ALREADY_RESERVED',
+    });
+    expect(
+      desk.call('reserve_stock', { order_id: 'C-301', sku: 'SKU-GREEN', quantity: 3 }),
+    ).toEqual({
+      ok: false,
+      error: 'INSUFFICIENT_STOCK',
+      in_stock: 1,
+    });
+  });
+
   it('set_order_status sets reserved or backordered only', () => {
     const desk = createOrderDesk('s1');
     expect(desk.call('set_order_status', { order_id: 'A-100', status: 'backordered' })).toEqual({
@@ -152,6 +198,8 @@ describe('the tools', () => {
     }
     expect(desk.call('cancel_order', {})).toEqual({ ok: false, error: 'UNKNOWN_TOOL' });
     expect(desk.callJson('lookup_order', '{oops')).toBe('{"ok":false,"error":"INVALID_ARGUMENTS"}');
+    // An unknown tool is named before its arguments are read.
+    expect(desk.callJson('cancel_order', '{oops')).toBe('{"ok":false,"error":"UNKNOWN_TOOL"}');
     expect(desk.state()).toEqual(before);
     expect(desk.calls().every((c) => !c.ok)).toBe(true);
   });
@@ -210,6 +258,18 @@ describe('the verifier', () => {
     const unmarked = createOrderDesk('s1');
     unmarked.call('reserve_stock', { order_id: 'A-100', sku: 'SKU-RED', quantity: 2 });
     expect(unmarked.verify().reasons).toEqual(['A-100: expected reserved, got new/2']);
+  });
+
+  it('fails a SKU whose stock does not match what was reserved for it', () => {
+    const desk = createOrderDesk('s1');
+    solve(desk);
+    expect(desk.verify().verdict).toBe('pass');
+    // Stock that went missing outside any reservation (simulated by editing the state directly).
+    (desk as unknown as { stock: Record<string, number> }).stock['SKU-RED'] = 1;
+    expect(desk.verify()).toMatchObject({
+      verdict: 'fail',
+      reasons: ['SKU-RED: expected stock 3, got 1'],
+    });
   });
 
   it('the same final state gives the same evidence hash', () => {

@@ -4,6 +4,10 @@
  * constant time, refuses a timestamp outside the tolerance window, deduplicates redeliveries by
  * event id, and reports the verdict with `source: 'webhook'`.
  *
+ * When the payload carries no `observed_at`, the signed timestamp is used (as
+ * `YYYY-MM-DDTHH:MM:SS.000Z`), so every process handling the same delivery sends byte-identical
+ * events.
+ *
  * Signature scheme: the sender computes `sha256=` + the hex HMAC-SHA256, keyed with the shared
  * secret, of `"<timestamp>.<raw body>"` (timestamp in Unix seconds), and sends it in
  * `x-webhook-signature` with the timestamp in `x-webhook-timestamp` ({@link signWebhook} does
@@ -326,11 +330,12 @@ export function createWebhookReceiver(options: WebhookReceiverOptions): WebhookR
 
   return {
     async handle(request: WebhookRequest): Promise<WebhookHandleResult> {
+      const timestamp = header(request.headers, timestampHeader);
       const check = await verifyWebhookSignature({
         secret,
         rawBody: request.rawBody,
         signature: header(request.headers, signatureHeader),
-        timestamp: header(request.headers, timestampHeader),
+        timestamp,
         toleranceSeconds: options.toleranceSeconds,
         now: options.now,
       });
@@ -344,13 +349,16 @@ export function createWebhookReceiver(options: WebhookReceiverOptions): WebhookR
       if (!(await dedupe.claim(outcome.eventId, ttl))) {
         return { status: 'duplicate', httpStatus: 200, eventId: outcome.eventId };
       }
+      // Without a sender-given time, the signed timestamp: identical in every process that handles
+      // this delivery, so racing handlers send byte-identical events.
+      const observedAt = outcome.observedAt ?? new Date(Number(timestamp) * 1000).toISOString();
       let report: OutcomeReportResult<'webhook'>;
       try {
         report = await reporter.report(outcome.requestId, {
           verdict: outcome.verdict,
           source: 'webhook',
           idempotencyKey: outcome.eventId,
-          ...(outcome.observedAt !== undefined ? { observedAt: outcome.observedAt } : {}),
+          observedAt,
           ...(outcome.evidenceHash !== undefined ? { evidenceHash: outcome.evidenceHash } : {}),
         });
       } catch (err) {
