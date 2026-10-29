@@ -3772,6 +3772,13 @@ on the other arm. A rule frozen before the comparison decides activation (a nega
 inconclusive result keeps the incumbent); under `manual`, your promote or reject; under
 `immediate`, publication is activation.
 
+Under the current `lpr2` rule, `min_verified_per_arm` and `max_verified_per_arm` keep their
+compatibility names but set **enrollment** thresholds. The gateway freezes the selected episode
+IDs when both arms reach the minimum or either reaches the maximum, then waits for outcomes from
+those same episodes. New episodes use the active version while the comparison waits. Missing
+outcomes cannot promote a candidate; an incomplete cohort at the original `max_duration_hours`
+deadline keeps the incumbent. Historical `lpr1` results retain their original rule.
+
 A refusal you can act on rejects with a `LearningError` (an `UltraRouterError`). The gateway names
 the refusal as the first token of its message; the error carries it as `refusal`, its parenthesized
 sub-reason as `detail`, the actionable `reason`, and the `action` to take:

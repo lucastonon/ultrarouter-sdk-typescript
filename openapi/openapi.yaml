@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: 8780a8c93354811cdf149d410a642199a5159af2390cc022428c073758c3624f
+# spec-sha256: cc557624bbf9d22e404225e3f35ccb4ddd778bd8159b836c714eda1bfc891c5a
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -6872,17 +6872,17 @@ components:
               minimum: 0
               type: "number"
             candidate_share:
-              description: "The share of NEW episodes assigned the candidate while an evaluation runs (default 0.5)."
+              description: "The share of NEW enrolled episodes assigned the candidate while enrollment is open (default 0.5). After enrollment closes, new episodes use the active version while selected episodes finish."
               maximum: 0.99
               minimum: 0.01
               type: "number"
             max_duration_hours:
-              description: "An evaluation whose window has not closed after this long stops (`stopped_budget`; default 720)."
+              description: "The fixed deadline from evaluation start, including time to receive selected outcomes (default 720). Incomplete evidence cannot promote a candidate; the deadline never resets."
               maximum: 8760
               minimum: 1
               type: "integer"
             max_verified_per_arm:
-              description: "…or when EITHER arm reaches this many; each arm counts at most this many (default 200)."
+              description: "Compatibility field name. Under lpr2, enrollment also closes when EITHER arm reaches this many enrolled episodes; each frozen arm contains at most this many (default 200)."
               maximum: 5000
               minimum: 1
               type: "integer"
@@ -6892,7 +6892,7 @@ components:
               minimum: 0
               type: "number"
             min_verified_per_arm:
-              description: "The window closes when BOTH arms have this many verified episodes (default 30)."
+              description: "Compatibility field name. Under lpr2, enrollment closes when BOTH arms have this many enrolled episodes (default 30); the selected episodes are then frozen and their verified outcomes are awaited."
               maximum: 5000
               minimum: 1
               type: "integer"
@@ -10191,7 +10191,7 @@ components:
                     candidate:
                       properties:
                         cost_micro_usd:
-                          description: "Summed request cost of the verified episodes (cost objective only)."
+                          description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                           nullable: true
                           type: "integer"
                         mean_cost_micro_usd:
@@ -10201,10 +10201,11 @@ components:
                           minimum: 0
                           type: "integer"
                         success_rate:
+                          description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                           nullable: true
                           type: "number"
                         unknown:
-                          description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                          description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                           minimum: 0
                           type: "integer"
                         verified:
@@ -10222,7 +10223,7 @@ components:
                     incumbent:
                       properties:
                         cost_micro_usd:
-                          description: "Summed request cost of the verified episodes (cost objective only)."
+                          description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                           nullable: true
                           type: "integer"
                         mean_cost_micro_usd:
@@ -10232,10 +10233,11 @@ components:
                           minimum: 0
                           type: "integer"
                         success_rate:
+                          description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                           nullable: true
                           type: "number"
                         unknown:
-                          description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                          description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                           minimum: 0
                           type: "integer"
                         verified:
@@ -10318,7 +10320,7 @@ components:
                     - "learning_evaluation"
                   type: "string"
                 rule:
-                  description: "The decision rule frozen when the evaluation started."
+                  description: "The decision rule frozen when the evaluation started. lpr2 selects episodes before inspecting their outcomes, freezes one cohort, and makes one decision only from complete selected outcomes or the fixed deadline."
                   nullable: true
                   properties:
                     alpha_one_sided:
@@ -10348,6 +10350,7 @@ components:
                       description: "`verified_teaching_episode`."
                       type: "string"
                     rule_version:
+                      description: "lpr2 freezes enrollment before waiting for outcomes; lpr1 identifies historical verified-only rules."
                       type: "string"
                   required:
                     - "rule_version"
@@ -10447,7 +10450,7 @@ components:
                     candidate:
                       properties:
                         cost_micro_usd:
-                          description: "Summed request cost of the verified episodes (cost objective only)."
+                          description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                           nullable: true
                           type: "integer"
                         mean_cost_micro_usd:
@@ -10457,10 +10460,11 @@ components:
                           minimum: 0
                           type: "integer"
                         success_rate:
+                          description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                           nullable: true
                           type: "number"
                         unknown:
-                          description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                          description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                           minimum: 0
                           type: "integer"
                         verified:
@@ -10478,7 +10482,7 @@ components:
                     incumbent:
                       properties:
                         cost_micro_usd:
-                          description: "Summed request cost of the verified episodes (cost objective only)."
+                          description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                           nullable: true
                           type: "integer"
                         mean_cost_micro_usd:
@@ -10488,10 +10492,11 @@ components:
                           minimum: 0
                           type: "integer"
                         success_rate:
+                          description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                           nullable: true
                           type: "number"
                         unknown:
-                          description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                          description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                           minimum: 0
                           type: "integer"
                         verified:
@@ -10574,7 +10579,7 @@ components:
                     - "learning_evaluation"
                   type: "string"
                 rule:
-                  description: "The decision rule frozen when the evaluation started."
+                  description: "The decision rule frozen when the evaluation started. lpr2 selects episodes before inspecting their outcomes, freezes one cohort, and makes one decision only from complete selected outcomes or the fixed deadline."
                   nullable: true
                   properties:
                     alpha_one_sided:
@@ -10604,6 +10609,7 @@ components:
                       description: "`verified_teaching_episode`."
                       type: "string"
                     rule_version:
+                      description: "lpr2 freezes enrollment before waiting for outcomes; lpr1 identifies historical verified-only rules."
                       type: "string"
                   required:
                     - "rule_version"
@@ -10726,17 +10732,17 @@ components:
                   minimum: 0
                   type: "number"
                 candidate_share:
-                  description: "The share of NEW episodes assigned the candidate while an evaluation runs (default 0.5)."
+                  description: "The share of NEW enrolled episodes assigned the candidate while enrollment is open (default 0.5). After enrollment closes, new episodes use the active version while selected episodes finish."
                   maximum: 0.99
                   minimum: 0.01
                   type: "number"
                 max_duration_hours:
-                  description: "An evaluation whose window has not closed after this long stops (`stopped_budget`; default 720)."
+                  description: "The fixed deadline from evaluation start, including time to receive selected outcomes (default 720). Incomplete evidence cannot promote a candidate; the deadline never resets."
                   maximum: 8760
                   minimum: 1
                   type: "integer"
                 max_verified_per_arm:
-                  description: "…or when EITHER arm reaches this many; each arm counts at most this many (default 200)."
+                  description: "Compatibility field name. Under lpr2, enrollment also closes when EITHER arm reaches this many enrolled episodes; each frozen arm contains at most this many (default 200)."
                   maximum: 5000
                   minimum: 1
                   type: "integer"
@@ -10746,7 +10752,7 @@ components:
                   minimum: 0
                   type: "number"
                 min_verified_per_arm:
-                  description: "The window closes when BOTH arms have this many verified episodes (default 30)."
+                  description: "Compatibility field name. Under lpr2, enrollment closes when BOTH arms have this many enrolled episodes (default 30); the selected episodes are then frozen and their verified outcomes are awaited."
                   maximum: 5000
                   minimum: 1
                   type: "integer"
@@ -10975,7 +10981,7 @@ components:
             candidate:
               properties:
                 cost_micro_usd:
-                  description: "Summed request cost of the verified episodes (cost objective only)."
+                  description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                   nullable: true
                   type: "integer"
                 mean_cost_micro_usd:
@@ -10985,10 +10991,11 @@ components:
                   minimum: 0
                   type: "integer"
                 success_rate:
+                  description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                   nullable: true
                   type: "number"
                 unknown:
-                  description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                  description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                   minimum: 0
                   type: "integer"
                 verified:
@@ -11006,7 +11013,7 @@ components:
             incumbent:
               properties:
                 cost_micro_usd:
-                  description: "Summed request cost of the verified episodes (cost objective only)."
+                  description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                   nullable: true
                   type: "integer"
                 mean_cost_micro_usd:
@@ -11016,10 +11023,11 @@ components:
                   minimum: 0
                   type: "integer"
                 success_rate:
+                  description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                   nullable: true
                   type: "number"
                 unknown:
-                  description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                  description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                   minimum: 0
                   type: "integer"
                 verified:
@@ -11102,7 +11110,7 @@ components:
             - "learning_evaluation"
           type: "string"
         rule:
-          description: "The decision rule frozen when the evaluation started."
+          description: "The decision rule frozen when the evaluation started. lpr2 selects episodes before inspecting their outcomes, freezes one cohort, and makes one decision only from complete selected outcomes or the fixed deadline."
           nullable: true
           properties:
             alpha_one_sided:
@@ -11132,6 +11140,7 @@ components:
               description: "`verified_teaching_episode`."
               type: "string"
             rule_version:
+              description: "lpr2 freezes enrollment before waiting for outcomes; lpr1 identifies historical verified-only rules."
               type: "string"
           required:
             - "rule_version"
@@ -11169,7 +11178,7 @@ components:
         - "decided_by"
       type: "object"
     LearningPromotionPolicy:
-      description: "The promotion policy. Defaults: evaluate / success / 30–200 verified episodes per arm / one-sided alpha 0.05 / 0 pp minimum effect / 5 pp margin / 0.5 candidate share / 720 h. Changeable before an evaluation starts; a running evaluation keeps the rule it froze."
+      description: "The promotion policy. Defaults: evaluate / success / enrollment thresholds 30–200 episodes per arm / one-sided alpha 0.05 / 0 pp minimum effect / 5 pp margin / 0.5 candidate share / 720 h. Changeable before an evaluation starts; a running evaluation keeps the rule it froze."
       properties:
         alpha:
           description: "One-sided significance level of the interval on the difference (default 0.05)."
@@ -11179,17 +11188,17 @@ components:
           minimum: 0
           type: "number"
         candidate_share:
-          description: "The share of NEW episodes assigned the candidate while an evaluation runs (default 0.5)."
+          description: "The share of NEW enrolled episodes assigned the candidate while enrollment is open (default 0.5). After enrollment closes, new episodes use the active version while selected episodes finish."
           maximum: 0.99
           minimum: 0.01
           type: "number"
         max_duration_hours:
-          description: "An evaluation whose window has not closed after this long stops (`stopped_budget`; default 720)."
+          description: "The fixed deadline from evaluation start, including time to receive selected outcomes (default 720). Incomplete evidence cannot promote a candidate; the deadline never resets."
           maximum: 8760
           minimum: 1
           type: "integer"
         max_verified_per_arm:
-          description: "…or when EITHER arm reaches this many; each arm counts at most this many (default 200)."
+          description: "Compatibility field name. Under lpr2, enrollment also closes when EITHER arm reaches this many enrolled episodes; each frozen arm contains at most this many (default 200)."
           maximum: 5000
           minimum: 1
           type: "integer"
@@ -11199,7 +11208,7 @@ components:
           minimum: 0
           type: "number"
         min_verified_per_arm:
-          description: "The window closes when BOTH arms have this many verified episodes (default 30)."
+          description: "Compatibility field name. Under lpr2, enrollment closes when BOTH arms have this many enrolled episodes (default 30); the selected episodes are then frozen and their verified outcomes are awaited."
           maximum: 5000
           minimum: 1
           type: "integer"
@@ -11313,7 +11322,7 @@ components:
                 candidate:
                   properties:
                     cost_micro_usd:
-                      description: "Summed request cost of the verified episodes (cost objective only)."
+                      description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                       nullable: true
                       type: "integer"
                     mean_cost_micro_usd:
@@ -11323,10 +11332,11 @@ components:
                       minimum: 0
                       type: "integer"
                     success_rate:
+                      description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                       nullable: true
                       type: "number"
                     unknown:
-                      description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                      description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                       minimum: 0
                       type: "integer"
                     verified:
@@ -11344,7 +11354,7 @@ components:
                 incumbent:
                   properties:
                     cost_micro_usd:
-                      description: "Summed request cost of the verified episodes (cost objective only)."
+                      description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                       nullable: true
                       type: "integer"
                     mean_cost_micro_usd:
@@ -11354,10 +11364,11 @@ components:
                       minimum: 0
                       type: "integer"
                     success_rate:
+                      description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                       nullable: true
                       type: "number"
                     unknown:
-                      description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                      description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                       minimum: 0
                       type: "integer"
                     verified:
@@ -11440,7 +11451,7 @@ components:
                 - "learning_evaluation"
               type: "string"
             rule:
-              description: "The decision rule frozen when the evaluation started."
+              description: "The decision rule frozen when the evaluation started. lpr2 selects episodes before inspecting their outcomes, freezes one cohort, and makes one decision only from complete selected outcomes or the fixed deadline."
               nullable: true
               properties:
                 alpha_one_sided:
@@ -11470,6 +11481,7 @@ components:
                   description: "`verified_teaching_episode`."
                   type: "string"
                 rule_version:
+                  description: "lpr2 freezes enrollment before waiting for outcomes; lpr1 identifies historical verified-only rules."
                   type: "string"
               required:
                 - "rule_version"
@@ -11569,7 +11581,7 @@ components:
                 candidate:
                   properties:
                     cost_micro_usd:
-                      description: "Summed request cost of the verified episodes (cost objective only)."
+                      description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                       nullable: true
                       type: "integer"
                     mean_cost_micro_usd:
@@ -11579,10 +11591,11 @@ components:
                       minimum: 0
                       type: "integer"
                     success_rate:
+                      description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                       nullable: true
                       type: "number"
                     unknown:
-                      description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                      description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                       minimum: 0
                       type: "integer"
                     verified:
@@ -11600,7 +11613,7 @@ components:
                 incumbent:
                   properties:
                     cost_micro_usd:
-                      description: "Summed request cost of the verified episodes (cost objective only)."
+                      description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                       nullable: true
                       type: "integer"
                     mean_cost_micro_usd:
@@ -11610,10 +11623,11 @@ components:
                       minimum: 0
                       type: "integer"
                     success_rate:
+                      description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                       nullable: true
                       type: "number"
                     unknown:
-                      description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                      description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                       minimum: 0
                       type: "integer"
                     verified:
@@ -11696,7 +11710,7 @@ components:
                 - "learning_evaluation"
               type: "string"
             rule:
-              description: "The decision rule frozen when the evaluation started."
+              description: "The decision rule frozen when the evaluation started. lpr2 selects episodes before inspecting their outcomes, freezes one cohort, and makes one decision only from complete selected outcomes or the fixed deadline."
               nullable: true
               properties:
                 alpha_one_sided:
@@ -11726,6 +11740,7 @@ components:
                   description: "`verified_teaching_episode`."
                   type: "string"
                 rule_version:
+                  description: "lpr2 freezes enrollment before waiting for outcomes; lpr1 identifies historical verified-only rules."
                   type: "string"
               required:
                 - "rule_version"
@@ -11848,17 +11863,17 @@ components:
               minimum: 0
               type: "number"
             candidate_share:
-              description: "The share of NEW episodes assigned the candidate while an evaluation runs (default 0.5)."
+              description: "The share of NEW enrolled episodes assigned the candidate while enrollment is open (default 0.5). After enrollment closes, new episodes use the active version while selected episodes finish."
               maximum: 0.99
               minimum: 0.01
               type: "number"
             max_duration_hours:
-              description: "An evaluation whose window has not closed after this long stops (`stopped_budget`; default 720)."
+              description: "The fixed deadline from evaluation start, including time to receive selected outcomes (default 720). Incomplete evidence cannot promote a candidate; the deadline never resets."
               maximum: 8760
               minimum: 1
               type: "integer"
             max_verified_per_arm:
-              description: "…or when EITHER arm reaches this many; each arm counts at most this many (default 200)."
+              description: "Compatibility field name. Under lpr2, enrollment also closes when EITHER arm reaches this many enrolled episodes; each frozen arm contains at most this many (default 200)."
               maximum: 5000
               minimum: 1
               type: "integer"
@@ -11868,7 +11883,7 @@ components:
               minimum: 0
               type: "number"
             min_verified_per_arm:
-              description: "The window closes when BOTH arms have this many verified episodes (default 30)."
+              description: "Compatibility field name. Under lpr2, enrollment closes when BOTH arms have this many enrolled episodes (default 30); the selected episodes are then frozen and their verified outcomes are awaited."
               maximum: 5000
               minimum: 1
               type: "integer"
@@ -18795,7 +18810,7 @@ paths:
         - "Learning"
   "/v1/call-types/{id}/learning/evaluations":
     get:
-      description: "Every evaluation, newest first: the frozen rule and its hash, each arm’s verified / pass / unknown episodes, the one-sided interval on the success difference, and the decision with its reason. Dual auth: an api key (`config:read` to read, `config:write` to change) or an owner/admin session with the `X-UR-Workspace` header; a viewer may read only. A call type of another workspace is a 404. Requires API-key scope: config:read or config:write."
+      description: "Every evaluation, newest first: the frozen rule and its hash, each arm’s verified / pass / unknown episodes, the one-sided interval on the success difference, and the decision with its reason. Under lpr2, enrollment closes before outcomes are inspected; the frozen episodes remain selected while their outcomes are awaited. Missing outcomes cannot produce a promotion. Historical lpr1 results retain their original rule. Dual auth: an api key (`config:read` to read, `config:write` to change) or an owner/admin session with the `X-UR-Workspace` header; a viewer may read only. A call type of another workspace is a 404. Requires API-key scope: config:read or config:write."
       operationId: "listLearningEvaluations"
       parameters:
         -
@@ -18822,7 +18837,7 @@ paths:
                             candidate:
                               properties:
                                 cost_micro_usd:
-                                  description: "Summed request cost of the verified episodes (cost objective only)."
+                                  description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                                   nullable: true
                                   type: "integer"
                                 mean_cost_micro_usd:
@@ -18832,10 +18847,11 @@ paths:
                                   minimum: 0
                                   type: "integer"
                                 success_rate:
+                                  description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                                   nullable: true
                                   type: "number"
                                 unknown:
-                                  description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                                  description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                                   minimum: 0
                                   type: "integer"
                                 verified:
@@ -18853,7 +18869,7 @@ paths:
                             incumbent:
                               properties:
                                 cost_micro_usd:
-                                  description: "Summed request cost of the verified episodes (cost objective only)."
+                                  description: "Summed request cost of verified episodes within the selected cohort (cost objective only)."
                                   nullable: true
                                   type: "integer"
                                 mean_cost_micro_usd:
@@ -18863,10 +18879,11 @@ paths:
                                   minimum: 0
                                   type: "integer"
                                 success_rate:
+                                  description: "Descriptive pass / verified rate. Under lpr2 a promotion decision waits for complete outcomes in the frozen cohort."
                                   nullable: true
                                   type: "number"
                                 unknown:
-                                  description: "Episodes assigned the arm with no verdict yet — excluded from the comparison."
+                                  description: "Selected episodes without an eligible verified outcome, including reports after the fixed deadline. Under lpr2 they remain in the frozen cohort and block promotion; missing outcomes at the fixed deadline leave the incumbent active. Historical lpr1 evaluations excluded and counted unknown outcomes."
                                   minimum: 0
                                   type: "integer"
                                 verified:
@@ -18949,7 +18966,7 @@ paths:
                             - "learning_evaluation"
                           type: "string"
                         rule:
-                          description: "The decision rule frozen when the evaluation started."
+                          description: "The decision rule frozen when the evaluation started. lpr2 selects episodes before inspecting their outcomes, freezes one cohort, and makes one decision only from complete selected outcomes or the fixed deadline."
                           nullable: true
                           properties:
                             alpha_one_sided:
@@ -18979,6 +18996,7 @@ paths:
                               description: "`verified_teaching_episode`."
                               type: "string"
                             rule_version:
+                              description: "lpr2 freezes enrollment before waiting for outcomes; lpr1 identifies historical verified-only rules."
                               type: "string"
                           required:
                             - "rule_version"
