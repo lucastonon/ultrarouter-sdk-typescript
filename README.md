@@ -284,7 +284,10 @@ if (report.receipt !== null) {
   const receipt = await ur.ur.outcomes.waitForReceipt(report.receipt.id, { timeoutMs: 10_000 });
   console.log(receipt.status); // "applied"
 }
-console.log((await ur.ur.learning.status('support-reply')).state);
+const callTypes = await ur.ur.callTypes.list();
+const callType = callTypes.data.find((ct) => ct.slug === 'support-reply') ??
+  await ur.ur.callTypes.create({ slug: 'support-reply' });
+console.log((await ur.ur.learning.status(callType.id)).state); // learning requires the ct_… id
 ```
 
 [Plug-and-play learning](./docs/plug-and-play-learning.md) ·

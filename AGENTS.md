@@ -119,7 +119,10 @@ const report = await ur.ur.outcomes.report(res.requestId, {
 console.log(report.status, report.result?.status); // "delivered" "pending" (applied once the request lands)
 
 try {
-  console.log((await ur.ur.learning.status('support-reply')).state);
+  const callTypes = await ur.ur.callTypes.list();
+  const callType = callTypes.data.find((ct) => ct.slug === 'support-reply') ??
+    await ur.ur.callTypes.create({ slug: 'support-reply' });
+  console.log((await ur.ur.learning.status(callType.id)).state); // learning requires the ct_… id
 } catch (err) {
   if (err instanceof LearningError) console.log(err.reason, err.action);
   else throw err;
