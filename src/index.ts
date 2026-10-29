@@ -34,6 +34,7 @@ export {
   type ImportsResource,
   type LearnedRecordOptions,
   type LearnedSession,
+  type LearningResource,
   type ModelListQuery,
   type ModelsResource,
   type OraclesResource,
@@ -65,6 +66,11 @@ export * from './diff-stats.js';
 export * from './artifacts.js';
 export * from './outcomes.js';
 export * from './flywheel-queue.js';
+// Plug-and-play learning: request/episode correlation, verdict reports, receipts and learning controls.
+export * from './correlation.js';
+export * from './outcome-report.js';
+export * from './outcome-receipts.js';
+export * from './learning-controls.js';
 // Learning status and history imports.
 export * from './flywheel-status.js';
 export * from './imports.js';

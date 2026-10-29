@@ -29,6 +29,17 @@ import {
   type ResolvedBenchInit,
   type ResolvedInit,
 } from './config.js';
+import {
+  assertEpisodeKey,
+  assertRequestId,
+  attachRequestId,
+  EPISODE_HEADER,
+  mintRequestId,
+  readRequestId,
+  REQUEST_ID_HEADER,
+  type RequestCorrelation,
+  type StreamCorrelation,
+} from './correlation.js';
 import { UltraRouterError } from './errors.js';
 import type { FlywheelCalibration, FlywheelStatus } from './flywheel-status.js';
 import {
@@ -50,6 +61,17 @@ import {
 } from './imports.js';
 import { applyLearnedContext, type LearnedMessage } from './learned-placement.js';
 import {
+  toLearningError,
+  type EnableLearningParams,
+  type LearningDecisionParams,
+  type LearningEvaluationList,
+  type LearningRollbackParams,
+  type LearningStatus,
+  type LearningVersion,
+  type LearningVersionDetail,
+  type LearningVersionList,
+} from './learning-controls.js';
+import {
   buildOpenAIAdapter,
   type OpenAICompatConfig,
   type OpenAIConstructor,
@@ -66,6 +88,25 @@ import {
   type PendingOutcomesQuery,
   type RecordOutcomesResponse,
 } from './outcomes.js';
+import {
+  isTerminalReceiptState,
+  parseOutcomeReceipt,
+  parseOutcomeReceiptList,
+  RECEIPT_WAIT_DEFAULTS,
+  ReceiptWaitTimeoutError,
+  type OutcomeReceiptList,
+  type OutcomeReceiptRecord,
+  type RequestOutcomeResult,
+  type WaitForReceiptOptions,
+} from './outcome-receipts.js';
+import {
+  planOutcomeReport,
+  type OutcomeReportParams,
+  type OutcomeReportResult,
+  type OutcomeReported,
+  type OutcomeSource,
+  type OutcomeVerdict,
+} from './outcome-report.js';
 import {
   decidePreflightCache,
   parseGrantHeader,
@@ -206,6 +247,39 @@ function readEnv(name: string): string | undefined {
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** The typed `aborted` error for a fired signal. */
+function abortedError(signal: AbortSignal): UltraRouterError {
+  const reason: unknown = signal.reason;
+  return new UltraRouterError({
+    code: 'aborted',
+    message: `request aborted: ${reason instanceof Error ? reason.message : String(reason ?? 'aborted')}`,
+    status: 0,
+    retryable: false,
+  });
+}
+
+/** Throw the typed `aborted` error when `signal` has fired. */
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted === true) throw abortedError(signal);
+}
+
+/** Sleep `ms`, rejecting with the typed `aborted` error as soon as `signal` fires. */
+function abortableSleep(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  if (signal === undefined) return sleep(ms);
+  throwIfAborted(signal);
+  return new Promise((resolve, reject) => {
+    const onAbort = (): void => {
+      clearTimeout(timer);
+      reject(abortedError(signal));
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
 /** Percent-encode one path segment (ids, slugs, run ids). */
 const seg = (value: string): string => encodeURIComponent(value);
 
@@ -251,21 +325,24 @@ function queryString(query: Readonly<Record<string, unknown>> | undefined): stri
  * `stream: true`.
  */
 export interface ChatCompletionsCreate {
-  /** A non-streaming completion. */
+  /** A non-streaming completion, with the gateway request id as `requestId`. */
   (
     params: ChatCompletionCreateParams & { stream?: false | undefined },
     options?: RequestOptions,
-  ): Promise<ChatCompletion>;
-  /** A streaming completion: an async iterable of chunks; the final chunk carries `usage` and `ur`. */
+  ): Promise<ChatCompletion & RequestCorrelation>;
+  /**
+   * A streaming completion: an async iterable of chunks (the final chunk carries `usage` and `ur`),
+   * with the request id as `requestId` as soon as the stream opens.
+   */
   (
     params: ChatCompletionCreateParams & { stream: true },
     options?: RequestOptions,
-  ): Promise<ChatCompletionStream>;
+  ): Promise<ChatCompletionStream & StreamCorrelation>;
   /** Either, when `stream` is a `boolean` known only at runtime. */
   (
     params: ChatCompletionCreateParams,
     options?: RequestOptions,
-  ): Promise<ChatCompletion | ChatCompletionStream>;
+  ): Promise<(ChatCompletion & RequestCorrelation) | (ChatCompletionStream & StreamCorrelation)>;
 }
 
 /** `ur.chat`: OpenAI-compatible chat completions. */
@@ -282,11 +359,11 @@ export interface ChatResource {
 
 /** `ur.embeddings`: OpenAI-compatible embeddings. */
 export interface EmbeddingsResource {
-  /** Create embeddings (`POST /v1/embeddings`). */
+  /** Create embeddings (`POST /v1/embeddings`), with the gateway request id as `requestId`. */
   create: (
     params: EmbeddingCreateParams,
     options?: RequestOptions,
-  ) => Promise<CreateEmbeddingResponse>;
+  ) => Promise<CreateEmbeddingResponse & RequestCorrelation>;
 }
 
 /** `ur.models`: the model catalog visible to your key. */
@@ -461,6 +538,86 @@ export interface OutcomesResource {
   ) => Promise<PendingClaimsResponse>;
   /** Drain the durable queue. Call it before your process exits. */
   flush: (options?: RequestOptions) => Promise<OutcomeFlushReport>;
+  /**
+   * Report a task verdict on a request: `pass` / `fail` / `unknown` plus its `source`, mapped onto
+   * the outcome channels by the SDK's verdict table. `unknown` sends nothing and resolves
+   * `not_reported`; `self_rating` is a proxy that never teaches (`teaches: false`). The event is sent
+   * through the durable queue under an identity derived from `(requestId, verdict, source,
+   * idempotencyKey)`, so a retry, a lost acknowledgement or a repeated call never double-reports.
+   * Report as soon as you have the verdict: the gateway accepts it before the request is fully
+   * written (`result.status === 'pending'`, with a receipt). Never throws for a delivery failure.
+   *
+   * @throws {UltraRouterError} `invalid_request` for a malformed request id, verdict, source or
+   * option; `OutcomeStoreError` when the store cannot persist.
+   */
+  report: <S extends OutcomeSource, V extends OutcomeVerdict>(
+    requestId: string,
+    params: OutcomeReportParams<S, V>,
+    options?: RequestOptions,
+  ) => Promise<OutcomeReportResult<S, V>>;
+  /** Read one outcome receipt (`GET /v1/outcome-receipts/{id}`). */
+  receipt: (id: string, options?: RequestOptions) => Promise<OutcomeReceiptRecord>;
+  /** Read every outcome receipt of a request (`GET /v1/requests/{id}/outcome-receipts`). */
+  receiptsForRequest: (requestId: string, options?: RequestOptions) => Promise<OutcomeReceiptList>;
+  /**
+   * Poll a receipt with bounded exponential backoff (250 ms doubling to 4 s by default) until it
+   * reaches a final state (`applied`, `rejected`, `failed`, `expired`), and resolve it. Rejects with
+   * {@link ReceiptWaitTimeoutError} after `timeoutMs` (default 30 s) and with an `aborted` error
+   * when `signal` fires. It reads the public receipt route only.
+   */
+  waitForReceipt: (id: string, options?: WaitForReceiptOptions) => Promise<OutcomeReceiptRecord>;
+}
+
+/**
+ * `ur.ur.learning`: learning controls for one call type (`/v1/call-types/{id}/learning*`). A refusal
+ * you can act on (missing consent, no learning provider, provider quota, learning budget, not found,
+ * forbidden) rejects with a `LearningError` naming the `reason` and the `action`.
+ */
+export interface LearningResource {
+  /** Read the learning status: state, provider, active and candidate versions, evaluation, evidence, backlog, budget. */
+  status: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
+  /** Enable learning (self-serve; needs corrections consent and a `config:write` key or an owner/admin). */
+  enable: (
+    callTypeId: string,
+    params: EnableLearningParams,
+    options?: RequestOptions,
+  ) => Promise<LearningStatus>;
+  /** Pause: stop learning and evaluation decisions, keep serving the active version. */
+  pause: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
+  /** Resume a paused (or quota / budget stopped) call type. */
+  resume: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
+  /** Disable: stop serving learned versions (the kill switch). */
+  disable: (callTypeId: string, options?: RequestOptions) => Promise<LearningStatus>;
+  /** List the version history with each version's state, newest first. */
+  versions: (callTypeId: string, options?: RequestOptions) => Promise<LearningVersionList>;
+  /** Read one version: its lessons and a provenance summary. */
+  version: (
+    callTypeId: string,
+    versionId: string,
+    options?: RequestOptions,
+  ) => Promise<LearningVersionDetail>;
+  /** Point the active version at an exact earlier version. */
+  rollback: (
+    callTypeId: string,
+    params: LearningRollbackParams,
+    options?: RequestOptions,
+  ) => Promise<LearningStatus>;
+  /** Promote a candidate by hand (owner/admin). */
+  promote: (
+    callTypeId: string,
+    versionId: string,
+    params?: LearningDecisionParams,
+    options?: RequestOptions,
+  ) => Promise<LearningVersion>;
+  /** Reject a candidate by hand (owner/admin); the incumbent keeps serving. */
+  reject: (
+    callTypeId: string,
+    versionId: string,
+    params?: LearningDecisionParams,
+    options?: RequestOptions,
+  ) => Promise<LearningVersion>;
+  /** List evaluations with their frozen rule, arms, interval and decision, newest first. */
+  evaluations: (callTypeId: string, options?: RequestOptions) => Promise<LearningEvaluationList>;
 }
 
 /** Options for a reviewer delivery: a declared backfill and/or the reviewer system name. */
@@ -677,8 +834,10 @@ export interface UrNamespace {
   };
   /** Artifacts: the units of value your application produces. */
   artifacts: ArtifactsResource;
-  /** Outcome events with a durable local queue. */
+  /** Outcome events with a durable local queue, verdict reports and receipts. */
   outcomes: OutcomesResource;
+  /** Learning controls per call type. */
+  learning: LearningResource;
   /** The signed reviewer-decision adapter. */
   reviewer: ReviewerResource;
   /** Learning status and verdict-source health. */
@@ -729,6 +888,7 @@ export class UltraRouter {
   private readonly fetchImpl: FetchLike;
   private readonly timeoutMs: number;
   private readonly maxRetries: number;
+  private readonly requestIds: 'gateway' | 'client';
   private readonly defaultHeaders: Record<string, string>;
   /** The per-request Bench trace factory, when the init `bench.trace` is a function. */
   private readonly benchTraceFactory: (() => string) | undefined;
@@ -806,6 +966,7 @@ export class UltraRouter {
     }
     this.timeoutMs = options.timeout ?? DEFAULT_TIMEOUT_MS;
     this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
+    this.requestIds = options.requestIds ?? 'gateway';
     // The init Bench tag (explicit option, else UR_BENCH env). Its static X-UR-Bench-* headers
     // fold into defaultHeaders so they ride every request and `asOpenAI()`; a trace factory is
     // applied per request. A live key plus a bench tag warns once here.
@@ -935,7 +1096,12 @@ export class UltraRouter {
         batch: this.batchOutcomes.bind(this),
         pending: this.pendingOutcomes.bind(this),
         flush: this.flushOutcomes.bind(this),
+        report: this.reportOutcome.bind(this) as OutcomesResource['report'],
+        receipt: this.getOutcomeReceipt.bind(this),
+        receiptsForRequest: this.listRequestReceipts.bind(this),
+        waitForReceipt: this.waitForOutcomeReceipt.bind(this),
       },
+      learning: this.learningResource(),
       reviewer: {
         setup: this.reviewerSetup.bind(this),
         test: this.reviewerTest.bind(this),
@@ -1234,30 +1400,54 @@ export class UltraRouter {
   private createChatCompletion(
     params: ChatCompletionCreateParams & { stream?: false | undefined },
     options?: RequestOptions,
-  ): Promise<ChatCompletion>;
+  ): Promise<ChatCompletion & RequestCorrelation>;
   private createChatCompletion(
     params: ChatCompletionCreateParams & { stream: true },
     options?: RequestOptions,
-  ): Promise<ChatCompletionStream>;
+  ): Promise<ChatCompletionStream & StreamCorrelation>;
   private createChatCompletion(
     params: ChatCompletionCreateParams,
     options?: RequestOptions,
-  ): Promise<ChatCompletion | ChatCompletionStream>;
+  ): Promise<(ChatCompletion & RequestCorrelation) | (ChatCompletionStream & StreamCorrelation)>;
   private async createChatCompletion(
     params: ChatCompletionCreateParams,
     options: RequestOptions = {},
-  ): Promise<ChatCompletion | ChatCompletionStream> {
+  ): Promise<(ChatCompletion & RequestCorrelation) | (ChatCompletionStream & StreamCorrelation)> {
     const body = applyChatDefaults(params, this.init);
+    const correlated = this.correlate(options);
     if (body.stream === true) {
       const open = await this.send('POST', '/v1/chat/completions', {
         body,
         stream: true,
-        options,
+        options: correlated,
       });
       // The deadline and the caller's abort signal keep applying while chunks arrive.
-      return iterateChatStream(open.response, open) as ChatCompletionStream;
+      const stream = iterateChatStream(open.response, open) as ChatCompletionStream;
+      return attachRequestId(stream, readRequestId(open.response) ?? correlated.requestId ?? null);
     }
-    return this.json<ChatCompletion>('POST', '/v1/chat/completions', { body, options });
+    return this.inference<ChatCompletion>('/v1/chat/completions', body, correlated);
+  }
+
+  /**
+   * The per-call options with the request id resolved: the caller's, else (with
+   * `requestIds: 'client'`) a freshly minted one, so the id is known before the call returns.
+   */
+  private correlate(options: RequestOptions): RequestOptions {
+    if (options.requestId !== undefined || this.requestIds !== 'client') return options;
+    return { ...options, requestId: mintRequestId() };
+  }
+
+  /** POST an inference call and attach its request id (header, else body `ur.request_id`, else sent). */
+  private async inference<T extends { ur?: { request_id?: string } }>(
+    path: string,
+    body: unknown,
+    options: RequestOptions,
+  ): Promise<T & RequestCorrelation> {
+    const open = await this.send('POST', path, { body, stream: false, options });
+    const parsed = parseJsonBody<T>(await readText(open), 'POST', path, open.response.status);
+    const requestId =
+      readRequestId(open.response) ?? parsed.ur?.request_id ?? options.requestId ?? '';
+    return attachRequestId(parsed, requestId);
   }
 
   // ─────────────────────────────── embeddings ───────────────────────────────
@@ -1265,9 +1455,9 @@ export class UltraRouter {
   private createEmbedding(
     params: EmbeddingCreateParams,
     options: RequestOptions = {},
-  ): Promise<CreateEmbeddingResponse> {
+  ): Promise<CreateEmbeddingResponse & RequestCorrelation> {
     const body = applyEmbeddingDefaults(params, this.init);
-    return this.json<CreateEmbeddingResponse>('POST', '/v1/embeddings', { body, options });
+    return this.inference<CreateEmbeddingResponse>('/v1/embeddings', body, this.correlate(options));
   }
 
   // ─────────────────────────────── models ───────────────────────────────
@@ -1441,6 +1631,156 @@ export class UltraRouter {
   /** Drain the durable outcome queue. */
   private flushOutcomes(options?: RequestOptions): Promise<OutcomeFlushReport> {
     return this.outcomeQueue.flush(options);
+  }
+
+  /** `ur.outcomes.report`: map a verdict, then send it through the queue under its stable identity. */
+  private async reportOutcome(
+    requestId: string,
+    params: OutcomeReportParams,
+    options: RequestOptions = {},
+  ): Promise<OutcomeReportResult> {
+    const plan = planOutcomeReport(requestId, params);
+    if (!plan.send) return plan.result;
+    const entryId = plan.event.source_event_id;
+    const queued = await this.outcomeQueue.enqueueStable(
+      entryId,
+      { request: requestId },
+      plan.event,
+      options,
+    );
+    const result = queued.status === 'delivered' ? (queued.result as RequestOutcomeResult) : null;
+    const reported: OutcomeReported = {
+      status: queued.status,
+      requestId,
+      verdict: plan.verdict,
+      source: params.source,
+      channel: plan.mapping.channel,
+      kind: plan.mapping.kind,
+      teaches: plan.teaches,
+      sourceEventId: plan.event.source_event_id,
+      entryId: queued.entryId,
+      result,
+      receipt: result?.receipt ?? null,
+      error: queued.status === 'delivered' ? null : queued.error,
+    };
+    return reported;
+  }
+
+  /** `GET /v1/outcome-receipts/{id}`. */
+  private async getOutcomeReceipt(
+    id: string,
+    options: RequestOptions = {},
+  ): Promise<OutcomeReceiptRecord> {
+    return parseOutcomeReceipt(
+      await this.json<unknown>('GET', `/v1/outcome-receipts/${seg(id)}`, { options }),
+    );
+  }
+
+  /** `GET /v1/requests/{id}/outcome-receipts`. */
+  private async listRequestReceipts(
+    requestId: string,
+    options: RequestOptions = {},
+  ): Promise<OutcomeReceiptList> {
+    return parseOutcomeReceiptList(
+      await this.json<unknown>('GET', `/v1/requests/${seg(requestId)}/outcome-receipts`, {
+        options,
+      }),
+    );
+  }
+
+  /** Poll the public receipt route with bounded backoff until the receipt is final. */
+  private async waitForOutcomeReceipt(
+    id: string,
+    options: WaitForReceiptOptions = {},
+  ): Promise<OutcomeReceiptRecord> {
+    const timeoutMs = options.timeoutMs ?? RECEIPT_WAIT_DEFAULTS.timeoutMs;
+    const maxDelay = options.maxPollIntervalMs ?? RECEIPT_WAIT_DEFAULTS.maxPollIntervalMs;
+    let delay = Math.min(options.pollIntervalMs ?? RECEIPT_WAIT_DEFAULTS.pollIntervalMs, maxDelay);
+    const signal = options.signal;
+    const deadline = Date.now() + timeoutMs;
+    let last: OutcomeReceiptRecord | null = null;
+    for (;;) {
+      throwIfAborted(signal);
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) throw new ReceiptWaitTimeoutError(id, timeoutMs, last);
+      try {
+        last = await this.getOutcomeReceipt(id, {
+          timeout: Math.min(remaining, this.timeoutMs),
+          ...(signal !== undefined ? { signal } : {}),
+        });
+        if (isTerminalReceiptState(last.status)) return last;
+      } catch (err) {
+        if (!(err instanceof UltraRouterError)) throw err;
+        if (err.code === 'aborted') throw err;
+        // A read that timed out against our own deadline, or a transient failure the transport gave
+        // up on, is one missed poll; anything else (not_found, permission, …) ends the wait.
+        if (err.code !== 'timeout' && !err.retryable) throw err;
+      }
+      if (Date.now() + delay >= deadline) {
+        await abortableSleep(Math.max(0, deadline - Date.now()), signal);
+        throw new ReceiptWaitTimeoutError(id, timeoutMs, last);
+      }
+      await abortableSleep(delay, signal);
+      delay = Math.min(delay * 2, maxDelay);
+    }
+  }
+
+  // ─────────────────────────────── learning controls ───────────────────────────────
+
+  /** Build `ur.learning`: every call maps an actionable refusal to a `LearningError`. */
+  private learningResource(): LearningResource {
+    const call = async <T>(
+      method: string,
+      path: string,
+      options: RequestOptions,
+      body?: unknown,
+    ): Promise<T> => {
+      try {
+        return await this.json<T>(method, path, {
+          ...(body !== undefined ? { body } : {}),
+          options,
+        });
+      } catch (err) {
+        throw toLearningError(err);
+      }
+    };
+    return {
+      status: (id, o = {}) => call<LearningStatus>('GET', `/v1/call-types/${seg(id)}/learning`, o),
+      enable: (id, params, o = {}) =>
+        call<LearningStatus>('POST', `/v1/call-types/${seg(id)}/learning/enable`, o, params),
+      pause: (id, o = {}) =>
+        call<LearningStatus>('POST', `/v1/call-types/${seg(id)}/learning/pause`, o, {}),
+      resume: (id, o = {}) =>
+        call<LearningStatus>('POST', `/v1/call-types/${seg(id)}/learning/resume`, o, {}),
+      disable: (id, o = {}) =>
+        call<LearningStatus>('POST', `/v1/call-types/${seg(id)}/learning/disable`, o, {}),
+      versions: (id, o = {}) =>
+        call<LearningVersionList>('GET', `/v1/call-types/${seg(id)}/learning/versions`, o),
+      version: (id, versionId, o = {}) =>
+        call<LearningVersionDetail>(
+          'GET',
+          `/v1/call-types/${seg(id)}/learning/versions/${seg(versionId)}`,
+          o,
+        ),
+      rollback: (id, params, o = {}) =>
+        call<LearningStatus>('POST', `/v1/call-types/${seg(id)}/learning/rollback`, o, params),
+      promote: (id, versionId, params = {}, o = {}) =>
+        call<LearningVersion>(
+          'POST',
+          `/v1/call-types/${seg(id)}/learning/versions/${seg(versionId)}/promote`,
+          o,
+          params,
+        ),
+      reject: (id, versionId, params = {}, o = {}) =>
+        call<LearningVersion>(
+          'POST',
+          `/v1/call-types/${seg(id)}/learning/versions/${seg(versionId)}/reject`,
+          o,
+          params,
+        ),
+      evaluations: (id, o = {}) =>
+        call<LearningEvaluationList>('GET', `/v1/call-types/${seg(id)}/learning/evaluations`, o),
+    };
   }
 
   /** Send one finalized outcome event verbatim (the queue's transport). */
@@ -2005,6 +2345,14 @@ export class UltraRouter {
       headers['x-ur-bench-trace'] = this.benchTraceFactory();
     }
     Object.assign(headers, options.headers ?? {});
+    if (options.requestId !== undefined) {
+      assertRequestId(options.requestId);
+      headers[REQUEST_ID_HEADER] = options.requestId;
+    }
+    if (options.episodeKey !== undefined) {
+      assertEpisodeKey(options.episodeKey);
+      headers[EPISODE_HEADER] = options.episodeKey;
+    }
     if (hasBody) headers['content-type'] = 'application/json';
     return headers;
   }
@@ -2115,7 +2463,9 @@ export interface ArtifactScope {
       create: (
         params: ChatCompletionCreateParams,
         options?: RequestOptions,
-      ) => Promise<ChatCompletion | ChatCompletionStream>;
+      ) => Promise<
+        (ChatCompletion & RequestCorrelation) | (ChatCompletionStream & StreamCorrelation)
+      >;
     };
   };
   /** Embeddings bound to the artifact. */
@@ -2124,7 +2474,7 @@ export interface ArtifactScope {
     create: (
       params: EmbeddingCreateParams,
       options?: RequestOptions,
-    ) => Promise<CreateEmbeddingResponse>;
+    ) => Promise<CreateEmbeddingResponse & RequestCorrelation>;
   };
   /** Durably record an outcome on the bound artifact (upserted on first use). */
   record: (outcome: OutcomeInput, options?: RequestOptions) => Promise<OutcomeReceipt>;

@@ -917,6 +917,12 @@ export interface UltraRouterOptions {
   /** Extra headers sent on every request. */
   defaultHeaders?: Record<string, string> | undefined;
   /**
+   * Who chooses request ids: `gateway` (default; the gateway mints one and echoes it) or `client`
+   * (the SDK mints one with `mintRequestId()` for every chat completion and embeddings call that does
+   * not pass `requestId`, so the id is known even when the response is lost).
+   */
+  requestIds?: 'gateway' | 'client' | undefined;
+  /**
    * Where outcome events are persisted before they are sent. Defaults to an in-process
    * `MemoryOutcomeStore`; pass a `FileOutcomeStore(path)` to survive restarts, or your own
    * {@link OutcomeStore}.
@@ -943,6 +949,18 @@ export interface RequestOptions {
   headers?: Record<string, string> | undefined;
   /** An explicit idempotency key (otherwise one is generated for each non-streaming POST). */
   idempotencyKey?: string | undefined;
+  /**
+   * Your own request id for this call (`[A-Za-z0-9_-]{1,64}`), sent as `x-ur-request-id` so you know
+   * the id before the call returns. Mint one with `mintRequestId()`. Meaningful on chat completions
+   * and embeddings; the gateway echoes it on the response.
+   */
+  requestId?: string | undefined;
+  /**
+   * The episode handle, sent as `x-ur-artifact` (the same key as `ur.artifact`): every step of one
+   * multi-step task carries the same key, and concurrent tasks carry different keys even when they
+   * open with identical text. Printable ASCII, at most 256 characters.
+   */
+  episodeKey?: string | undefined;
 }
 
 // ---------------------------------------------------------------------------

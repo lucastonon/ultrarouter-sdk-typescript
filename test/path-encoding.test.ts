@@ -272,6 +272,71 @@ const TABLE: readonly Row[] = [
     pattern: '/v1/flywheel/experiments/{}/test/evaluate',
     invoke: (ur) => ur.ur.flywheel.experiments.evaluateTest(ADV),
   },
+  {
+    label: 'outcomes.receipt',
+    pattern: '/v1/outcome-receipts/{}',
+    invoke: (ur) => ur.ur.outcomes.receipt(ADV),
+  },
+  {
+    label: 'outcomes.receiptsForRequest',
+    pattern: '/v1/requests/{}/outcome-receipts',
+    invoke: (ur) => ur.ur.outcomes.receiptsForRequest(ADV),
+  },
+  {
+    label: 'learning.status',
+    pattern: '/v1/call-types/{}/learning',
+    invoke: (ur) => ur.ur.learning.status(ADV),
+  },
+  {
+    label: 'learning.enable',
+    pattern: '/v1/call-types/{}/learning/enable',
+    invoke: (ur) => ur.ur.learning.enable(ADV, { reflection_model: 'm' }),
+  },
+  {
+    label: 'learning.pause',
+    pattern: '/v1/call-types/{}/learning/pause',
+    invoke: (ur) => ur.ur.learning.pause(ADV),
+  },
+  {
+    label: 'learning.resume',
+    pattern: '/v1/call-types/{}/learning/resume',
+    invoke: (ur) => ur.ur.learning.resume(ADV),
+  },
+  {
+    label: 'learning.disable',
+    pattern: '/v1/call-types/{}/learning/disable',
+    invoke: (ur) => ur.ur.learning.disable(ADV),
+  },
+  {
+    label: 'learning.versions',
+    pattern: '/v1/call-types/{}/learning/versions',
+    invoke: (ur) => ur.ur.learning.versions(ADV),
+  },
+  {
+    label: 'learning.version',
+    pattern: '/v1/call-types/{}/learning/versions/{}',
+    invoke: (ur) => ur.ur.learning.version(ADV, ADV),
+  },
+  {
+    label: 'learning.rollback',
+    pattern: '/v1/call-types/{}/learning/rollback',
+    invoke: (ur) => ur.ur.learning.rollback(ADV, { version_id: ADV }),
+  },
+  {
+    label: 'learning.promote',
+    pattern: '/v1/call-types/{}/learning/versions/{}/promote',
+    invoke: (ur) => ur.ur.learning.promote(ADV, ADV),
+  },
+  {
+    label: 'learning.reject',
+    pattern: '/v1/call-types/{}/learning/versions/{}/reject',
+    invoke: (ur) => ur.ur.learning.reject(ADV, ADV),
+  },
+  {
+    label: 'learning.evaluations',
+    pattern: '/v1/call-types/{}/learning/evaluations',
+    invoke: (ur) => ur.ur.learning.evaluations(ADV),
+  },
 ];
 
 /** The exact wire path a row must produce: its pattern with the encoded id spliced into every `{}` slot. */

@@ -3,9 +3,11 @@
  * Size-budget assertion. Two SEPARATE entry points are measured:
  *
  * - `@ultrarouter/sdk` (core, `src/index.ts`): the fetch-based client, ZERO runtime
- * deps. Minified + gzipped it must stay under 15 kB. This is the load-bearing proof
- * that adding the context subpath did NOT bloat the client — importing the client
- * never pulls the context runtime (separate entry, tree-shaken).
+ * deps. Minified + gzipped it must stay under 19 kB (raised from 15 kB when the
+ * plug-and-play learning surface landed: request/episode correlation, verdict reports,
+ * receipts and learning controls). This is the load-bearing proof that adding the
+ * context subpath did NOT bloat the client — importing the client never pulls the
+ * context runtime (separate entry, tree-shaken).
  * - `@ultrarouter/sdk/context` (`src/context.ts`): the pure context runtime with `zod`
  * BUNDLED (so the published SDK keeps zero runtime deps). `node:crypto` (the
  * deterministic default hasher) stays an external builtin. It has a generous budget
@@ -26,7 +28,7 @@ const SRC = resolve(HERE, '../src');
 
 /** @type {{ name: string, entry: string, budget: number, external: string[] }[]} */
 const ENTRIES = [
-  { name: '@ultrarouter/sdk core', entry: 'index.ts', budget: 15 * 1024, external: [] },
+  { name: '@ultrarouter/sdk core', entry: 'index.ts', budget: 19 * 1024, external: [] },
   {
     name: '@ultrarouter/sdk/context',
     entry: 'context.ts',

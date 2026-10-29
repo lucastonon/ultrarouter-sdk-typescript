@@ -13,6 +13,9 @@
  * - model `example/no-tools`       → 400 `capability_unsupported` when `tools` are sent
  * - API key `ur_sk_test_invalid`   → 401 `authentication`
  *
+ * Plug-and-play learning (request ids, outcome receipts, learning controls and the scripted
+ * order-desk tool policy) lives in `test/support/mock-learning.mjs`; see its header.
+ *
  * Usage: `const gw = await startMockGateway(); … gw.url … await gw.close();`
  * or run it directly: `node test/support/mock-gateway.mjs [--port 8787]`.
  */
@@ -22,6 +25,8 @@ import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { createLearningMock, isOrderDeskRequest, orderDeskStep } from './mock-learning.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -400,6 +405,7 @@ export async function startMockGateway(options = {}) {
   const attempts = new Map(); // idempotency key → attempts (for example/flaky)
   const callTypes = new Map();
   const imports = new Map();
+  const learn = createLearningMock();
   const PREFLIGHT_ETAG = '"cfg-mock-1"';
 
   const server = createServer((req, res) => {
@@ -474,6 +480,8 @@ export async function startMockGateway(options = {}) {
 
     // ── embeddings ──
     if (method === 'POST' && path === '/v1/embeddings') {
+      const rid = learn.requestIdFor(req.headers);
+      if (rid.error !== undefined) return send(res, 400, rid.error);
       const inputs = Array.isArray(r.body?.input) ? r.body.input : [r.body?.input ?? ''];
       const model = r.body?.model ?? 'openai/text-embedding-3-small';
       if (model === 'example/unpriced-model')
@@ -491,14 +499,24 @@ export async function startMockGateway(options = {}) {
         return { object: 'embedding', index, embedding };
       });
       const tokens = inputs.reduce((n, t) => n + Math.max(1, Math.ceil(String(t).length / 4)), 0);
-      return send(res, 200, {
-        object: 'list',
-        data,
-        model,
-        usage: { prompt_tokens: tokens, total_tokens: tokens },
-        ur: ur(model),
-      });
+      learn.onServed(rid.id, r.body?.ur?.artifact ?? req.headers['x-ur-artifact']);
+      return send(
+        res,
+        200,
+        {
+          object: 'list',
+          data,
+          model,
+          usage: { prompt_tokens: tokens, total_tokens: tokens },
+          ur: ur(model, { request_id: rid.id }),
+        },
+        { 'x-ur-request-id': rid.id },
+      );
     }
+
+    // ── plug-and-play learning: outcome receipts, the receipt-aware outcome shortcut, learning ──
+    const learned = learn.route(method, path, r.body);
+    if (learned !== null) return send(res, learned.status, learned.body);
 
     // ── native passthrough: OpenAI Responses (/v1/responses) + Anthropic Messages (/v1/messages) ──
     // The body is forwarded verbatim; the gateway meters and returns the request id + booked cost on
@@ -843,6 +861,10 @@ export async function startMockGateway(options = {}) {
     if (!Array.isArray(body.messages) || body.messages.length === 0) {
       return send(res, 400, errorBody('invalid_request', '`messages` must be a non-empty array'));
     }
+    const rid = learn.requestIdFor(r.headers);
+    if (rid.error !== undefined) return send(res, 400, rid.error);
+    const episodeKey = body.ur?.artifact ?? r.headers['x-ur-artifact'];
+    learn.onServed(rid.id, episodeKey);
 
     const question = lastUserText(body.messages);
     let content = `Mock reply to: ${question.slice(0, 80)}`;
@@ -851,7 +873,22 @@ export async function startMockGateway(options = {}) {
     const wantsTools =
       Array.isArray(body.tools) && body.tools.length > 0 && body.tool_choice !== 'none';
     const answeredTool = body.messages.some((m) => m?.role === 'tool');
-    if (wantsTools && !answeredTool) {
+    const deskStep = wantsTools && isOrderDeskRequest(body) ? orderDeskStep(body.messages) : null;
+    if (deskStep !== null) {
+      if (deskStep.toolCall !== undefined) {
+        toolCalls = [
+          {
+            id: deskStep.toolCall.id,
+            type: 'function',
+            function: { name: deskStep.toolCall.name, arguments: deskStep.toolCall.arguments },
+          },
+        ];
+        content = null;
+        finish = 'tool_calls';
+      } else {
+        content = deskStep.content;
+      }
+    } else if (wantsTools && !answeredTool) {
       const tool = body.tools[0];
       const fn = tool?.function ?? {};
       toolCalls = [
@@ -881,16 +918,21 @@ export async function startMockGateway(options = {}) {
       total_tokens: promptTokens + completionTokens,
     };
     const urBlock = ur(model, {
+      request_id: rid.id,
       call_type: body.call_type ?? null,
       routing: { mode: body.router ?? 'off', fallback_used: false },
-      ...(body.ur?.artifact !== undefined
-        ? { artifact_id: `art_${sha(body.ur.artifact).slice(0, 12)}` }
+      ...(episodeKey !== undefined
+        ? { artifact_id: `art_${sha(String(episodeKey)).slice(0, 12)}` }
         : {}),
     });
     const id = `chatcmpl_mock_${sha(r.raw).slice(0, 10)}`;
 
     if (body.stream === true) {
-      res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' });
+      res.writeHead(200, {
+        'content-type': 'text/event-stream',
+        'cache-control': 'no-cache',
+        'x-ur-request-id': rid.id,
+      });
       const frame = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
       const base = { id, object: 'chat.completion.chunk', created: NOW_S, model };
       res.write(': heartbeat\n\n');
@@ -938,25 +980,30 @@ export async function startMockGateway(options = {}) {
       return res.end();
     }
 
-    return send(res, 200, {
-      id,
-      object: 'chat.completion',
-      created: NOW_S,
-      model,
-      choices: [
-        {
-          index: 0,
-          message: {
-            role: 'assistant',
-            content,
-            ...(toolCalls !== undefined ? { tool_calls: toolCalls } : {}),
+    return send(
+      res,
+      200,
+      {
+        id,
+        object: 'chat.completion',
+        created: NOW_S,
+        model,
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: 'assistant',
+              content,
+              ...(toolCalls !== undefined ? { tool_calls: toolCalls } : {}),
+            },
+            finish_reason: finish,
           },
-          finish_reason: finish,
-        },
-      ],
-      usage,
-      ur: urBlock,
-    });
+        ],
+        usage,
+        ur: urBlock,
+      },
+      { 'x-ur-request-id': rid.id },
+    );
   }
 
   function preflight(req, res, r) {
@@ -1068,6 +1115,8 @@ export async function startMockGateway(options = {}) {
     url: `http://127.0.0.1:${String(port)}`,
     port,
     requests,
+    /** The plug-and-play learning state (receipts, served request ids), for assertions. */
+    learning: learn,
     close: () =>
       new Promise((resolveClose) => {
         server.closeAllConnections?.();

@@ -80,6 +80,7 @@ console.log(ur.baseURL);
 | `outcomeStore`   | `OutcomeStore`                      | `MemoryOutcomeStore`                                                     | Where outcome events are persisted before they are sent.                                |
 | `reviewerStore`  | `OutcomeStore<QueuedReviewerEvent>` | `MemoryOutcomeStore`                                                     | Where reviewer events are persisted before they are sent.                               |
 | `preflightCache` | `{ maxEntries?: number }`           | `{ maxEntries: 1000 }`                                                   | The bound on the `preflight()` cache (LRU); `0` turns it off.                           |
+| `requestIds`     | `'gateway' \| 'client'`             | `'gateway'`                                                              | `'client'` mints an `x-ur-request-id` for every chat and embeddings call without one.   |
 
 ## Request defaults and per-call precedence
 

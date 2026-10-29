@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "description": "How an SDK outcome report maps to the server's outcome channels. Shared byte-for-byte by the TypeScript and Python SDKs.",
+  "sources": {
+    "verifier": {
+      "label": "Automated verifier (test suite or computable check)",
+      "teaches": true,
+      "pass": { "channel": "computable", "kind": "oracle_pass" },
+      "fail": { "channel": "computable", "kind": "oracle_fail" }
+    },
+    "business_rule": {
+      "label": "Structured-output or business-rule validation",
+      "teaches": true,
+      "pass": { "channel": "computable", "kind": "oracle_pass" },
+      "fail": { "channel": "computable", "kind": "oracle_fail" }
+    },
+    "webhook": {
+      "label": "Delayed business resolution (signed webhook)",
+      "teaches": true,
+      "pass": { "channel": "resolution", "kind": "resolved_true" },
+      "fail": { "channel": "resolution", "kind": "resolved_false" }
+    },
+    "human_review": {
+      "label": "Human review",
+      "teaches": true,
+      "pass": { "channel": "correction", "kind": "accepted_unchanged" },
+      "fail": { "channel": "correction", "kind": "rejected" }
+    },
+    "self_rating": {
+      "label": "Self-rating (weak proxy; never teaches)",
+      "teaches": false,
+      "pass": { "channel": "proxy", "kind": "thumbs", "value": { "value": 1 } },
+      "fail": { "channel": "proxy", "kind": "thumbs", "value": { "value": -1 } }
+    }
+  },
+  "unknown": { "sends": false, "result": "not_reported" }
+}
