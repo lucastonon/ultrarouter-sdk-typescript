@@ -48,11 +48,19 @@ interface Row {
   readonly invoke: (ur: UltraRouter) => Promise<unknown>;
   /** Override the expected wire path (model ids keep their provider `/` separator). */
   readonly expected?: string;
+  /** A strict namespace grammar rejects the adversarial id before transport. */
+  readonly rejectsInvalidId?: boolean;
 }
 
 const OUTCOME = { channel: 'mechanical', kind: 'tool_success' } as const;
 
 const TABLE: readonly Row[] = [
+  {
+    label: 'knowledge.get',
+    pattern: '/v1/knowledge/{}',
+    invoke: (ur) => ur.ur.knowledge.get(ADV),
+    rejectsInvalidId: true,
+  },
   {
     label: 'callTypes.get',
     pattern: '/v1/call-types/{}',
@@ -390,6 +398,11 @@ describe('every path-id method percent-encodes its id', () => {
     it(`${row.label} → ${row.pattern} encodes the adversarial id`, async () => {
       const rec = recordingFetch();
       const ur = new UltraRouter({ apiKey: 'k', baseURL: BASE, fetch: rec.fetch });
+      if (row.rejectsInvalidId === true) {
+        await expect(row.invoke(ur)).rejects.toMatchObject({ code: 'invalid_request', status: 0 });
+        expect(() => rec.url()).toThrow('no request captured');
+        return;
+      }
       await row.invoke(ur).catch(() => undefined);
       // Compare the PATH portion (before any real query separator); the id's own `?` is `%3F`, so the
       // only literal `?` that can survive is a genuine query (e.g. bench.report's `?format=json`).

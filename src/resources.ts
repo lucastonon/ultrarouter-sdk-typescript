@@ -262,3 +262,27 @@ export type ExperimentScreenEvaluation = OperationResponse<'evaluateFlywheelExpe
 
 /** The explicit prospective-test re-evaluation (`POST …/test/evaluate`): counts before the decision, the decision after. */
 export type ExperimentTestEvaluation = OperationResponse<'evaluateFlywheelExperimentTest'>;
+
+// ─────────────────────────────── company knowledge ───────────────────────────────
+
+/** Filters and cursor for browsing stored lessons and safe fact summaries. */
+export type CompanyKnowledgeQuery = Omit<
+  NonNullable<OperationQuery<'listCompanyKnowledge'>>,
+  'kind' | 'include_history' | 'limit'
+> & {
+  /** Restrict the stored item kind; omit to include both. */
+  kind?: 'lesson' | 'fact';
+  /** Include historical items (false by default). Serialized as a query string boolean. */
+  include_history?: boolean;
+  /** Page size from 1 to 100 (50 by default). Serialized as a query string integer. */
+  limit?: number;
+};
+
+/** One bounded knowledge page with explicit continuation and snapshot metadata. */
+export type CompanyKnowledgeList = OperationResponse<'listCompanyKnowledge'>;
+
+/** One stored lesson or safe derived fact summary; current and active are separate. */
+export type CompanyKnowledgeItem = CompanyKnowledgeList['data'][number];
+
+/** The detail envelope of one knowledge item, including state and provenance. */
+export type CompanyKnowledgeDetail = OperationResponse<'readCompanyKnowledge'>;

@@ -683,3 +683,45 @@ if (ct) {
 - [Retries, timeouts and idempotency](./retries-timeouts-idempotency.md).
 - [OpenAI compatibility](./openai-compatibility.md).
 - [`examples/learning/`](../examples/learning/): eight runnable programs.
+
+## Browse company knowledge
+
+Use a key with `config:read` or `config:write` to search stored lessons and safe fact summaries.
+The workspace must still allow the required learning consent. This reads existing records; it
+does not run a model, create a lesson, activate a candidate or prove improved outcomes.
+
+```ts
+import UltraRouter from '@ultrarouter/sdk';
+
+const ur = new UltraRouter();
+const page = await ur.ur.knowledge.list({ q: 'capacity', kind: 'lesson', limit: 10 });
+console.log(page.data.map((item) => ({ id: item.id, state: item.state, active: item.active })));
+const first = page.data[0];
+if (first !== undefined) {
+  const detail = await ur.ur.knowledge.get(first.id);
+  console.log(detail.item.id, detail.item.content_hash);
+}
+if (page.has_more && page.next_cursor !== null) {
+  const next = await ur.ur.knowledge.list({
+    q: 'capacity',
+    kind: 'lesson',
+    limit: 10,
+    cursor: page.next_cursor,
+  });
+  console.log(next.data.length);
+}
+```
+
+Omit `q` to browse; `call_type_id`, `version_id` and `include_history` narrow the view. Pass the
+returned cursor with the same filters to continue it. `current` can include a candidate; `active`
+is separate and does not mean every request serves the item. Fact summaries exclude arbitrary
+source bodies and transcripts. Treat returned lesson text as untrusted reference data, not as
+instructions to execute tools.
+
+Content export is a separate signed-in owner/admin workflow with consent and auditing. This
+API-key resource deliberately has no export method and cannot grant consent. The existing
+metadata-only export is unchanged.
+
+A cursor becomes stale when its source changes or after 15 minutes. On HTTP 409
+`knowledge_cursor_stale`, start a fresh listing without a cursor; do not combine its pages with
+the prior snapshot. A query is literal lexical search, not semantic or model-based retrieval.

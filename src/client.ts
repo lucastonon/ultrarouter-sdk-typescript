@@ -128,6 +128,9 @@ import {
   type PreflightResponse,
 } from './preflight.js';
 import {
+  type CompanyKnowledgeQuery,
+  type CompanyKnowledgeList,
+  type CompanyKnowledgeDetail,
   ORACLE_SIGNATURE_HEADER,
   ORACLE_TIMESTAMP_HEADER,
   type ActivateHostedPromptParams,
@@ -301,6 +304,19 @@ function encodeModelId(id: string): string {
     });
   }
   return parts.map(encodeURIComponent).join('/');
+}
+
+/** A knowledge id is a namespace-qualified item, never the reserved export route. */
+function encodeKnowledgeId(id: string): string {
+  if (id.length > 450 || !/^(?:fact:[A-Za-z0-9_-]+|lesson:[A-Za-z0-9_-]+:L[0-9]+)$/.test(id)) {
+    throw new UltraRouterError({
+      code: 'invalid_request',
+      message: 'invalid company knowledge id',
+      status: 0,
+      retryable: false,
+    });
+  }
+  return encodeURIComponent(id);
 }
 
 /** Build a `?a=1&b=2` query string; `undefined`/`null` values are skipped, arrays repeat the key. */
@@ -643,6 +659,17 @@ export interface LearningResource {
   evaluations: (callTypeId: string, options?: RequestOptions) => Promise<LearningEvaluationList>;
 }
 
+/**
+ * Read-only stored lessons and safe fact summaries. Needs config:read or config:write.
+ * Content export is a separate owner/admin session operation, not an API-key method.
+ */
+export interface KnowledgeResource {
+  /** Browse or search a bounded page. Continue with next_cursor and the same filters. */
+  list: (query?: CompanyKnowledgeQuery, options?: RequestOptions) => Promise<CompanyKnowledgeList>;
+  /** Read an exact namespaced id from list(); source transcripts are excluded. */
+  get: (id: string, options?: RequestOptions) => Promise<CompanyKnowledgeDetail>;
+}
+
 /** Options for a reviewer delivery: a declared backfill and/or the reviewer system name. */
 export interface ReviewerDeliveryOptions {
   /** Declare the batch as a backfill of historical decisions. */
@@ -861,6 +888,8 @@ export interface UrNamespace {
   outcomes: OutcomesResource;
   /** Learning controls per call type. */
   learning: LearningResource;
+  /** Browse/search stored company knowledge without changing or exporting it. */
+  knowledge: KnowledgeResource;
   /** The signed reviewer-decision adapter. */
   reviewer: ReviewerResource;
   /** Learning status and verdict-source health. */
@@ -1125,6 +1154,16 @@ export class UltraRouter {
         waitForReceipt: this.waitForOutcomeReceipt.bind(this),
       },
       learning: this.learningResource(),
+      knowledge: {
+        list: (query = {}, o = {}) =>
+          this.json<CompanyKnowledgeList>('GET', `/v1/knowledge${queryString(query)}`, {
+            options: o,
+          }),
+        get: async (id, o = {}) =>
+          this.json<CompanyKnowledgeDetail>('GET', `/v1/knowledge/${encodeKnowledgeId(id)}`, {
+            options: o,
+          }),
+      },
       reviewer: {
         setup: this.reviewerSetup.bind(this),
         test: this.reviewerTest.bind(this),

@@ -23,6 +23,10 @@ The version in `package.json` is now `0.1.0`: these changes ship as the 0.1.0 re
 
 ### Added
 
+- Read-only company knowledge browsing/search and detail, with typed results, cursors and
+  namespaced item IDs. Examples inspect state and provenance without model calls. Content export
+  remains a separate owner/admin session operation; malformed and reserved export IDs fail locally.
+
 - **Plug-and-play learning** (new guide: `docs/plug-and-play-learning.md`; eight runnable programs in
   `examples/learning/`).
   - Request and episode correlation: chat completion and embeddings results expose `requestId` (the

@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: cc557624bbf9d22e404225e3f35ccb4ddd778bd8159b836c714eda1bfc891c5a
+# spec-sha256: 2da96e5963cf0ed6e07f5a03f123721550b6dd355b83f4f17080254b50db5577
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -5913,6 +5913,1313 @@ components:
       required:
         - "key"
         - "claim_type"
+      type: "object"
+    CompanyKnowledgeDetailResponse:
+      properties:
+        item:
+          oneOf:
+            -
+              properties:
+                active:
+                  description: "For lessons, belongs to the incumbent version and is not retired. Does not claim every request serves it."
+                  type: "boolean"
+                call_type_id:
+                  nullable: true
+                  type: "string"
+                content_hash:
+                  type: "string"
+                created_at:
+                  type: "string"
+                current:
+                  description: "In the current knowledge view; candidates can be current without being active."
+                  type: "boolean"
+                evidence:
+                  items:
+                    properties:
+                      availability:
+                        enum:
+                          - "available"
+                          - "unavailable"
+                          - "not_checked"
+                        type: "string"
+                      id:
+                        type: "string"
+                      kind:
+                        type: "string"
+                      outcome:
+                        enum:
+                          - "pass"
+                          - "fail"
+                        nullable: true
+                        type: "string"
+                      verified_at:
+                        nullable: true
+                        type: "string"
+                    required:
+                      - "kind"
+                      - "id"
+                      - "availability"
+                      - "outcome"
+                      - "verified_at"
+                    type: "object"
+                  type: "array"
+                evidence_count:
+                  type: "integer"
+                evidence_truncated:
+                  description: "At most 100 citation metadata entries are returned per lesson."
+                  type: "boolean"
+                harmful:
+                  type: "number"
+                helpful:
+                  type: "number"
+                id:
+                  maxLength: 450
+                  pattern: "^(?:fact:[A-Za-z0-9_-]+|lesson:[A-Za-z0-9_-]+:L[0-9]+)$"
+                  type: "string"
+                kind:
+                  enum:
+                    - "lesson"
+                  type: "string"
+                lesson_id:
+                  type: "string"
+                meta:
+                  nullable: true
+                  properties:
+                    admission:
+                      properties:
+                        disposition:
+                          type: "string"
+                        policy:
+                          type: "string"
+                      required:
+                        - "policy"
+                        - "disposition"
+                      type: "object"
+                    capabilityUnknown:
+                      type: "boolean"
+                    conditions:
+                      items:
+                        type: "string"
+                      type: "array"
+                    exceptions:
+                      items:
+                        type: "string"
+                      type: "array"
+                    kind:
+                      enum:
+                        - "general"
+                        - "tool_fact"
+                        - "procedure"
+                      type: "string"
+                    requiredTools:
+                      items:
+                        type: "string"
+                      type: "array"
+                    schema:
+                      enum:
+                        - "ela1"
+                      type: "string"
+                    scope:
+                      items:
+                        properties:
+                          fingerprints:
+                            items:
+                              type: "string"
+                            type: "array"
+                          protocol:
+                            enum:
+                              - "native"
+                              - "text_api"
+                            type: "string"
+                          tool:
+                            type: "string"
+                        required:
+                          - "tool"
+                          - "protocol"
+                          - "fingerprints"
+                        type: "object"
+                      type: "array"
+                    supersedes:
+                      items:
+                        type: "string"
+                      type: "array"
+                  type: "object"
+                parent_version_id:
+                  nullable: true
+                  type: "string"
+                recipe:
+                  type: "string"
+                retired:
+                  type: "boolean"
+                retired_reason:
+                  nullable: true
+                  type: "string"
+                state:
+                  enum:
+                    - "candidate"
+                    - "evaluating"
+                    - "active"
+                    - "retired"
+                    - "rejected"
+                    - "superseded"
+                  type: "string"
+                text:
+                  type: "string"
+                version:
+                  type: "integer"
+                version_id:
+                  type: "string"
+              required:
+                - "id"
+                - "call_type_id"
+                - "created_at"
+                - "content_hash"
+                - "current"
+                - "active"
+                - "kind"
+                - "state"
+                - "lesson_id"
+                - "version_id"
+                - "version"
+                - "parent_version_id"
+                - "recipe"
+                - "text"
+                - "retired"
+                - "retired_reason"
+                - "helpful"
+                - "harmful"
+                - "meta"
+                - "evidence"
+                - "evidence_count"
+                - "evidence_truncated"
+              type: "object"
+            -
+              properties:
+                active:
+                  description: "For lessons, belongs to the incumbent version and is not retired. Does not claim every request serves it."
+                  type: "boolean"
+                call_type_id:
+                  nullable: true
+                  type: "string"
+                clusters:
+                  type: "number"
+                content_hash:
+                  type: "string"
+                content_projection:
+                  description: "Raw fact bodies, correction exemplars and source transcripts are excluded."
+                  enum:
+                    - "derived_statistics"
+                  type: "string"
+                created_at:
+                  type: "string"
+                current:
+                  description: "In the current knowledge view; candidates can be current without being active."
+                  type: "boolean"
+                description:
+                  description: "Derived type description, not customer source text."
+                  type: "string"
+                evidence_tier:
+                  type: "string"
+                fact_id:
+                  type: "string"
+                fact_kind:
+                  type: "string"
+                id:
+                  maxLength: 450
+                  pattern: "^(?:fact:[A-Za-z0-9_-]+|lesson:[A-Za-z0-9_-]+:L[0-9]+)$"
+                  type: "string"
+                interval:
+                  items:
+                    type: "number"
+                  maxItems: 2
+                  minItems: 2
+                  nullable: true
+                  type: "array"
+                kind:
+                  enum:
+                    - "fact"
+                  type: "string"
+                lineage:
+                  items:
+                    properties:
+                      availability:
+                        enum:
+                          - "available"
+                          - "unavailable"
+                          - "not_checked"
+                        type: "string"
+                      id:
+                        type: "string"
+                      kind:
+                        type: "string"
+                      outcome:
+                        enum:
+                          - "pass"
+                          - "fail"
+                        nullable: true
+                        type: "string"
+                      verified_at:
+                        nullable: true
+                        type: "string"
+                    required:
+                      - "kind"
+                      - "id"
+                      - "availability"
+                      - "outcome"
+                      - "verified_at"
+                    type: "object"
+                  type: "array"
+                n:
+                  type: "number"
+                rate:
+                  nullable: true
+                  type: "number"
+                scope:
+                  additionalProperties:
+                    type: "string"
+                  type: "object"
+                state:
+                  enum:
+                    - "current"
+                    - "history"
+                  type: "string"
+                superseded_by:
+                  nullable: true
+                  type: "string"
+                window_end:
+                  nullable: true
+                  type: "string"
+                window_start:
+                  nullable: true
+                  type: "string"
+              required:
+                - "id"
+                - "call_type_id"
+                - "created_at"
+                - "content_hash"
+                - "current"
+                - "active"
+                - "kind"
+                - "state"
+                - "fact_id"
+                - "fact_kind"
+                - "description"
+                - "scope"
+                - "evidence_tier"
+                - "n"
+                - "rate"
+                - "interval"
+                - "clusters"
+                - "window_start"
+                - "window_end"
+                - "superseded_by"
+                - "lineage"
+                - "content_projection"
+              type: "object"
+        object:
+          enum:
+            - "knowledge_item"
+          type: "string"
+      required:
+        - "object"
+        - "item"
+      type: "object"
+    CompanyKnowledgeExportResponse:
+      properties:
+        complete:
+          description: "This page contains every item matching selection, not necessarily the whole workspace. Continuation pages are fragments."
+          type: "boolean"
+        content_hash:
+          type: "string"
+        data:
+          items:
+            oneOf:
+              -
+                properties:
+                  active:
+                    description: "For lessons, belongs to the incumbent version and is not retired. Does not claim every request serves it."
+                    type: "boolean"
+                  call_type_id:
+                    nullable: true
+                    type: "string"
+                  content_hash:
+                    type: "string"
+                  created_at:
+                    type: "string"
+                  current:
+                    description: "In the current knowledge view; candidates can be current without being active."
+                    type: "boolean"
+                  evidence:
+                    items:
+                      properties:
+                        availability:
+                          enum:
+                            - "available"
+                            - "unavailable"
+                            - "not_checked"
+                          type: "string"
+                        id:
+                          type: "string"
+                        kind:
+                          type: "string"
+                        outcome:
+                          enum:
+                            - "pass"
+                            - "fail"
+                          nullable: true
+                          type: "string"
+                        verified_at:
+                          nullable: true
+                          type: "string"
+                      required:
+                        - "kind"
+                        - "id"
+                        - "availability"
+                        - "outcome"
+                        - "verified_at"
+                      type: "object"
+                    type: "array"
+                  evidence_count:
+                    type: "integer"
+                  evidence_truncated:
+                    description: "At most 100 citation metadata entries are returned per lesson."
+                    type: "boolean"
+                  harmful:
+                    type: "number"
+                  helpful:
+                    type: "number"
+                  id:
+                    maxLength: 450
+                    pattern: "^(?:fact:[A-Za-z0-9_-]+|lesson:[A-Za-z0-9_-]+:L[0-9]+)$"
+                    type: "string"
+                  kind:
+                    enum:
+                      - "lesson"
+                    type: "string"
+                  lesson_id:
+                    type: "string"
+                  meta:
+                    nullable: true
+                    properties:
+                      admission:
+                        properties:
+                          disposition:
+                            type: "string"
+                          policy:
+                            type: "string"
+                        required:
+                          - "policy"
+                          - "disposition"
+                        type: "object"
+                      capabilityUnknown:
+                        type: "boolean"
+                      conditions:
+                        items:
+                          type: "string"
+                        type: "array"
+                      exceptions:
+                        items:
+                          type: "string"
+                        type: "array"
+                      kind:
+                        enum:
+                          - "general"
+                          - "tool_fact"
+                          - "procedure"
+                        type: "string"
+                      requiredTools:
+                        items:
+                          type: "string"
+                        type: "array"
+                      schema:
+                        enum:
+                          - "ela1"
+                        type: "string"
+                      scope:
+                        items:
+                          properties:
+                            fingerprints:
+                              items:
+                                type: "string"
+                              type: "array"
+                            protocol:
+                              enum:
+                                - "native"
+                                - "text_api"
+                              type: "string"
+                            tool:
+                              type: "string"
+                          required:
+                            - "tool"
+                            - "protocol"
+                            - "fingerprints"
+                          type: "object"
+                        type: "array"
+                      supersedes:
+                        items:
+                          type: "string"
+                        type: "array"
+                    type: "object"
+                  parent_version_id:
+                    nullable: true
+                    type: "string"
+                  recipe:
+                    type: "string"
+                  retired:
+                    type: "boolean"
+                  retired_reason:
+                    nullable: true
+                    type: "string"
+                  state:
+                    enum:
+                      - "candidate"
+                      - "evaluating"
+                      - "active"
+                      - "retired"
+                      - "rejected"
+                      - "superseded"
+                    type: "string"
+                  text:
+                    type: "string"
+                  version:
+                    type: "integer"
+                  version_id:
+                    type: "string"
+                required:
+                  - "id"
+                  - "call_type_id"
+                  - "created_at"
+                  - "content_hash"
+                  - "current"
+                  - "active"
+                  - "kind"
+                  - "state"
+                  - "lesson_id"
+                  - "version_id"
+                  - "version"
+                  - "parent_version_id"
+                  - "recipe"
+                  - "text"
+                  - "retired"
+                  - "retired_reason"
+                  - "helpful"
+                  - "harmful"
+                  - "meta"
+                  - "evidence"
+                  - "evidence_count"
+                  - "evidence_truncated"
+                type: "object"
+              -
+                properties:
+                  active:
+                    description: "For lessons, belongs to the incumbent version and is not retired. Does not claim every request serves it."
+                    type: "boolean"
+                  call_type_id:
+                    nullable: true
+                    type: "string"
+                  clusters:
+                    type: "number"
+                  content_hash:
+                    type: "string"
+                  content_projection:
+                    description: "Raw fact bodies, correction exemplars and source transcripts are excluded."
+                    enum:
+                      - "derived_statistics"
+                    type: "string"
+                  created_at:
+                    type: "string"
+                  current:
+                    description: "In the current knowledge view; candidates can be current without being active."
+                    type: "boolean"
+                  description:
+                    description: "Derived type description, not customer source text."
+                    type: "string"
+                  evidence_tier:
+                    type: "string"
+                  fact_id:
+                    type: "string"
+                  fact_kind:
+                    type: "string"
+                  id:
+                    maxLength: 450
+                    pattern: "^(?:fact:[A-Za-z0-9_-]+|lesson:[A-Za-z0-9_-]+:L[0-9]+)$"
+                    type: "string"
+                  interval:
+                    items:
+                      type: "number"
+                    maxItems: 2
+                    minItems: 2
+                    nullable: true
+                    type: "array"
+                  kind:
+                    enum:
+                      - "fact"
+                    type: "string"
+                  lineage:
+                    items:
+                      properties:
+                        availability:
+                          enum:
+                            - "available"
+                            - "unavailable"
+                            - "not_checked"
+                          type: "string"
+                        id:
+                          type: "string"
+                        kind:
+                          type: "string"
+                        outcome:
+                          enum:
+                            - "pass"
+                            - "fail"
+                          nullable: true
+                          type: "string"
+                        verified_at:
+                          nullable: true
+                          type: "string"
+                      required:
+                        - "kind"
+                        - "id"
+                        - "availability"
+                        - "outcome"
+                        - "verified_at"
+                      type: "object"
+                    type: "array"
+                  n:
+                    type: "number"
+                  rate:
+                    nullable: true
+                    type: "number"
+                  scope:
+                    additionalProperties:
+                      type: "string"
+                    type: "object"
+                  state:
+                    enum:
+                      - "current"
+                      - "history"
+                    type: "string"
+                  superseded_by:
+                    nullable: true
+                    type: "string"
+                  window_end:
+                    nullable: true
+                    type: "string"
+                  window_start:
+                    nullable: true
+                    type: "string"
+                required:
+                  - "id"
+                  - "call_type_id"
+                  - "created_at"
+                  - "content_hash"
+                  - "current"
+                  - "active"
+                  - "kind"
+                  - "state"
+                  - "fact_id"
+                  - "fact_kind"
+                  - "description"
+                  - "scope"
+                  - "evidence_tier"
+                  - "n"
+                  - "rate"
+                  - "interval"
+                  - "clusters"
+                  - "window_start"
+                  - "window_end"
+                  - "superseded_by"
+                  - "lineage"
+                  - "content_projection"
+                type: "object"
+          type: "array"
+        exclusions:
+          items:
+            type: "string"
+          type: "array"
+        generated_at:
+          type: "string"
+        next_cursor:
+          nullable: true
+          type: "string"
+        object:
+          enum:
+            - "company_knowledge_export"
+          type: "string"
+        schema:
+          enum:
+            - "ur.company_knowledge/v1"
+          type: "string"
+        selection:
+          properties:
+            call_type_id:
+              nullable: true
+              type: "string"
+            include_history:
+              type: "boolean"
+            kind:
+              enum:
+                - "lesson"
+                - "fact"
+              nullable: true
+              type: "string"
+            limit:
+              type: "integer"
+            q:
+              nullable: true
+              type: "string"
+            version_id:
+              nullable: true
+              type: "string"
+          required:
+            - "q"
+            - "kind"
+            - "call_type_id"
+            - "version_id"
+            - "include_history"
+            - "limit"
+          type: "object"
+        snapshot_at:
+          type: "string"
+        truncated:
+          type: "boolean"
+        workspace_id:
+          type: "string"
+      required:
+        - "object"
+        - "selection"
+        - "schema"
+        - "workspace_id"
+        - "generated_at"
+        - "snapshot_at"
+        - "content_hash"
+        - "data"
+        - "complete"
+        - "truncated"
+        - "next_cursor"
+        - "exclusions"
+      type: "object"
+    CompanyKnowledgeItem:
+      oneOf:
+        -
+          properties:
+            active:
+              description: "For lessons, belongs to the incumbent version and is not retired. Does not claim every request serves it."
+              type: "boolean"
+            call_type_id:
+              nullable: true
+              type: "string"
+            content_hash:
+              type: "string"
+            created_at:
+              type: "string"
+            current:
+              description: "In the current knowledge view; candidates can be current without being active."
+              type: "boolean"
+            evidence:
+              items:
+                properties:
+                  availability:
+                    enum:
+                      - "available"
+                      - "unavailable"
+                      - "not_checked"
+                    type: "string"
+                  id:
+                    type: "string"
+                  kind:
+                    type: "string"
+                  outcome:
+                    enum:
+                      - "pass"
+                      - "fail"
+                    nullable: true
+                    type: "string"
+                  verified_at:
+                    nullable: true
+                    type: "string"
+                required:
+                  - "kind"
+                  - "id"
+                  - "availability"
+                  - "outcome"
+                  - "verified_at"
+                type: "object"
+              type: "array"
+            evidence_count:
+              type: "integer"
+            evidence_truncated:
+              description: "At most 100 citation metadata entries are returned per lesson."
+              type: "boolean"
+            harmful:
+              type: "number"
+            helpful:
+              type: "number"
+            id:
+              maxLength: 450
+              pattern: "^(?:fact:[A-Za-z0-9_-]+|lesson:[A-Za-z0-9_-]+:L[0-9]+)$"
+              type: "string"
+            kind:
+              enum:
+                - "lesson"
+              type: "string"
+            lesson_id:
+              type: "string"
+            meta:
+              nullable: true
+              properties:
+                admission:
+                  properties:
+                    disposition:
+                      type: "string"
+                    policy:
+                      type: "string"
+                  required:
+                    - "policy"
+                    - "disposition"
+                  type: "object"
+                capabilityUnknown:
+                  type: "boolean"
+                conditions:
+                  items:
+                    type: "string"
+                  type: "array"
+                exceptions:
+                  items:
+                    type: "string"
+                  type: "array"
+                kind:
+                  enum:
+                    - "general"
+                    - "tool_fact"
+                    - "procedure"
+                  type: "string"
+                requiredTools:
+                  items:
+                    type: "string"
+                  type: "array"
+                schema:
+                  enum:
+                    - "ela1"
+                  type: "string"
+                scope:
+                  items:
+                    properties:
+                      fingerprints:
+                        items:
+                          type: "string"
+                        type: "array"
+                      protocol:
+                        enum:
+                          - "native"
+                          - "text_api"
+                        type: "string"
+                      tool:
+                        type: "string"
+                    required:
+                      - "tool"
+                      - "protocol"
+                      - "fingerprints"
+                    type: "object"
+                  type: "array"
+                supersedes:
+                  items:
+                    type: "string"
+                  type: "array"
+              type: "object"
+            parent_version_id:
+              nullable: true
+              type: "string"
+            recipe:
+              type: "string"
+            retired:
+              type: "boolean"
+            retired_reason:
+              nullable: true
+              type: "string"
+            state:
+              enum:
+                - "candidate"
+                - "evaluating"
+                - "active"
+                - "retired"
+                - "rejected"
+                - "superseded"
+              type: "string"
+            text:
+              type: "string"
+            version:
+              type: "integer"
+            version_id:
+              type: "string"
+          required:
+            - "id"
+            - "call_type_id"
+            - "created_at"
+            - "content_hash"
+            - "current"
+            - "active"
+            - "kind"
+            - "state"
+            - "lesson_id"
+            - "version_id"
+            - "version"
+            - "parent_version_id"
+            - "recipe"
+            - "text"
+            - "retired"
+            - "retired_reason"
+            - "helpful"
+            - "harmful"
+            - "meta"
+            - "evidence"
+            - "evidence_count"
+            - "evidence_truncated"
+          type: "object"
+        -
+          properties:
+            active:
+              description: "For lessons, belongs to the incumbent version and is not retired. Does not claim every request serves it."
+              type: "boolean"
+            call_type_id:
+              nullable: true
+              type: "string"
+            clusters:
+              type: "number"
+            content_hash:
+              type: "string"
+            content_projection:
+              description: "Raw fact bodies, correction exemplars and source transcripts are excluded."
+              enum:
+                - "derived_statistics"
+              type: "string"
+            created_at:
+              type: "string"
+            current:
+              description: "In the current knowledge view; candidates can be current without being active."
+              type: "boolean"
+            description:
+              description: "Derived type description, not customer source text."
+              type: "string"
+            evidence_tier:
+              type: "string"
+            fact_id:
+              type: "string"
+            fact_kind:
+              type: "string"
+            id:
+              maxLength: 450
+              pattern: "^(?:fact:[A-Za-z0-9_-]+|lesson:[A-Za-z0-9_-]+:L[0-9]+)$"
+              type: "string"
+            interval:
+              items:
+                type: "number"
+              maxItems: 2
+              minItems: 2
+              nullable: true
+              type: "array"
+            kind:
+              enum:
+                - "fact"
+              type: "string"
+            lineage:
+              items:
+                properties:
+                  availability:
+                    enum:
+                      - "available"
+                      - "unavailable"
+                      - "not_checked"
+                    type: "string"
+                  id:
+                    type: "string"
+                  kind:
+                    type: "string"
+                  outcome:
+                    enum:
+                      - "pass"
+                      - "fail"
+                    nullable: true
+                    type: "string"
+                  verified_at:
+                    nullable: true
+                    type: "string"
+                required:
+                  - "kind"
+                  - "id"
+                  - "availability"
+                  - "outcome"
+                  - "verified_at"
+                type: "object"
+              type: "array"
+            n:
+              type: "number"
+            rate:
+              nullable: true
+              type: "number"
+            scope:
+              additionalProperties:
+                type: "string"
+              type: "object"
+            state:
+              enum:
+                - "current"
+                - "history"
+              type: "string"
+            superseded_by:
+              nullable: true
+              type: "string"
+            window_end:
+              nullable: true
+              type: "string"
+            window_start:
+              nullable: true
+              type: "string"
+          required:
+            - "id"
+            - "call_type_id"
+            - "created_at"
+            - "content_hash"
+            - "current"
+            - "active"
+            - "kind"
+            - "state"
+            - "fact_id"
+            - "fact_kind"
+            - "description"
+            - "scope"
+            - "evidence_tier"
+            - "n"
+            - "rate"
+            - "interval"
+            - "clusters"
+            - "window_start"
+            - "window_end"
+            - "superseded_by"
+            - "lineage"
+            - "content_projection"
+          type: "object"
+    CompanyKnowledgeListResponse:
+      properties:
+        data:
+          items:
+            oneOf:
+              -
+                properties:
+                  active:
+                    description: "For lessons, belongs to the incumbent version and is not retired. Does not claim every request serves it."
+                    type: "boolean"
+                  call_type_id:
+                    nullable: true
+                    type: "string"
+                  content_hash:
+                    type: "string"
+                  created_at:
+                    type: "string"
+                  current:
+                    description: "In the current knowledge view; candidates can be current without being active."
+                    type: "boolean"
+                  evidence:
+                    items:
+                      properties:
+                        availability:
+                          enum:
+                            - "available"
+                            - "unavailable"
+                            - "not_checked"
+                          type: "string"
+                        id:
+                          type: "string"
+                        kind:
+                          type: "string"
+                        outcome:
+                          enum:
+                            - "pass"
+                            - "fail"
+                          nullable: true
+                          type: "string"
+                        verified_at:
+                          nullable: true
+                          type: "string"
+                      required:
+                        - "kind"
+                        - "id"
+                        - "availability"
+                        - "outcome"
+                        - "verified_at"
+                      type: "object"
+                    type: "array"
+                  evidence_count:
+                    type: "integer"
+                  evidence_truncated:
+                    description: "At most 100 citation metadata entries are returned per lesson."
+                    type: "boolean"
+                  harmful:
+                    type: "number"
+                  helpful:
+                    type: "number"
+                  id:
+                    maxLength: 450
+                    pattern: "^(?:fact:[A-Za-z0-9_-]+|lesson:[A-Za-z0-9_-]+:L[0-9]+)$"
+                    type: "string"
+                  kind:
+                    enum:
+                      - "lesson"
+                    type: "string"
+                  lesson_id:
+                    type: "string"
+                  meta:
+                    nullable: true
+                    properties:
+                      admission:
+                        properties:
+                          disposition:
+                            type: "string"
+                          policy:
+                            type: "string"
+                        required:
+                          - "policy"
+                          - "disposition"
+                        type: "object"
+                      capabilityUnknown:
+                        type: "boolean"
+                      conditions:
+                        items:
+                          type: "string"
+                        type: "array"
+                      exceptions:
+                        items:
+                          type: "string"
+                        type: "array"
+                      kind:
+                        enum:
+                          - "general"
+                          - "tool_fact"
+                          - "procedure"
+                        type: "string"
+                      requiredTools:
+                        items:
+                          type: "string"
+                        type: "array"
+                      schema:
+                        enum:
+                          - "ela1"
+                        type: "string"
+                      scope:
+                        items:
+                          properties:
+                            fingerprints:
+                              items:
+                                type: "string"
+                              type: "array"
+                            protocol:
+                              enum:
+                                - "native"
+                                - "text_api"
+                              type: "string"
+                            tool:
+                              type: "string"
+                          required:
+                            - "tool"
+                            - "protocol"
+                            - "fingerprints"
+                          type: "object"
+                        type: "array"
+                      supersedes:
+                        items:
+                          type: "string"
+                        type: "array"
+                    type: "object"
+                  parent_version_id:
+                    nullable: true
+                    type: "string"
+                  recipe:
+                    type: "string"
+                  retired:
+                    type: "boolean"
+                  retired_reason:
+                    nullable: true
+                    type: "string"
+                  state:
+                    enum:
+                      - "candidate"
+                      - "evaluating"
+                      - "active"
+                      - "retired"
+                      - "rejected"
+                      - "superseded"
+                    type: "string"
+                  text:
+                    type: "string"
+                  version:
+                    type: "integer"
+                  version_id:
+                    type: "string"
+                required:
+                  - "id"
+                  - "call_type_id"
+                  - "created_at"
+                  - "content_hash"
+                  - "current"
+                  - "active"
+                  - "kind"
+                  - "state"
+                  - "lesson_id"
+                  - "version_id"
+                  - "version"
+                  - "parent_version_id"
+                  - "recipe"
+                  - "text"
+                  - "retired"
+                  - "retired_reason"
+                  - "helpful"
+                  - "harmful"
+                  - "meta"
+                  - "evidence"
+                  - "evidence_count"
+                  - "evidence_truncated"
+                type: "object"
+              -
+                properties:
+                  active:
+                    description: "For lessons, belongs to the incumbent version and is not retired. Does not claim every request serves it."
+                    type: "boolean"
+                  call_type_id:
+                    nullable: true
+                    type: "string"
+                  clusters:
+                    type: "number"
+                  content_hash:
+                    type: "string"
+                  content_projection:
+                    description: "Raw fact bodies, correction exemplars and source transcripts are excluded."
+                    enum:
+                      - "derived_statistics"
+                    type: "string"
+                  created_at:
+                    type: "string"
+                  current:
+                    description: "In the current knowledge view; candidates can be current without being active."
+                    type: "boolean"
+                  description:
+                    description: "Derived type description, not customer source text."
+                    type: "string"
+                  evidence_tier:
+                    type: "string"
+                  fact_id:
+                    type: "string"
+                  fact_kind:
+                    type: "string"
+                  id:
+                    maxLength: 450
+                    pattern: "^(?:fact:[A-Za-z0-9_-]+|lesson:[A-Za-z0-9_-]+:L[0-9]+)$"
+                    type: "string"
+                  interval:
+                    items:
+                      type: "number"
+                    maxItems: 2
+                    minItems: 2
+                    nullable: true
+                    type: "array"
+                  kind:
+                    enum:
+                      - "fact"
+                    type: "string"
+                  lineage:
+                    items:
+                      properties:
+                        availability:
+                          enum:
+                            - "available"
+                            - "unavailable"
+                            - "not_checked"
+                          type: "string"
+                        id:
+                          type: "string"
+                        kind:
+                          type: "string"
+                        outcome:
+                          enum:
+                            - "pass"
+                            - "fail"
+                          nullable: true
+                          type: "string"
+                        verified_at:
+                          nullable: true
+                          type: "string"
+                      required:
+                        - "kind"
+                        - "id"
+                        - "availability"
+                        - "outcome"
+                        - "verified_at"
+                      type: "object"
+                    type: "array"
+                  n:
+                    type: "number"
+                  rate:
+                    nullable: true
+                    type: "number"
+                  scope:
+                    additionalProperties:
+                      type: "string"
+                    type: "object"
+                  state:
+                    enum:
+                      - "current"
+                      - "history"
+                    type: "string"
+                  superseded_by:
+                    nullable: true
+                    type: "string"
+                  window_end:
+                    nullable: true
+                    type: "string"
+                  window_start:
+                    nullable: true
+                    type: "string"
+                required:
+                  - "id"
+                  - "call_type_id"
+                  - "created_at"
+                  - "content_hash"
+                  - "current"
+                  - "active"
+                  - "kind"
+                  - "state"
+                  - "fact_id"
+                  - "fact_kind"
+                  - "description"
+                  - "scope"
+                  - "evidence_tier"
+                  - "n"
+                  - "rate"
+                  - "interval"
+                  - "clusters"
+                  - "window_start"
+                  - "window_end"
+                  - "superseded_by"
+                  - "lineage"
+                  - "content_projection"
+                type: "object"
+          type: "array"
+        has_more:
+          type: "boolean"
+        next_cursor:
+          nullable: true
+          type: "string"
+        object:
+          enum:
+            - "list"
+          type: "string"
+        snapshot_at:
+          type: "string"
+      required:
+        - "object"
+        - "data"
+        - "has_more"
+        - "next_cursor"
+        - "snapshot_at"
       type: "object"
     ConfirmationLift:
       description: "The live lift — the contrast interval + n per arm + cost per successful artifact."
@@ -36785,6 +38092,202 @@ paths:
       summary: "Introspect the presented API key"
       tags:
         - "Keys"
+  "/v1/knowledge":
+    get:
+      description: "Workspace members or config:read/config:write keys. Knowledge and corrections consent required; unavailable content is omitted. Lessons include stored text and atomic metadata; citations expose metadata only. Facts expose allowlisted derived statistics and structured scope, never arbitrary bodies. Current candidates are not active or proven. No training or provider calls. Existing consent and erasure rules apply. Evidence availability refers to retained metadata, not raw source bodies; correction-body TTL does not expire derived lessons. snapshot_at is an observation time, not a durable database snapshot. Requires API-key scope: config:read or config:write."
+      operationId: "listCompanyKnowledge"
+      parameters:
+        -
+          description: "Literal lexical substring (max 200 characters); no embeddings or model calls."
+          in: "query"
+          name: "q"
+          required: false
+          schema:
+            description: "Literal lexical substring (max 200 characters); no embeddings or model calls."
+            type: "string"
+        -
+          description: "lesson or fact; omitted includes both."
+          in: "query"
+          name: "kind"
+          required: false
+          schema:
+            description: "lesson or fact; omitted includes both."
+            type: "string"
+        -
+          description: "Filter to one workspace workflow."
+          in: "query"
+          name: "call_type_id"
+          required: false
+          schema:
+            description: "Filter to one workspace workflow."
+            type: "string"
+        -
+          description: "Filter to lessons of one immutable playbook version."
+          in: "query"
+          name: "version_id"
+          required: false
+          schema:
+            description: "Filter to lessons of one immutable playbook version."
+            type: "string"
+        -
+          description: "true includes historical and retired items; false (default) includes current facts, incumbent lessons and pending candidate/evaluating lessons."
+          in: "query"
+          name: "include_history"
+          required: false
+          schema:
+            description: "true includes historical and retired items; false (default) includes current facts, incumbent lessons and pending candidate/evaluating lessons."
+            type: "string"
+        -
+          description: "Page size 1–100, default 50."
+          in: "query"
+          name: "limit"
+          required: false
+          schema:
+            description: "Page size 1–100, default 50."
+            type: "string"
+        -
+          description: "Opaque continuation bound to workspace and unchanged filters. 400 on invalid/mismatched cursor; 409 knowledge_cursor_stale on source changes or after 15 minutes. Restart listing."
+          in: "query"
+          name: "cursor"
+          required: false
+          schema:
+            description: "Opaque continuation bound to workspace and unchanged filters. 400 on invalid/mismatched cursor; 409 knowledge_cursor_stale on source changes or after 15 minutes. Restart listing."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CompanyKnowledgeListResponse"
+          description: "A bounded page of owned knowledge."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          bearerAuth: []
+        -
+          sessionCookie: []
+      summary: "Search company knowledge"
+      tags:
+        - "Knowledge"
+  "/v1/knowledge/export":
+    get:
+      description: "Session-only owner/admin with 2FA and flywheel.export permission. Requires knowledge, corrections and training_export consent. Audited explicit content export ur.company_knowledge/v1; preserved /v1/flywheel/knowledge/export remains the metadata bundle. Normalized selection filters are included in the hash and manifest; complete is true only when this page contains every match of that selection, truncated includes omitted preceding pages. Resume with next_cursor; clocks and cursor excluded from content_hash. Exclusions explicitly identify unsupported/raw content. No import, activation or owned model weights."
+      operationId: "exportCompanyKnowledge"
+      parameters:
+        -
+          description: "Literal lexical substring (max 200 characters); no embeddings or model calls."
+          in: "query"
+          name: "q"
+          required: false
+          schema:
+            description: "Literal lexical substring (max 200 characters); no embeddings or model calls."
+            type: "string"
+        -
+          description: "lesson or fact; omitted includes both."
+          in: "query"
+          name: "kind"
+          required: false
+          schema:
+            description: "lesson or fact; omitted includes both."
+            type: "string"
+        -
+          description: "Filter to one workspace workflow."
+          in: "query"
+          name: "call_type_id"
+          required: false
+          schema:
+            description: "Filter to one workspace workflow."
+            type: "string"
+        -
+          description: "Filter to lessons of one immutable playbook version."
+          in: "query"
+          name: "version_id"
+          required: false
+          schema:
+            description: "Filter to lessons of one immutable playbook version."
+            type: "string"
+        -
+          description: "true includes historical and retired items; false (default) includes current facts, incumbent lessons and pending candidate/evaluating lessons."
+          in: "query"
+          name: "include_history"
+          required: false
+          schema:
+            description: "true includes historical and retired items; false (default) includes current facts, incumbent lessons and pending candidate/evaluating lessons."
+            type: "string"
+        -
+          description: "Page size 1–100, default 50."
+          in: "query"
+          name: "limit"
+          required: false
+          schema:
+            description: "Page size 1–100, default 50."
+            type: "string"
+        -
+          description: "Opaque continuation bound to workspace and unchanged filters. 400 on invalid/mismatched cursor; 409 knowledge_cursor_stale on source changes or after 15 minutes. Restart listing."
+          in: "query"
+          name: "cursor"
+          required: false
+          schema:
+            description: "Opaque continuation bound to workspace and unchanged filters. 400 on invalid/mismatched cursor; 409 knowledge_cursor_stale on source changes or after 15 minutes. Restart listing."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CompanyKnowledgeExportResponse"
+          description: "One bounded content export page."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Export retained company knowledge content"
+      tags:
+        - "Knowledge"
+  "/v1/knowledge/{id}":
+    get:
+      description: "Workspace members or config:read/config:write keys. Knowledge and corrections consent required; unavailable content is omitted. Lessons include stored text and atomic metadata; citations expose metadata only. Facts expose allowlisted derived statistics and structured scope, never arbitrary bodies. Current candidates are not active or proven. No training or provider calls. Existing consent and erasure rules apply. Evidence availability refers to retained metadata, not raw source bodies; correction-body TTL does not expire derived lessons. snapshot_at is an observation time, not a durable database snapshot. IDs: fact:<fact_id> or lesson:<version_id>:<lesson_id>. Unknown, foreign or erased items return 404. Requires API-key scope: config:read or config:write."
+      operationId: "readCompanyKnowledge"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CompanyKnowledgeDetailResponse"
+          description: "One retained knowledge item."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          bearerAuth: []
+        -
+          sessionCookie: []
+      summary: "Read one company knowledge item"
+      tags:
+        - "Knowledge"
   "/v1/messages":
     post:
       description: "Native passthrough for the Anthropic Messages API: point the official `@anthropic-ai/sdk` at ultrarouter by changing only the base URL and the key. The ur key is accepted via `Authorization: Bearer` OR `x-api-key` (the Anthropic SDK style); the body is FORWARDED VERBATIM to Anthropic and the response is returned UNTOUCHED — the gateway only meters, caps and captures. `stream:true` forwards the upstream SSE bytes verbatim. The ur extensions ride request headers (`X-UR-Call-Type`, `X-UR-Timeout-Ms` clamped 1 s–600 s (default 300 s), `X-UR-Trace`); the response carries `X-UR-Request-Id` and (non-streaming) `X-UR-Cost-Micro-USD`. An allowlist of request headers (`anthropic-version`, `anthropic-beta`, `idempotency-key`) is forwarded upstream; the caller's own key headers are never forwarded. Upstream errors pass through with their status and body; gateway failures (auth, caps, timeout) use the normalized error envelope. EXPERIMENT-BOUND calls: a call carrying `X-UR-Experiment-Execution` (an execution enrolled on `POST /v1/flywheel/experiments/{id}/executions`; the key also needs `flywheel:experiment:run`) is authorized against its execution (workspace, live experiment, open phase, bound candidate) BEFORE dispatch, reserved against the experiment budget from `max_tokens` and the dispatched bytes, claimed once (a retry of the same `attempt` is refused) and settled from the measured cost. For the TREATED arm’s lever call type only, the frozen learned pack is placed as a NEW FIRST TEXT BLOCK of the first user message — `system` and every `cache_control` marker are untouched; other stages and the control arm are forwarded unchanged. Refusals are named in the error message. A call without the header is unaffected. Requires API-key scope: gateway:invoke."
@@ -41101,6 +42604,8 @@ tags:
   -
     description: "API-key introspection."
     name: "Keys"
+  -
+    name: "Knowledge"
   -
     description: "Per-call-type learning controls — status, self-serve enable, pause / resume / disable, versions, evaluations, rollback and manual promote / reject."
     name: "Learning"

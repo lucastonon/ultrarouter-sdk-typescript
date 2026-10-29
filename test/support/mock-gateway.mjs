@@ -813,6 +813,18 @@ export async function startMockGateway(options = {}) {
     }
 
     // ── everything else: a schema-generated sample for the matching operation ──
+    if (method === 'GET' && (path === '/v1/knowledge' || path.startsWith('/v1/knowledge/'))) {
+      const page = JSON.parse(
+        readFileSync(new URL('../fixtures/company-knowledge.json', import.meta.url), 'utf8'),
+      );
+      if (path === '/v1/knowledge') return send(res, 200, page);
+      if (path !== '/v1/knowledge/export') {
+        const id = decodeURIComponent(path.slice('/v1/knowledge/'.length));
+        const item = page.data.find((row) => row.id === id) ?? page.data[0];
+        return send(res, 200, { object: 'knowledge_item', item });
+      }
+    }
+
     const match = matchOperation(method, path);
     if (match === null) return send(res, 404, errorBody('not_found', `no route ${method} ${path}`));
     const status = successStatus(match.op);

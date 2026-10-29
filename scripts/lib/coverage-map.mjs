@@ -100,6 +100,15 @@ export const COVERAGE = {
     methods: ['ur.callTypes.verifiedMemory.disable'],
     tests: ['test/resources.test.ts', 'test/surface.test.ts'],
   },
+  listCompanyKnowledge: {
+    methods: ['ur.knowledge.list'],
+    tests: ['test/company-knowledge.test.ts'],
+  },
+  readCompanyKnowledge: {
+    methods: ['ur.knowledge.get'],
+    tests: ['test/company-knowledge.test.ts'],
+  },
+  exportCompanyKnowledge: { methods: [], tests: [] },
   // Learning controls (per call type)
   getLearningToolDocumentation: {
     methods: ['ur.learning.toolDocumentation'],

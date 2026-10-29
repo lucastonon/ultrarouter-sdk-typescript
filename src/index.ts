@@ -35,6 +35,7 @@ export {
   type LearnedRecordOptions,
   type LearnedSession,
   type LearningResource,
+  type KnowledgeResource,
   type ModelListQuery,
   type ModelsResource,
   type OraclesResource,

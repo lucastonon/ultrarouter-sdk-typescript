@@ -1,0 +1,58 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "lesson:epb_example:L1",
+      "kind": "lesson",
+      "call_type_id": "ct_example",
+      "created_at": "2026-10-29T00:00:00.000Z",
+      "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "current": true,
+      "active": false,
+      "state": "candidate",
+      "lesson_id": "L1",
+      "version_id": "epb_example",
+      "version": 1,
+      "parent_version_id": null,
+      "recipe": "legacy",
+      "text": "Read the current capacity before reserving stock.",
+      "retired": false,
+      "retired_reason": null,
+      "helpful": 0,
+      "harmful": 0,
+      "meta": null,
+      "evidence": [],
+      "evidence_count": 0,
+      "evidence_truncated": false
+    },
+    {
+      "id": "fact:kf_example",
+      "kind": "fact",
+      "call_type_id": "ct_example",
+      "created_at": "2026-10-29T00:00:00.000Z",
+      "content_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "current": true,
+      "active": true,
+      "state": "current",
+      "fact_id": "kf_example",
+      "fact_kind": "outcome_rate",
+      "description": "Derived outcome summary",
+      "scope": {
+        "call_type_id": "ct_example"
+      },
+      "evidence_tier": "verified",
+      "n": 10,
+      "rate": 0.8,
+      "interval": [0.5, 0.95],
+      "clusters": 10,
+      "window_start": null,
+      "window_end": null,
+      "superseded_by": null,
+      "lineage": [],
+      "content_projection": "derived_statistics"
+    }
+  ],
+  "has_more": false,
+  "next_cursor": null,
+  "snapshot_at": "2026-10-29T00:00:00.000Z"
+}
