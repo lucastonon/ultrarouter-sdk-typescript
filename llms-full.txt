@@ -31,13 +31,12 @@ Version `0.1.0` is an early release; expect the API to evolve before 1.0.
 
 `@ultrarouter/sdk` is **not published to the npm registry yet**, so `npm install @ultrarouter/sdk`
 does not work today. Install it from the public GitHub source: build the package and install the
-tarball it produces (Node.js 20 or later). The `feat/learning-loop` branch contains this
-0.1.0 preview; the default branch does not yet include the learning additions.
+tarball it produces (Node.js 20 or later).
 
 <!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-git clone --branch feat/learning-loop --single-branch https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
 cd ultrarouter-sdk-typescript
 npm ci && npm run build && npm pack   # writes ultrarouter-sdk-0.1.0.tgz
 
@@ -411,7 +410,7 @@ registry.
 <!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-git clone --branch feat/learning-loop --single-branch https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
 (cd ultrarouter-sdk-typescript && npm ci && npm run build && npm pack)   # → ultrarouter-sdk-0.1.0.tgz
 npm install ./ultrarouter-sdk-typescript/ultrarouter-sdk-0.1.0.tgz
 export ULTRAROUTER_API_KEY=ur_sk_test_...         # or UR_API_KEY
@@ -745,13 +744,12 @@ three ship inside the package, under `node_modules/@ultrarouter/sdk/` once it is
 
 `@ultrarouter/sdk` is **not published to the npm registry yet**: `npm install @ultrarouter/sdk`
 answers 404 today. Install it from the public GitHub source by building the package and installing
-the tarball it produces. Select `feat/learning-loop` for this 0.1.0 preview; the default
-branch does not yet include the learning additions:
+the tarball it produces:
 
 <!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-git clone --branch feat/learning-loop --single-branch https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
 cd ultrarouter-sdk-typescript
 npm ci && npm run build && npm pack   # writes ultrarouter-sdk-0.1.0.tgz
 
@@ -7672,9 +7670,6 @@ contain breaking changes; they are always listed under **Changed** or **Removed*
 The version in `package.json` is now `0.1.0`: these changes ship as the 0.1.0 release.
 
 ### Fixed
-
-- Preview installation commands explicitly select `feat/learning-loop`, so they build the 0.1.0
-  learning client instead of the older default branch.
 
 - The acknowledgement-loss example verifies the exact answer instead of hardcoding success;
   negative executions check wrong non-empty and empty answers report failure.

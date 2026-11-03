@@ -25,13 +25,12 @@ Version `0.1.0` is an early release; expect the API to evolve before 1.0.
 
 `@ultrarouter/sdk` is **not published to the npm registry yet**, so `npm install @ultrarouter/sdk`
 does not work today. Install it from the public GitHub source: build the package and install the
-tarball it produces (Node.js 20 or later). The `feat/learning-loop` branch contains this
-0.1.0 preview; the default branch does not yet include the learning additions.
+tarball it produces (Node.js 20 or later).
 
 <!-- doctest: skip — clones the public repository and builds the package -->
 
 ```bash
-git clone --branch feat/learning-loop --single-branch https://github.com/lucastonon/ultrarouter-sdk-typescript.git
+git clone https://github.com/lucastonon/ultrarouter-sdk-typescript.git
 cd ultrarouter-sdk-typescript
 npm ci && npm run build && npm pack   # writes ultrarouter-sdk-0.1.0.tgz
 
