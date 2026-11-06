@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: a5990ba0c05dcbe4a3798f2c1506debcbb61dadfca1d0197727ee3330af2cacc
+# spec-sha256: b7fdcb8b4957ab207e4bee31f3628af8cdf66d38bc28bc06c621ab4bcc66b6e8
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -5282,7 +5282,7 @@ components:
           description: "Opaque JSON stored with the request."
           type: "object"
         model:
-          description: "Provider-prefixed model id, e.g. \"openai/gpt-5.2-mini\"."
+          description: "Provider-prefixed model id, e.g. \"openai/gpt-5-mini\"."
           type: "string"
         models:
           description: "Ordered fallback model ids (OpenRouter)."
@@ -8968,6 +8968,32 @@ components:
           additionalProperties:
             nullable: true
           type: "object"
+        episode_correction:
+          description: "Present only when a corrected body was supplied under consent. THE BARRIER: `/final` is SYNCHRONOUS, so `status: applied` means the correction is already live — a later similar request reads it on its next call (live memory is read fresh per request; a frozen `as_of` checkpoint never adopts a newer correction)."
+          properties:
+            corrected_at:
+              description: "When the stored correction is effective (ISO), or null."
+              nullable: true
+              type: "string"
+            status:
+              description: "Whether this correction reached episode memory: `applied` (stored, eligible to serve on the next request) | `unchanged` (the same correction was already stored) | `not_serving` (the call type is not opted into serve_corrections) | `consent_off` | `no_correction_text` | `no_episode` (no failed episode holds this artifact’s request)."
+              enum:
+                - "applied"
+                - "unchanged"
+                - "not_serving"
+                - "consent_off"
+                - "no_correction_text"
+                - "no_episode"
+              type: "string"
+            trace_id:
+              description: "The episode trace the correction bound to, or null."
+              nullable: true
+              type: "string"
+          required:
+            - "status"
+            - "trace_id"
+            - "corrected_at"
+          type: "object"
         final_hash:
           nullable: true
           type: "string"
@@ -11066,9 +11092,13 @@ components:
               type: "string"
             expiresAt:
               type: "string"
+            id:
+              description: "The invitation id — the path param the revoke route addresses."
+              type: "string"
             role:
               type: "string"
           required:
+            - "id"
             - "email"
             - "role"
             - "expiresAt"
@@ -11087,9 +11117,13 @@ components:
           type: "string"
         expiresAt:
           type: "string"
+        id:
+          description: "The invitation id — the path param the revoke route addresses."
+          type: "string"
         role:
           type: "string"
       required:
+        - "id"
         - "email"
         - "role"
         - "expiresAt"
@@ -11109,9 +11143,13 @@ components:
                 type: "string"
               expiresAt:
                 type: "string"
+              id:
+                description: "The invitation id — the path param the revoke route addresses."
+                type: "string"
               role:
                 type: "string"
             required:
+              - "id"
               - "email"
               - "role"
               - "expiresAt"
@@ -18221,7 +18259,7 @@ components:
 info:
   description: "OpenAI/OpenRouter-compatible AI gateway: proxy + compression + continuous evals + auto-routing. This spec is generated from the API route schemas (never hand-edited) and checked in CI against the served API."
   title: "ultrarouter API"
-  version: "0.0.0"
+  version: "1.0.0-beta"
 openapi: "3.0.3"
 paths:
   "/healthz":
@@ -18266,6 +18304,77 @@ paths:
       summary: "Readiness probe"
       tags:
         - "Ops"
+  "/v1/access-requests":
+    post:
+      description: "PUBLIC, unauthenticated intake behind the landing \"Request access\" form. Rate-limited per client IP. Idempotent per email; always returns the same acknowledgement and never reveals whether the email already requested or exists. The email and message are never logged."
+      operationId: "createAccessRequest"
+      requestBody:
+        content:
+          "application/json":
+            example:
+              company: "Example Inc"
+              email: "alex@example.com"
+              message: "Routing GPT and Claude for a support agent; want to compare models on our traffic."
+              name: "Alex Rivera"
+            schema:
+              description: "A request for access to the invite-only hosted service."
+              properties:
+                company:
+                  description: "Optional company name."
+                  maxLength: 200
+                  type: "string"
+                email:
+                  description: "The requester email address."
+                  format: "email"
+                  maxLength: 320
+                  minLength: 3
+                  type: "string"
+                message:
+                  description: "Optional note: what the requester is building."
+                  maxLength: 2000
+                  type: "string"
+                name:
+                  description: "Optional contact name."
+                  maxLength: 200
+                  type: "string"
+                website:
+                  description: "Anti-spam honeypot — leave empty; a filled value is silently ignored."
+                  maxLength: 200
+                  type: "string"
+              required:
+                - "email"
+              type: "object"
+        required: true
+      responses:
+        "202":
+          content:
+            "application/json":
+              schema:
+                description: "A fixed acknowledgement — never reveals whether the email already requested access."
+                properties:
+                  object:
+                    enum:
+                      - "access_request_ack"
+                    type: "string"
+                  status:
+                    enum:
+                      - "received"
+                    type: "string"
+                required:
+                  - "object"
+                  - "status"
+                type: "object"
+          description: "Accepted — staff will review the request."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+          description: "Normalized error envelope."
+      security: []
+      summary: "Request access to the invite-only hosted service"
+      tags:
+        - "Access"
   "/v1/artifact-types":
     post:
       description: "Declare what “it worked” MEANS for a type of artifact (the ONE thing the product refuses to infer), so every later artifact of that type pins this objective version. Objective versions are APPEND-ONLY: an upsert whose `archetype` + `objective` are unchanged is an idempotent NO-OP returning the EXISTING version; any change APPENDS version `max+1`. Never an UPDATE, never a rewrite. NEVER a body — `resolution_criteria` is redacted free text. Requires API-key scope: outcomes:write."
@@ -19245,6 +19354,12 @@ paths:
                           - "reuse"
                           - "adapt"
                         type: "string"
+                      importance_boost:
+                        description: "Present only when set (not 0)."
+                        type: "number"
+                      index_actions:
+                        description: "Present only when true."
+                        type: "boolean"
                       k:
                         exclusiveMinimum: true
                         minimum: 0
@@ -19323,6 +19438,12 @@ paths:
                       self_serve:
                         description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate. In evaluate mode it receives a randomized share of eligible episodes before the policy can make it the active version."
                         type: "boolean"
+                      serve_corrections:
+                        description: "Present only when true."
+                        type: "boolean"
+                      show_mistake:
+                        description: "Present only when true."
+                        type: "boolean"
                       source_call_type_id:
                         nullable: true
                         type: "string"
@@ -19345,6 +19466,10 @@ paths:
                   traces:
                     description: "The call type’s episode-trace accounting (counts only)."
                     properties:
+                      corrected:
+                        description: "Fail episodes with a stored customer correction (served when serve_corrections is on; reported separately — never counted as a pass)."
+                        minimum: 0
+                        type: "integer"
                       fail:
                         minimum: 0
                         type: "integer"
@@ -19367,6 +19492,7 @@ paths:
                       - "total"
                       - "pass"
                       - "fail"
+                      - "corrected"
                       - "unverified"
                       - "latest_verified_at"
                     type: "object"
@@ -19446,6 +19572,12 @@ paths:
                           - "reuse"
                           - "adapt"
                         type: "string"
+                      importance_boost:
+                        description: "Present only when set (not 0)."
+                        type: "number"
+                      index_actions:
+                        description: "Present only when true."
+                        type: "boolean"
                       k:
                         exclusiveMinimum: true
                         minimum: 0
@@ -19524,6 +19656,12 @@ paths:
                       self_serve:
                         description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate. In evaluate mode it receives a randomized share of eligible episodes before the policy can make it the active version."
                         type: "boolean"
+                      serve_corrections:
+                        description: "Present only when true."
+                        type: "boolean"
+                      show_mistake:
+                        description: "Present only when true."
+                        type: "boolean"
                       source_call_type_id:
                         nullable: true
                         type: "string"
@@ -19591,6 +19729,14 @@ paths:
                     - "reuse"
                     - "adapt"
                   type: "string"
+                importance_boost:
+                  description: "Weight corrected misses in ranking: a corrected miss’s similarity is multiplied by `1 + importance_boost` (0..100; default 0, no boost). The min_similarity floor applies to the raw similarity, before the boost."
+                  maximum: 100
+                  minimum: 0
+                  type: "number"
+                index_actions:
+                  description: "Index a candidate on its task text plus identifier tokens from its verified answer (SQL tables/columns/operators and literal shapes — never literal values; otherwise the action tokens), so retrieval can match on schema-linked terms. The query side stays the request’s task text (default false)."
+                  type: "boolean"
                 k:
                   description: "Precedents served per episode (1..5; default 3)."
                   maximum: 5
@@ -19672,6 +19818,12 @@ paths:
                     - "first_user_message"
                     - "content_lines"
                   type: "string"
+                serve_corrections:
+                  description: "Also serve CORRECTED misses — a fail episode whose corrected answer the customer supplied through `/final`; the corrected answer is served, never the failed attempt (default false)."
+                  type: "boolean"
+                show_mistake:
+                  description: "When a corrected miss is served, also show the failed attempt beside the corrected answer under plain labels, within the per-episode budget (the corrected answer is never shed first; default false)."
+                  type: "boolean"
                 source_call_type_id:
                   description: "The call type whose verified episodes are served (same workspace); null = this call type."
                   nullable: true
@@ -19715,6 +19867,12 @@ paths:
                           - "reuse"
                           - "adapt"
                         type: "string"
+                      importance_boost:
+                        description: "Present only when set (not 0)."
+                        type: "number"
+                      index_actions:
+                        description: "Present only when true."
+                        type: "boolean"
                       k:
                         exclusiveMinimum: true
                         minimum: 0
@@ -19792,6 +19950,12 @@ paths:
                         type: "string"
                       self_serve:
                         description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate. In evaluate mode it receives a randomized share of eligible episodes before the policy can make it the active version."
+                        type: "boolean"
+                      serve_corrections:
+                        description: "Present only when true."
+                        type: "boolean"
+                      show_mistake:
+                        description: "Present only when true."
                         type: "boolean"
                       source_call_type_id:
                         nullable: true
@@ -19821,6 +19985,12 @@ paths:
                           - "reuse"
                           - "adapt"
                         type: "string"
+                      importance_boost:
+                        description: "Present only when set (not 0)."
+                        type: "number"
+                      index_actions:
+                        description: "Present only when true."
+                        type: "boolean"
                       k:
                         exclusiveMinimum: true
                         minimum: 0
@@ -19898,6 +20068,12 @@ paths:
                         type: "string"
                       self_serve:
                         description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate. In evaluate mode it receives a randomized share of eligible episodes before the policy can make it the active version."
+                        type: "boolean"
+                      serve_corrections:
+                        description: "Present only when true."
+                        type: "boolean"
+                      show_mistake:
+                        description: "Present only when true."
                         type: "boolean"
                       source_call_type_id:
                         nullable: true
@@ -22441,6 +22617,12 @@ paths:
       requestBody:
         content:
           "application/json":
+            example:
+              messages:
+                -
+                  content: "Say hello in one word."
+                  role: "user"
+              model: "openai/gpt-5-mini"
             schema:
               "$ref": "#/components/schemas/ChatCompletionsRequest"
         required: true
@@ -22493,6 +22675,9 @@ paths:
       requestBody:
         content:
           "application/json":
+            example:
+              input: "The quick brown fox jumps over the lazy dog."
+              model: "openai/text-embedding-3-small"
             schema:
               "$ref": "#/components/schemas/EmbeddingsRequest"
         required: true
@@ -38328,7 +38513,7 @@ paths:
         - "Passthrough"
   "/v1/models":
     get:
-      description: "The active model catalog with pricing + capabilities, filterable by provider/capability. Each item separates PROVENANCE from HOSTING: `origin_jurisdiction` + `weights` describe the LOGICAL model (the developing lab — an offer inherits them from the model it serves), while `hosting_jurisdiction` + `hosting_region` describe where THIS offer RUNS. A CN-origin open-weight model hosted in the US shows `origin_jurisdiction: CN`, `weights: open`, `hosting_jurisdiction: US`. Any unestablished fact is `unknown` (fail-closed). Requires API-key scope: gateway:invoke."
+      description: "The active models you can call, with pricing + capabilities, filterable by provider/capability. A model with no usable price is refused at call time (`model_unpriced`), so it is listed only with `include_unpriced=true`. Each item separates PROVENANCE from HOSTING: `origin_jurisdiction` + `weights` describe the LOGICAL model (the developing lab — an offer inherits them from the model it serves), while `hosting_jurisdiction` + `hosting_region` describe where THIS offer RUNS. A CN-origin open-weight model hosted in the US shows `origin_jurisdiction: CN`, `weights: open`, `hosting_jurisdiction: US`. Any unestablished fact is `unknown` (fail-closed). Requires API-key scope: gateway:invoke."
       operationId: "listModels"
       parameters:
         -
@@ -38346,6 +38531,14 @@ paths:
           required: false
           schema:
             description: "Filter to models advertising a capability (e.g. vision)."
+            type: "string"
+        -
+          description: "Set to `true` to also list catalog models with no usable price."
+          in: "query"
+          name: "include_unpriced"
+          required: false
+          schema:
+            description: "Set to `true` to also list catalog models with no usable price."
             type: "string"
       responses:
         "200":
@@ -38368,7 +38561,7 @@ paths:
         - "Models"
   "/v1/models/{id}":
     get:
-      description: "Logical-model detail incl. every active provider offer. The `{id}` carries the provider-prefixed slash id (e.g. `openai/gpt-5.2`). Provenance vs hosting: top-level `origin_jurisdiction` + `weights` are the LOGICAL model's provenance; each offer carries its OWN `hosting_jurisdiction` + `hosting_region` (where that offer runs). Unestablished facts are `unknown` (fail-closed). Requires API-key scope: gateway:invoke."
+      description: "Logical-model detail incl. every active provider offer. The `{id}` carries the provider-prefixed slash id (e.g. `openai/gpt-5-mini`). Provenance vs hosting: top-level `origin_jurisdiction` + `weights` are the LOGICAL model's provenance; each offer carries its OWN `hosting_jurisdiction` + `hosting_region` (where that offer runs). Unestablished facts are `unknown` (fail-closed). Requires API-key scope: gateway:invoke."
       operationId: "getModel"
       parameters:
         -
@@ -38378,6 +38571,7 @@ paths:
           required: true
           schema:
             description: "Path parameter `id`."
+            example: "openai/gpt-5-mini"
             type: "string"
       responses:
         "200":
@@ -40493,6 +40687,46 @@ paths:
       summary: "Invite a member"
       tags:
         - "Invitations"
+  "/v1/workspaces/{id}/invitations/{invitationId}":
+    delete:
+      description: "Deletes a pending (unaccepted) invitation so its mailed token stops working; a later accept fails as `invitation_invalid`. Owner/admin only."
+      operationId: "revokeInvitation"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+        -
+          description: "Path parameter `invitationId`."
+          in: "path"
+          name: "invitationId"
+          required: true
+          schema:
+            description: "Path parameter `invitationId`."
+            type: "string"
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OkResponse"
+          description: "Acknowledged."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+          description: "Normalized error envelope."
+      security:
+        -
+          sessionCookie: []
+      summary: "Revoke a pending invitation"
+      tags:
+        - "Invitations"
   "/v1/workspaces/{id}/members":
     get:
       operationId: "listMembers"
@@ -42561,9 +42795,14 @@ paths:
         - "Flywheel"
 servers:
   -
+    description: "Hosted (invite-only) — the managed ultrarouter gateway."
+    url: "https://api.ultrarouter.io"
+  -
     description: "A self-hosted ultrarouter gateway (the local dev stack listens here); use your deployment's URL."
     url: "http://localhost:8080"
 tags:
+  -
+    name: "Access"
   -
     name: "Adaptive optimization"
   -
