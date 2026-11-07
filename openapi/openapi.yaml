@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: 04c682183add111119e35b90245c0144d54a05c16ebd19d10199f28711821a8d
+# spec-sha256: b1a00142a268fe1e33e3030cbefbeeb0e4a9dd11aed66d99e606a047468e30ac
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -20122,10 +20122,16 @@ paths:
           required: true
           schema:
             description: "Path parameter `id`."
+            example: "ct_01h8xk9m2p3q4r5s6t7v8w9x0y"
             type: "string"
       requestBody:
         content:
           "application/json":
+            example:
+              index_actions: true
+              k: 4
+              record: true
+              serve_corrections: true
             schema:
               additionalProperties: false
               description: "Enable episode memory for a call type (the lab-authorised, pre-evidence activation)."
