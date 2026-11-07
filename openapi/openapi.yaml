@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: b7fdcb8b4957ab207e4bee31f3628af8cdf66d38bc28bc06c621ab4bcc66b6e8
+# spec-sha256: 04c682183add111119e35b90245c0144d54a05c16ebd19d10199f28711821a8d
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -8921,7 +8921,7 @@ components:
       description: "Record the human-approved final output version (the correction channel)."
       properties:
         artifact_version:
-          description: "The draft version this final approves (defaults to the current version)."
+          description: "The draft version the human reviewed (defaults to the current version). When supplied it must equal the artifact’s current version — a stale value (the draft moved since it was reviewed) is a 409 conflict, never a silent append; a correction derived from this final binds only to the version it was reviewed against."
           exclusiveMinimum: true
           minimum: 0
           type: "integer"
@@ -18530,7 +18530,7 @@ paths:
         - "Flywheel"
   "/v1/artifacts/{id}/final":
     post:
-      description: "Outcome channel 2 — the ONLY route that may carry a body, and ONLY under `corrections_consent`: the final is stored in the workspace’s encrypted evidence blob store and `diff_stats` are computed server-side against the draft. WITHOUT consent the caller sends CLIENT-computed `diff_stats` + `final_hash` (the SDK `diffStats` helper) and the row is `stored:\"metadata_only\"`, `client_computed:true`. A body without consent is rejected (400). Requires API-key scope: outcomes:write."
+      description: "Outcome channel 2 — the ONLY route that may carry a body, and ONLY under `corrections_consent`: the final is stored in the workspace’s encrypted evidence blob store and `diff_stats` are computed server-side against the draft. WITHOUT consent the caller sends CLIENT-computed `diff_stats` + `final_hash` (the SDK `diffStats` helper) and the row is `stored:\"metadata_only\"`, `client_computed:true`. A body without consent is rejected (400). Supplying `artifact_version` binds the final to the draft the human reviewed: a stale value (the draft moved since) is a 409 conflict, never a silent append. When the call type opts into `serve_corrections`, a consented final also updates episode memory’s correction for the matching failed episode — the response’s `episode_correction.status:\"applied\"` means the correction is live for the next similar request. Requires API-key scope: outcomes:write."
       operationId: "recordArtifactFinal"
       parameters:
         -
@@ -19698,7 +19698,7 @@ paths:
         - "Call types"
   "/v1/call-types/{id}/episode-memory/enable":
     post:
-      description: "A LAB-AUTHORISED pre-evidence lever (staff grant `flywheel.episode_memory_lab`; no customer route grants it — 403 without it). Freezes a setting on a new config version (config_version bumped: served within one 5 s window), so the gateway records this call type’s agent episodes and injects the most similar VERIFIED past episodes (by task) into EVERY step of later episodes. Invalid knobs are a 400 (the named reason); an unknown `source_call_type_id` is a 404. No client-side code, no special headers. Requires API-key scope: config:write."
+      description: "A LAB-AUTHORISED pre-evidence lever (staff grant `flywheel.episode_memory_lab`; no customer route grants it — 403 without it; a customer activates precedent memory through `…/episode-memory/self-serve`). Freezes a setting on a new config version (config_version bumped: served within one 5 s window), so the gateway records this call type’s agent episodes and injects the most similar VERIFIED past episodes (by task) into EVERY step of later episodes. Invalid knobs are a 400 (the named reason); an unknown `source_call_type_id` is a 404. No client-side code, no special headers. Requires API-key scope: config:write."
       operationId: "enableEpisodeMemory"
       parameters:
         -
@@ -20108,6 +20108,420 @@ paths:
         -
           sessionCookie: []
       summary: "Enable episode memory"
+      tags:
+        - "Call types"
+  "/v1/call-types/{id}/episode-memory/self-serve":
+    post:
+      description: "The CUSTOMER activation of PRECEDENT episode memory — no staff lab grant. Takes the SAME setting knobs as `…/episode-memory/enable` and freezes them on a new config version (config_version bumped: served within one 5 s window), serving + recording this call type’s verified episodes (and, when `serve_corrections` is set, corrected misses) exactly as the lab activation does — the only difference is WHO may turn it on. Eligibility is checked SERVER-SIDE: learning must be enabled for the workspace (404 when off, like every learning route), the owner-granted self-learning consents must both be on (corrections AND knowledge — 409 `corrections_consent_required` / `knowledge_consent_required`; grant them with `PUT /v1/workspaces/{id}/self-learning {\"enabled\":true}`), `retention_mode` must be `full` so episodes may store the task + trajectory (409 `retention_not_full`), and the setting must be PRECEDENT-ONLY — a `lessons` block is a 400 `lessons_not_self_serve` (enable learned lessons through `POST /v1/call-types/{id}/learning/enable` instead). Invalid knobs are a 400 (the named reason); an unknown `source_call_type_id` is a 404. Requires API-key scope: config:write."
+      operationId: "selfServeEpisodeMemory"
+      parameters:
+        -
+          description: "Path parameter `id`."
+          in: "path"
+          name: "id"
+          required: true
+          schema:
+            description: "Path parameter `id`."
+            type: "string"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              additionalProperties: false
+              description: "Enable episode memory for a call type (the lab-authorised, pre-evidence activation)."
+              properties:
+                as_of:
+                  description: "Serve only episodes verified at or before this instant (ISO) — a frozen memory version; null = live."
+                  nullable: true
+                  type: "string"
+                dedupe:
+                  description: "Serve at most one of near-identical precedents (default false)."
+                  type: "boolean"
+                framing:
+                  description: "How served precedents are framed: `reuse` (default) invites reusing their calls; `adapt` presents them as evidence of how the tools behave, not values to copy."
+                  enum:
+                    - "reuse"
+                    - "adapt"
+                  type: "string"
+                importance_boost:
+                  description: "Weight corrected misses in ranking: a corrected miss’s similarity is multiplied by `1 + importance_boost` (0..100; default 0, no boost). The min_similarity floor applies to the raw similarity, before the boost."
+                  maximum: 100
+                  minimum: 0
+                  type: "number"
+                index_actions:
+                  description: "Index a candidate on its task text plus identifier tokens from its verified answer (SQL tables/columns/operators and literal shapes — never literal values; otherwise the action tokens), so retrieval can match on schema-linked terms. The query side stays the request’s task text (default false)."
+                  type: "boolean"
+                k:
+                  description: "Precedents served per episode (1..5; default 3)."
+                  maximum: 5
+                  minimum: 1
+                  type: "integer"
+                lessons:
+                  description: "The learned-playbook block (absent ⇒ lessons off, byte-identical)."
+                  properties:
+                    distiller_model:
+                      description: "The model the distiller uses; null = the call type’s own model."
+                      nullable: true
+                      type: "string"
+                    k:
+                      description: "Lessons served per episode (1..20; default 8)."
+                      maximum: 20
+                      minimum: 1
+                      type: "integer"
+                    mode:
+                      description: "Serve a distilled playbook — `off` (default, byte-identical), `only` (lessons, no precedents), `with_precedents` (lessons before precedents)."
+                      enum:
+                        - "off"
+                        - "only"
+                        - "with_precedents"
+                      type: "string"
+                    recipe:
+                      additionalProperties: false
+                      description: "The learner recipe the distiller runs (absent ⇒ the legacy learner)."
+                      properties:
+                        generation:
+                          description: "Lesson generation: `bundled` (legacy, the default) or `atomic` (one complete rule per item with conditions, exceptions and required tools; never clipped)."
+                          enum:
+                            - "bundled"
+                            - "atomic"
+                          type: "string"
+                        observations:
+                          description: "Observation selection: `legacy` (the default) or `elo2` (error→correction transitions, passed-case results and labelled user turns at the same total budget, with measured omissions)."
+                          enum:
+                            - "legacy"
+                            - "elo2"
+                          type: "string"
+                        validator:
+                          description: "Lesson admission: `elv1` (legacy literal rule, the default) or `elv2` (provenance-aware: evidence support + value handling, documented constants scoped to their tool)."
+                          enum:
+                            - "elv1"
+                            - "elv2"
+                          type: "string"
+                      type: "object"
+                    version_id:
+                      description: "A frozen-arm pin: serve exactly this playbook version (`epb_…`) of the source call type; null = the latest."
+                      nullable: true
+                      type: "string"
+                  required:
+                    - "mode"
+                  type: "object"
+                max_chars_per_episode:
+                  description: "Characters of actions shown per precedent (500..8000; default 3500)."
+                  maximum: 8000
+                  minimum: 500
+                  type: "integer"
+                min_similarity:
+                  description: "Serve only precedents at least this similar to the task (0..1; default 0, no floor)."
+                  maximum: 1
+                  minimum: 0
+                  type: "number"
+                observation_chars:
+                  description: "Characters of each kept action’s observation shown under it (0 = actions only; default 0)."
+                  maximum: 2000
+                  minimum: 0
+                  type: "integer"
+                prefer_shorter:
+                  description: "Among near-equally similar precedents, serve the shortest verified solutions first (default false)."
+                  type: "boolean"
+                record:
+                  description: "Record this call type’s episodes so outcomes can verify them (default true); false = serve only."
+                  type: "boolean"
+                retrieval_key:
+                  description: "What precedents are ranked on: the whole first user message (default) or its content lines — without lines carrying a personal identifier or a timestamp."
+                  enum:
+                    - "first_user_message"
+                    - "content_lines"
+                  type: "string"
+                serve_corrections:
+                  description: "Also serve CORRECTED misses — a fail episode whose corrected answer the customer supplied through `/final`; the corrected answer is served, never the failed attempt (default false)."
+                  type: "boolean"
+                show_mistake:
+                  description: "When a corrected miss is served, also show the failed attempt beside the corrected answer under plain labels, within the per-episode budget (the corrected answer is never shed first; default false)."
+                  type: "boolean"
+                source_call_type_id:
+                  description: "The call type whose verified episodes are served (same workspace); null = this call type."
+                  nullable: true
+                  type: "string"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            "application/json":
+              schema:
+                description: "The result of enabling episode memory (a refusal is a named HTTP error, never a 200)."
+                properties:
+                  call_type_id:
+                    type: "string"
+                  config_version:
+                    description: "The new config version carrying the setting."
+                    type: "integer"
+                  enabled:
+                    enum:
+                      - true
+                    type: "boolean"
+                  object:
+                    enum:
+                      - "episode_memory_enable"
+                    type: "string"
+                  previous:
+                    description: "The setting this one replaced (null when off)."
+                    nullable: true
+                    properties:
+                      as_of:
+                        description: "A frozen memory version (ISO), or null for live memory."
+                        nullable: true
+                        type: "string"
+                      dedupe:
+                        description: "Present only when true."
+                        type: "boolean"
+                      framing:
+                        description: "Present only when not the default `reuse`."
+                        enum:
+                          - "reuse"
+                          - "adapt"
+                        type: "string"
+                      importance_boost:
+                        description: "Present only when set (not 0)."
+                        type: "number"
+                      index_actions:
+                        description: "Present only when true."
+                        type: "boolean"
+                      k:
+                        exclusiveMinimum: true
+                        minimum: 0
+                        type: "integer"
+                      lessons:
+                        description: "Present only when the learned-playbook mode is not `off`."
+                        properties:
+                          distiller_model:
+                            nullable: true
+                            type: "string"
+                          k:
+                            exclusiveMinimum: true
+                            minimum: 0
+                            type: "integer"
+                          mode:
+                            enum:
+                              - "off"
+                              - "only"
+                              - "with_precedents"
+                            type: "string"
+                          recipe:
+                            description: "Present only for a non-legacy learner recipe (absent ⇒ the legacy learner)."
+                            properties:
+                              generation:
+                                enum:
+                                  - "bundled"
+                                  - "atomic"
+                                type: "string"
+                              observations:
+                                enum:
+                                  - "legacy"
+                                  - "elo2"
+                                type: "string"
+                              validator:
+                                enum:
+                                  - "elv1"
+                                  - "elv2"
+                                type: "string"
+                            required:
+                              - "validator"
+                              - "generation"
+                              - "observations"
+                            type: "object"
+                          version_id:
+                            nullable: true
+                            type: "string"
+                        required:
+                          - "mode"
+                          - "k"
+                          - "distiller_model"
+                          - "version_id"
+                        type: "object"
+                      max_chars_per_episode:
+                        minimum: 0
+                        type: "integer"
+                      min_similarity:
+                        description: "Present only when set (not 0)."
+                        type: "number"
+                      observation_chars:
+                        minimum: 0
+                        type: "integer"
+                      prefer_shorter:
+                        description: "Present only when true."
+                        type: "boolean"
+                      record:
+                        type: "boolean"
+                      retrieval_key:
+                        description: "Present only when not the default `first_user_message`."
+                        enum:
+                          - "first_user_message"
+                          - "content_lines"
+                        type: "string"
+                      rule_version:
+                        description: "`epm1` — the pure rule version a stored setting is parsed under."
+                        type: "string"
+                      self_serve:
+                        description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate. In evaluate mode it receives a randomized share of eligible episodes before the policy can make it the active version."
+                        type: "boolean"
+                      serve_corrections:
+                        description: "Present only when true."
+                        type: "boolean"
+                      show_mistake:
+                        description: "Present only when true."
+                        type: "boolean"
+                      source_call_type_id:
+                        nullable: true
+                        type: "string"
+                    required:
+                      - "rule_version"
+                      - "k"
+                      - "max_chars_per_episode"
+                      - "observation_chars"
+                      - "as_of"
+                      - "source_call_type_id"
+                      - "record"
+                    type: "object"
+                  setting:
+                    description: "The frozen episode-memory setting on a call-type config version."
+                    properties:
+                      as_of:
+                        description: "A frozen memory version (ISO), or null for live memory."
+                        nullable: true
+                        type: "string"
+                      dedupe:
+                        description: "Present only when true."
+                        type: "boolean"
+                      framing:
+                        description: "Present only when not the default `reuse`."
+                        enum:
+                          - "reuse"
+                          - "adapt"
+                        type: "string"
+                      importance_boost:
+                        description: "Present only when set (not 0)."
+                        type: "number"
+                      index_actions:
+                        description: "Present only when true."
+                        type: "boolean"
+                      k:
+                        exclusiveMinimum: true
+                        minimum: 0
+                        type: "integer"
+                      lessons:
+                        description: "Present only when the learned-playbook mode is not `off`."
+                        properties:
+                          distiller_model:
+                            nullable: true
+                            type: "string"
+                          k:
+                            exclusiveMinimum: true
+                            minimum: 0
+                            type: "integer"
+                          mode:
+                            enum:
+                              - "off"
+                              - "only"
+                              - "with_precedents"
+                            type: "string"
+                          recipe:
+                            description: "Present only for a non-legacy learner recipe (absent ⇒ the legacy learner)."
+                            properties:
+                              generation:
+                                enum:
+                                  - "bundled"
+                                  - "atomic"
+                                type: "string"
+                              observations:
+                                enum:
+                                  - "legacy"
+                                  - "elo2"
+                                type: "string"
+                              validator:
+                                enum:
+                                  - "elv1"
+                                  - "elv2"
+                                type: "string"
+                            required:
+                              - "validator"
+                              - "generation"
+                              - "observations"
+                            type: "object"
+                          version_id:
+                            nullable: true
+                            type: "string"
+                        required:
+                          - "mode"
+                          - "k"
+                          - "distiller_model"
+                          - "version_id"
+                        type: "object"
+                      max_chars_per_episode:
+                        minimum: 0
+                        type: "integer"
+                      min_similarity:
+                        description: "Present only when set (not 0)."
+                        type: "number"
+                      observation_chars:
+                        minimum: 0
+                        type: "integer"
+                      prefer_shorter:
+                        description: "Present only when true."
+                        type: "boolean"
+                      record:
+                        type: "boolean"
+                      retrieval_key:
+                        description: "Present only when not the default `first_user_message`."
+                        enum:
+                          - "first_user_message"
+                          - "content_lines"
+                        type: "string"
+                      rule_version:
+                        description: "`epm1` — the pure rule version a stored setting is parsed under."
+                        type: "string"
+                      self_serve:
+                        description: "Present (true) only when learning was enabled self-serve through `POST /v1/call-types/{id}/learning/enable` — a published version is then a candidate. In evaluate mode it receives a randomized share of eligible episodes before the policy can make it the active version."
+                        type: "boolean"
+                      serve_corrections:
+                        description: "Present only when true."
+                        type: "boolean"
+                      show_mistake:
+                        description: "Present only when true."
+                        type: "boolean"
+                      source_call_type_id:
+                        nullable: true
+                        type: "string"
+                    required:
+                      - "rule_version"
+                      - "k"
+                      - "max_chars_per_episode"
+                      - "observation_chars"
+                      - "as_of"
+                      - "source_call_type_id"
+                      - "record"
+                    type: "object"
+                required:
+                  - "object"
+                  - "call_type_id"
+                  - "enabled"
+                  - "config_version"
+                  - "setting"
+                  - "previous"
+                type: "object"
+          description: "The frozen setting on a new config version (`self_serve:true`)."
+        default:
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GatewayError"
+          description: "Normalized error envelope."
+      security:
+        -
+          bearerAuth: []
+        -
+          sessionCookie: []
+      summary: "Enable episode memory yourself (precedent-only)"
       tags:
         - "Call types"
   "/v1/call-types/{id}/evals":
