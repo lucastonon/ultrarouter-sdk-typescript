@@ -1,5 +1,5 @@
 # ultrarouter public API specification (OpenAPI). Synced artifact: do not hand-edit.
-# spec-sha256: c45d13b06d2978c09e2d4ce5c373f57fb8ec3e7fc1a492949498baa2729d9fae
+# spec-sha256: 2531a0d55024caeb420bc2cc0831f539a060a026856c76909f876899248bee79
 # Generated from the ultrarouter API route schemas — DO NOT EDIT BY HAND.
 # Regenerated from the schemas on every change; hand edits are overwritten.
 components:
@@ -19474,11 +19474,11 @@ paths:
                         minimum: 0
                         type: "integer"
                       latest_verified_at:
-                        description: "The newest pass verification instant (ISO), or null."
+                        description: "The newest verification instant (ISO) of a servable pass, or null."
                         nullable: true
                         type: "string"
                       pass:
-                        description: "Episodes a whole-episode teaching outcome verified as passing."
+                        description: "Verified passing episodes with recorded steps (servable). A verified pass with no recorded steps is left out, so total can exceed pass + fail + unverified."
                         minimum: 0
                         type: "integer"
                       total:
