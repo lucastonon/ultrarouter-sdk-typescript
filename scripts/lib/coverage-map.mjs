@@ -167,6 +167,7 @@ export const COVERAGE = {
   getEpisodeMemory: { methods: [], tests: [] },
   enableEpisodeMemory: { methods: [], tests: [] },
   disableEpisodeMemory: { methods: [], tests: [] },
+  selfServeEpisodeMemory: { methods: [], tests: [] },
   // Feedback, generation, audit readiness
   submitFeedback: {
     methods: ['ur.requests.feedback'],
@@ -424,6 +425,8 @@ export const COVERAGE = {
   patchFlywheelConsents: { methods: [], tests: [] },
   listInvitations: { methods: [], tests: [] },
   createInvitation: { methods: [], tests: [] },
+  revokeInvitation: { methods: [], tests: [] },
+  createAccessRequest: { methods: [], tests: [] },
   listMembers: { methods: [], tests: [] },
   changeMemberRole: { methods: [], tests: [] },
   removeMember: { methods: [], tests: [] },
