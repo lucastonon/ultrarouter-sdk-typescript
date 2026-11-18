@@ -20,6 +20,46 @@ The version in `package.json` is now `0.1.0`: these changes ship as the 0.1.0 re
 
 ### Added
 
+- **The end-user key, `ur.memory_partition`** (`UrRequestOptions.memory_partition`, 1 to 1,024
+  characters). It names the end user a request is for. Under a call type scoped `partitioned`, a
+  verified answer is shown only to later requests with the same key. First match wins: this field,
+  then the `X-UR-Memory-Partition` header, then the OpenAI `user` field. The gateway stores only a
+  digest of it.
+- **Self-serve precedent memory and its end-user scope.** The first enable of episode memory on a call
+  type (`POST /v1/call-types/{id}/episode-memory/self-serve`) declares its end-user scope
+  (`memory_scope`: `shared` or `partitioned`). Only the workspace owner, signed in, can make it: in
+  the dashboard's agent memory control for the call type, or with the owner's session. An API key
+  cannot. After that first enable, a `config:write` key can re-enable the call type with the scope
+  and the `source_call_type_id` in force (naming the scope or leaving it out), for example to change
+  `k`. The two refusals a key meets: leaving `memory_scope` out on a call type with no scope recorded
+  is `400 invalid_request`, message `memory_scope_required: …`; naming a scope on a first enable, a
+  different scope, or another `source_call_type_id` is `403 permission`, message
+  `scope_declaration_owner_only: …`. An admin's session gets the same 403.
+- **Requests must land first.** An outcome, a final or a reviewer event naming a request that has
+  not been recorded yet answers `503 request_not_landed` (retryable, `Retry-After: 2`); the SDK
+  retries it. After the 15-minute window a request that never landed answers `404
+request_not_found`, the same as an id from another workspace. No pending receipt is held for such
+  a request any more. Request ids are plain `req_` + a ULID again; ids issued before stay valid. An
+  outcome receipt can read `status: "erased"` (`reason: "end_user_erased"`): the end user of its
+  request was erased; the episode association's `reason` can be `end_user_erased`.
+  `Idempotency-Key` replays are kept per API key: the same key sent by two API keys is two separate
+  claims.
+- Four gateway error codes in `GATEWAY_ERROR_TAXONOMY` / `GATEWAY_ERROR_CODES`: `request_not_landed`
+  and `workspace_busy` (503, retried after `Retry-After`), `outcome_backlog_full` (429, retried) and
+  `internal_knowledge_ask` (403, never retried: a knowledge-ask `req_int_…` id named where a learning
+  request belongs).
+- The response `ur` block's `learned_injection` (`UrLearnedInjectionBlock`) and `learning_serving`
+  (`UrLearningServingBlock`), and `GenerationStats.client_request_id` (the `X-UR-Request-Id` alias
+  the client sent, or `null`).
+- The synced API specification adds eleven operations, reachable through the typed `ur.request()`
+  and listed in `docs/api-coverage.md`: episode memory's operations log, evict or erase, restore,
+  import and precedents (`/v1/call-types/{id}/episode-memory/evictions`, `…/imports`,
+  `…/precedents`), the learned-memory read deadline (`PATCH /v1/call-types/{id}/learning`), the
+  memory cost read (`GET …/learning/cost`), correction-lesson sharing and approval (owner session),
+  and asking the knowledge base (`POST /v1/knowledge/ask`; not idempotent: a retry is a new charge).
+  The memory erasure response counts each store it cleared in `erased` and, per store, the rows an
+  earlier erasure had already erased in `already_erased`.
+
 - Read-only company knowledge browsing/search and detail, with typed results, cursors and
   namespaced item IDs. Examples inspect state and provenance without model calls. Content export
   remains a separate owner/admin session operation; malformed and reserved export IDs fail locally.
@@ -104,6 +144,14 @@ supersedes? })`: a `pass` / `fail` verdict from a `verifier`, `business_rule`, `
 
 ### Changed
 
+- `ImportParams.records` is typed by the specification (`ImportRecord[]`: an object, a string, a
+  number, a boolean, an array or `null`) instead of `unknown[]`; a record object keeps any fields.
+- The learning status, evaluation and version types follow the synced specification: the status
+  adds `explanation`, `serving_stopped`, `correction_lesson_sharing` and `memory_read`; an
+  evaluation adds `observed` and `outcome_source`; a version adds `lesson_source`; a version can be
+  `held_for_approval`. The enable recipe accepts `corrections_v1`, `repair_chains_v1` and `elv3`.
+- The context runtime pins emails, currency words, mixed identifiers, inline JSON, legal citations
+  and named entities in linear time on adversarial text; the pinned spans are unchanged.
 - Learning setup and refusal guidance require the full owner/admin self-learning opt-in
   (knowledge and corrections consent); the synced API specification carries the same requirement.
 - The durable outcome queue treats a success result with `status: "pending"` as delivered (the
