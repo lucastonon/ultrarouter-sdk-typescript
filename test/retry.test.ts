@@ -71,6 +71,33 @@ describe('executeRequest — retry policy', () => {
     expect(sleeps).toEqual([2000]); // Retry-After: 2s honored
   });
 
+  it.each(['request_not_landed', 'workspace_busy'])(
+    'retries a %s 503 after its Retry-After hint, then succeeds',
+    async (code) => {
+      const { fetch, calls } = scriptedFetch([
+        jsonResponse(503, { error: { code, retryable: true } }, { 'retry-after': '2' }),
+        jsonResponse(200, { ok: true }),
+      ]);
+      const { clock, sleeps } = fakeClock();
+      const res = await executeRequest({ fetch, clock }, req());
+      expect(res.response.status).toBe(200);
+      expect(calls.length).toBe(2);
+      expect(sleeps).toEqual([2000]);
+    },
+  );
+
+  it('never retries internal_knowledge_ask (a 403 refused before any write)', async () => {
+    const { fetch, calls } = scriptedFetch([
+      jsonResponse(403, { error: { code: 'internal_knowledge_ask', retryable: true } }),
+    ]);
+    const { clock } = fakeClock();
+    await expect(executeRequest({ fetch, clock }, req({ maxRetries: 3 }))).rejects.toMatchObject({
+      code: 'internal_knowledge_ask',
+      retryable: false,
+    });
+    expect(calls.length).toBe(1);
+  });
+
   it('retries 5xx with jittered exponential backoff', async () => {
     const { fetch, calls } = scriptedFetch([
       jsonResponse(503, { error: { code: 'provider_unavailable' } }),

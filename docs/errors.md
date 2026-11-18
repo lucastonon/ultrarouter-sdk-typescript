@@ -105,29 +105,33 @@ These are the codes the gateway returns (`GATEWAY_ERROR_CODES`). "Retried" means
 the request automatically (up to `maxRetries`, see
 [retries, timeouts and idempotency](./retries-timeouts-idempotency.md)).
 
-| Code                             | HTTP | Retried | What it means and what to do                                                                                          |
-| -------------------------------- | ---- | ------- | --------------------------------------------------------------------------------------------------------------------- |
-| `invalid_request`                | 400  | no      | The body or parameters are invalid, or an option is unsupported. Fix the request.                                     |
-| `manifest_invalid`               | 400  | no      | A declared `ur.manifest` is malformed (for example overlapping ranges). Rebuild it with `toWire()`.                   |
-| `manifest_mismatch`              | 400  | no      | A declared `ur.manifest` hash does not match the bytes sent. Recompute the manifest over the exact messages you send. |
-| `authentication`                 | 401  | no      | Missing or invalid API key. Check `ULTRAROUTER_API_KEY` / `apiKey`.                                                   |
-| `permission`                     | 403  | no      | The key lacks the scope the route needs (for example `config:write`). Use a key with that scope.                      |
-| `not_found`                      | 404  | no      | Unknown model, request or resource. Check the id.                                                                     |
-| `model_denied_by_policy`         | 403  | no      | Your workspace model policy forbids this model. Choose another model or change the policy.                            |
-| `model_unpriced`                 | 403  | no      | The model has no price, so the call is refused before dispatch. Use a priced model. Raised as `ModelUnpricedError`.   |
-| `capability_unsupported`         | 400  | no      | The model cannot honour a requested capability (tools, `json_schema`, vision, reasoning). Choose a model that can.    |
-| `prompt_variables_missing`       | 400  | no      | The active hosted prompt needs `{{variables}}` you did not send in `ur.prompt_vars`. The message names them.          |
-| `conflict`                       | 409  | no      | An idempotent write collided with a different payload under the same key. Use a new id for a new event.               |
-| `rate_limited`                   | 429  | yes     | A rate limit was hit. Retried with backoff, honouring `Retry-After`.                                                  |
-| `spend_cap_exceeded`             | 402  | no      | The key or workspace spend cap for the period is reached.                                                             |
-| `max_cost_exceeded`              | 402  | no      | The estimated cost of this one call exceeds `ur.max_cost_usd`. Raise the cap or shrink the request.                   |
-| `atomic_spend_guard_unavailable` | 503  | no      | Live Bench execution is not available on this deployment. Dry runs still work.                                        |
-| `provider_unavailable`           | 502  | yes     | The upstream provider is unreachable or failed. Retried; add fallbacks with `models: [...]`.                          |
-| `provider_timeout`               | 504  | yes     | The upstream provider exceeded its deadline. Retried.                                                                 |
-| `content_filtered`               | 400  | no      | The provider refused the content (moderation or safety).                                                              |
-| `context_length`                 | 400  | no      | The prompt plus the requested completion exceeds the model's context window. Shorten it or pick a larger model.       |
-| `cancelled`                      | 499  | no      | The client disconnected before the request completed.                                                                 |
-| `internal`                       | 500  | no      | An unexpected gateway failure. Report it with the `requestId`.                                                        |
+| Code                             | HTTP | Retried | What it means and what to do                                                                                                                                   |
+| -------------------------------- | ---- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `invalid_request`                | 400  | no      | The body or parameters are invalid, or an option is unsupported. Fix the request.                                                                              |
+| `manifest_invalid`               | 400  | no      | A declared `ur.manifest` is malformed (for example overlapping ranges). Rebuild it with `toWire()`.                                                            |
+| `manifest_mismatch`              | 400  | no      | A declared `ur.manifest` hash does not match the bytes sent. Recompute the manifest over the exact messages you send.                                          |
+| `authentication`                 | 401  | no      | Missing or invalid API key. Check `ULTRAROUTER_API_KEY` / `apiKey`.                                                                                            |
+| `permission`                     | 403  | no      | The key lacks the scope the route needs (for example `config:write`). Use a key with that scope.                                                               |
+| `internal_knowledge_ask`         | 403  | no      | A knowledge-ask request id (`req_int_…`) was named where a learning request belongs. Report against a chat or embeddings `req_…` id.                           |
+| `not_found`                      | 404  | no      | Unknown model, request or resource. Check the id.                                                                                                              |
+| `model_denied_by_policy`         | 403  | no      | Your workspace model policy forbids this model. Choose another model or change the policy.                                                                     |
+| `model_unpriced`                 | 403  | no      | The model has no price, so the call is refused before dispatch. Use a priced model. Raised as `ModelUnpricedError`.                                            |
+| `capability_unsupported`         | 400  | no      | The model cannot honour a requested capability (tools, `json_schema`, vision, reasoning). Choose a model that can.                                             |
+| `prompt_variables_missing`       | 400  | no      | The active hosted prompt needs `{{variables}}` you did not send in `ur.prompt_vars`. The message names them.                                                   |
+| `conflict`                       | 409  | no      | An idempotent write collided with a different payload under the same key. Use a new id for a new event.                                                        |
+| `rate_limited`                   | 429  | yes     | A rate limit was hit. Retried with backoff, honouring `Retry-After`.                                                                                           |
+| `outcome_backlog_full`           | 429  | yes     | The workspace holds the maximum of pending outcome receipts. Nothing was stored; retried after `Retry-After`.                                                  |
+| `spend_cap_exceeded`             | 402  | no      | The key or workspace spend cap for the period is reached.                                                                                                      |
+| `max_cost_exceeded`              | 402  | no      | The estimated cost of this one call exceeds `ur.max_cost_usd`. Raise the cap or shrink the request.                                                            |
+| `atomic_spend_guard_unavailable` | 503  | no      | Live Bench execution is not available on this deployment. Dry runs still work.                                                                                 |
+| `request_not_landed`             | 503  | yes     | The request this write names is not recorded yet; nothing was stored. Retried after `Retry-After`; a request that never lands is `not_found` after 15 minutes. |
+| `workspace_busy`                 | 503  | yes     | The workspace was held (an end-user erasure or a long write) longer than the write could wait; nothing was written. Retried after `Retry-After`.               |
+| `provider_unavailable`           | 502  | yes     | The upstream provider is unreachable or failed. Retried; add fallbacks with `models: [...]`.                                                                   |
+| `provider_timeout`               | 504  | yes     | The upstream provider exceeded its deadline. Retried.                                                                                                          |
+| `content_filtered`               | 400  | no      | The provider refused the content (moderation or safety).                                                                                                       |
+| `context_length`                 | 400  | no      | The prompt plus the requested completion exceeds the model's context window. Shorten it or pick a larger model.                                                |
+| `cancelled`                      | 499  | no      | The client disconnected before the request completed.                                                                                                          |
+| `internal`                       | 500  | no      | An unexpected gateway failure. Report it with the `requestId`.                                                                                                 |
 
 The SDK treats the taxonomy as authoritative: a code marked "no" is never retried, even when it
 arrives with a 5xx status or an envelope that says otherwise.

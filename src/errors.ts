@@ -146,6 +146,12 @@ export const GATEWAY_ERROR_TAXONOMY = {
   authentication: { status: 401, retryable: false },
   /** The key is valid but lacks the scope or permission the route requires. */
   permission: { status: 403, retryable: false },
+  /**
+   * A knowledge-ask request id (`req_int_…`) was named where a learning request belongs (an outcome,
+   * a final, an artifact or an import call). Refused before anything is read or written; report
+   * against the `req_…` id of a chat or embeddings request instead.
+   */
+  internal_knowledge_ask: { status: 403, retryable: false },
   /** Unknown model, request, or resource. */
   not_found: { status: 404, retryable: false },
   /** The workspace model policy forbids the requested model. Change the model or the policy. */
@@ -164,12 +170,28 @@ export const GATEWAY_ERROR_TAXONOMY = {
   conflict: { status: 409, retryable: false },
   /** Rate limit hit. Retried with backoff, honouring `Retry-After`. */
   rate_limited: { status: 429, retryable: true },
+  /**
+   * The workspace already holds the maximum number of pending outcome receipts (outcomes reported
+   * for requests not recorded yet). Nothing was stored; retried after the `Retry-After` hint.
+   */
+  outcome_backlog_full: { status: 429, retryable: true },
   /** The workspace or key hard spend cap is reached for the current period. */
   spend_cap_exceeded: { status: 402, retryable: false },
   /** The pre-dispatch cost estimate of this single call exceeds `ur.max_cost_usd`. */
   max_cost_exceeded: { status: 402, retryable: false },
   /** Live Bench execution is not available on this deployment (dry runs still work). */
   atomic_spend_guard_unavailable: { status: 503, retryable: false },
+  /**
+   * The request this write names (an outcome, a final, a reviewer event, feedback) has not been
+   * recorded yet, so nothing was stored. Retried after the `Retry-After` hint; a request that never
+   * lands answers `not_found` once the 15-minute landing window has passed.
+   */
+  request_not_landed: { status: 503, retryable: true },
+  /**
+   * The workspace was held (by an end-user erasure or a long write) longer than this write could
+   * wait; nothing was written. Retried after the `Retry-After` hint.
+   */
+  workspace_busy: { status: 503, retryable: true },
   /** The upstream provider is unreachable or failed. Retried with backoff. */
   provider_unavailable: { status: 502, retryable: true },
   /** The upstream provider exceeded the per-attempt deadline. Retried with backoff. */

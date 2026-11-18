@@ -172,6 +172,7 @@ describe('helpers', () => {
         'manifest_mismatch',
         'authentication',
         'permission',
+        'internal_knowledge_ask',
         'not_found',
         'model_denied_by_policy',
         'model_unpriced',
@@ -179,9 +180,12 @@ describe('helpers', () => {
         'prompt_variables_missing',
         'conflict',
         'rate_limited',
+        'outcome_backlog_full',
         'spend_cap_exceeded',
         'max_cost_exceeded',
         'atomic_spend_guard_unavailable',
+        'request_not_landed',
+        'workspace_busy',
         'provider_unavailable',
         'provider_timeout',
         'content_filtered',
@@ -190,7 +194,7 @@ describe('helpers', () => {
         'internal',
       ]),
     );
-    expect(GATEWAY_ERROR_CODES).toHaveLength(21);
+    expect(GATEWAY_ERROR_CODES).toHaveLength(25);
   });
 });
 
