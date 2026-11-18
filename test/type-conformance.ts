@@ -66,6 +66,7 @@ import type {
   ImportEnvelope,
   ImportListResponse,
   ImportParams,
+  ImportRecord,
 } from '../src/imports.js';
 import type {
   PreflightGrant,
@@ -247,7 +248,10 @@ export function __conformance(): void {
   // schemas (bidirectional identity), and ur.manifest IS the generated chat-request manifest shape.
   const flywheelStatus: Schemas['FlywheelStatusResponse'] = {} as FlywheelStatus;
   const flywheelUsage: Schemas['FlywheelUsageBlock'] = {} as FlywheelUsage;
-  const importReq: Schemas['ImportRequest'] = {} as ImportParams;
+  // `records` keeps the specification's open-object branch open (it is generated closed), so it is
+  // checked apart: every spec record is an SDK record, and the rest of the request is the spec's.
+  const importReq: Omit<Schemas['ImportRequest'], 'records'> = {} as Omit<ImportParams, 'records'>;
+  const importRecord: ImportRecord = {} as NonNullable<Schemas['ImportRequest']['records']>[number];
   const importSummary: Schemas['ImportSummary'] = {} as Import;
   const importEnvelope: Schemas['ImportEnvelope'] = {} as ImportEnvelope;
   const importReport: Schemas['ImportCapabilityReport'] = {} as ImportCapabilityReport;
@@ -410,6 +414,7 @@ export function __conformance(): void {
     flywheelStatus,
     flywheelUsage,
     importReq,
+    importRecord,
     importSummary,
     importEnvelope,
     importReport,

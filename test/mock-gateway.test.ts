@@ -50,6 +50,10 @@ function bodyFor(method: string, template: string): unknown {
     return { channel: 'mechanical', kind: 'schema_valid' };
   if (template === '/v1/call-types/{id}/learning/enable')
     return { reflection_model: 'openai/gpt-5.2', promotion: { mode: 'evaluate' } };
+  if (template === '/v1/call-types/{id}/learning' && method === 'patch')
+    return { learned_read_timeout_ms: 400 };
+  if (template === '/v1/call-types/{id}/learning/correction-sharing')
+    return { correction_lesson_sharing: 'automatic' };
   return method === 'get' || method === 'delete' ? undefined : {};
 }
 
@@ -67,10 +71,19 @@ function concrete(template: string): string {
  * State a route needs before it can answer 2xx: the learning controls act on an enabled call type,
  * and a receipt read needs a receipt. Returns the concrete path to call.
  */
-async function prepare(template: string, headers: Record<string, string>): Promise<string> {
+async function prepare(
+  template: string,
+  headers: Record<string, string>,
+  method?: string,
+): Promise<string> {
   const path = concrete(template);
   const json = { ...headers, 'content-type': 'application/json' };
-  if (template.startsWith('/v1/call-types/{id}/learning/') && !template.endsWith('/enable')) {
+  const changesLearning =
+    template === '/v1/call-types/{id}/learning' && method !== undefined && method !== 'get';
+  if (
+    (template.startsWith('/v1/call-types/{id}/learning/') && !template.endsWith('/enable')) ||
+    changesLearning
+  ) {
     const base = path.slice(0, path.indexOf('/learning') + '/learning'.length);
     await fetch(`${gw.url}${base}/enable`, {
       method: 'POST',
@@ -123,7 +136,7 @@ describe('the mock gateway answers every published operation with a schema-valid
         Object.assign(headers, signedHeaders(KEY, raw ?? '', 'reviewer'));
       if (/oracles\/\{id\}\/(jobs\/claim|verdicts)$/.test(template))
         Object.assign(headers, signedHeaders(MOCK_ORACLE_SECRET as string, raw ?? '', 'oracle'));
-      const target = await prepare(template, { authorization: `Bearer ${KEY}` });
+      const target = await prepare(template, { authorization: `Bearer ${KEY}` }, method);
       const res = await fetch(`${gw.url}${target}`, {
         method: method.toUpperCase(),
         headers,

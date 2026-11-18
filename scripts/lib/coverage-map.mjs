@@ -109,6 +109,8 @@ export const COVERAGE = {
     tests: ['test/company-knowledge.test.ts'],
   },
   exportCompanyKnowledge: { methods: [], tests: [] },
+  // Asking the knowledge base a question has no dedicated method yet; reach it with `ur.request()`.
+  askCompanyKnowledge: { methods: [], tests: [] },
   // Learning controls (per call type)
   getLearningToolDocumentation: {
     methods: ['ur.learning.toolDocumentation'],
@@ -162,12 +164,26 @@ export const COVERAGE = {
     methods: ['ur.learning.evaluations'],
     tests: ['test/learning-controls.test.ts', 'test/surface.test.ts'],
   },
+  // The learned-memory read deadline and the memory cost read have no dedicated method yet; reach
+  // them with `ur.request()`. Correction-lesson sharing and approval are owner-session operations.
+  updateLearningReadLimit: { methods: [], tests: [] },
+  getLearningCost: { methods: [], tests: [] },
+  setCorrectionLessonSharing: { methods: [], tests: [] },
+  approveCorrectionLessons: { methods: [], tests: [] },
   // Episode memory: a lab-authorised lever (staff grant) with no dedicated method; reach it with
   // `ur.request()`. Customers enable learning through `ur.learning.enable` instead.
   getEpisodeMemory: { methods: [], tests: [] },
   enableEpisodeMemory: { methods: [], tests: [] },
   disableEpisodeMemory: { methods: [], tests: [] },
   selfServeEpisodeMemory: { methods: [], tests: [] },
+  // Episode-memory operations: the evictions log, evict or erase, restore (owner session), import,
+  // and the precedents read; reach them with `ur.request()`.
+  listEpisodeEvictions: { methods: [], tests: [] },
+  evictEpisodeMemory: { methods: [], tests: [] },
+  restoreEpisodeEviction: { methods: [], tests: [] },
+  importEpisodeMemory: { methods: [], tests: [] },
+  listEpisodePrecedents: { methods: [], tests: [] },
+  getEpisodePrecedent: { methods: [], tests: [] },
   // Feedback, generation, audit readiness
   submitFeedback: {
     methods: ['ur.requests.feedback'],

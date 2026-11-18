@@ -10,7 +10,7 @@
 
 import type { UltraRouter } from '../client.js';
 import { UltraRouterError } from '../errors.js';
-import type { Import } from '../imports.js';
+import type { Import, ImportRecord } from '../imports.js';
 
 import { EXIT } from './gate.js';
 
@@ -48,7 +48,7 @@ export interface ImportRunResult {
 }
 
 /** The upload payload — records (a JSON array) OR JSONL (raw text). */
-type ImportPayload = { records: unknown[] } | { jsonl: string };
+type ImportPayload = { records: ImportRecord[] } | { jsonl: string };
 
 /**
  * Parse the export file into the import payload. A file whose first non-space character is `[`
@@ -59,7 +59,8 @@ export function parseImportPayload(raw: string): ImportPayload {
   if (raw.trimStart().startsWith('[')) {
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) throw new Error('expected a JSON array of records');
-    return { records: parsed };
+    // Every element of a parsed JSON array is a JSON value, which is what an import record is.
+    return { records: parsed as ImportRecord[] };
   }
   return { jsonl: raw };
 }

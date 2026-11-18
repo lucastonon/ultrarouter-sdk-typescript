@@ -175,7 +175,7 @@ export function createLearningMock() {
   function expire(receipt) {
     receipt.status = 'expired';
     receipt.reason = 'request_not_found';
-    receipt.episode = { status: 'not_applicable', trace_id: null, verdict: null };
+    receipt.episode = { status: 'not_applicable', trace_id: null, verdict: null, reason: null };
     receipt.updated_at = NOW;
   }
 
@@ -188,9 +188,9 @@ export function createLearningMock() {
     receipt.applied_at = NOW;
     receipt.updated_at = NOW;
     if (!TEACHING_CHANNELS.has(receipt.channel)) {
-      receipt.episode = { status: 'not_applicable', trace_id: null, verdict: null };
+      receipt.episode = { status: 'not_applicable', trace_id: null, verdict: null, reason: null };
     } else if (row.episodeKey === null) {
-      receipt.episode = { status: 'not_recorded', trace_id: null, verdict: null };
+      receipt.episode = { status: 'not_recorded', trace_id: null, verdict: null, reason: null };
     } else {
       const first = episodes.get(row.episodeKey) !== true;
       episodes.set(row.episodeKey, true);
@@ -198,6 +198,7 @@ export function createLearningMock() {
         status: 'associated',
         trace_id: `ept_${sha(row.episodeKey).slice(0, 12)}`,
         verdict: first ? 'recorded' : 'kept_earlier',
+        reason: null,
       };
     }
   }
@@ -271,7 +272,12 @@ export function createLearningMock() {
       outcome_event_id: null,
       outcome_status: null,
       artifact_id: null,
-      episode: { status: teaches ? 'pending' : 'not_applicable', trace_id: null, verdict: null },
+      episode: {
+        status: teaches ? 'pending' : 'not_applicable',
+        trace_id: null,
+        verdict: null,
+        reason: null,
+      },
       attempts: 0,
       created_at: NOW,
       updated_at: NOW,
@@ -317,6 +323,7 @@ export function createLearningMock() {
       active_lessons: 2,
       cohort: { size: 12, pass: 8, fail: 4 },
       reflection_model: null,
+      lesson_source: 'declared',
       ...extra,
     };
   }
@@ -376,6 +383,8 @@ export function createLearningMock() {
           started_at: NOW,
           decided_at: null,
           decided_by: null,
+          observed: null,
+          outcome_source: 'verified_teaching_episode',
         },
       ],
     };
@@ -423,6 +432,8 @@ export function createLearningMock() {
       config_version: on ? 2 : null,
       state,
       reason: reasons[state],
+      explanation: null,
+      correction_lesson_sharing: on ? (s.correctionSharing ?? 'approval') : 'approval',
       enabled: on && !s.disabled,
       self_serve: on,
       governed: on,
@@ -452,6 +463,7 @@ export function createLearningMock() {
       },
       promotion: on ? { ...s.policy } : null,
       active_version: ref(active),
+      serving_stopped: null,
       latest_candidate: ref(candidate),
       evaluation: running === undefined ? null : { ...running },
       last_evaluation: on && s.evaluations[0] !== undefined ? { ...s.evaluations[0] } : null,
@@ -499,6 +511,15 @@ export function createLearningMock() {
       outcome_receipts: on
         ? { pending: 1, applied: 30, rejected: 0, failed: 0, expired: 1, episode_pending: 0 }
         : { pending: 0, applied: 0, rejected: 0, failed: 0, expired: 0, episode_pending: 0 },
+      // The learned-memory read deadline (`PATCH …/learning`), 250 ms unless changed.
+      memory_read: {
+        eligible: on ? 40 : 0,
+        served: on ? 31 : 0,
+        skipped_time_limit: 0,
+        limit_ms: on ? (s.readLimitMs ?? 250) : 250,
+        since: NOW,
+        through: NOW,
+      },
     };
   }
 
@@ -563,6 +584,28 @@ export function createLearningMock() {
       );
 
     if (method === 'GET' && rest === '') return ok(statusOf(id));
+    if (method === 'PATCH' && rest === '') {
+      const ms = body?.learned_read_timeout_ms;
+      if (!Number.isInteger(ms) || ms < 25 || ms > 2000)
+        return refuse(
+          400,
+          'invalid_request',
+          'learned_read_timeout_ms: an integer from 25 to 2000',
+        );
+      if (s === undefined) return notEnabled();
+      s.readLimitMs = ms;
+      return ok(statusOf(id));
+    }
+    if (method === 'PUT' && rest === 'correction-sharing') {
+      const mode = body?.correction_lesson_sharing;
+      if (mode !== 'approval' && mode !== 'automatic')
+        return refuse(400, 'invalid_request', 'correction_lesson_sharing: approval or automatic');
+      if (s === undefined) return notEnabled();
+      s.correctionSharing = mode;
+      return ok(statusOf(id));
+    }
+    // The cost read has no state here: the gateway's generic schema sample answers it.
+    if (method === 'GET' && rest === 'cost') return null;
     if (rest === 'tool-documentation' && (method === 'GET' || method === 'PUT')) {
       if (method === 'PUT')
         toolDocumentation.set(id, {
@@ -667,7 +710,7 @@ export function createLearningMock() {
       activate(s, target, 'rollback');
       return control(id, 'rollback', true, { version_id: target.id });
     }
-    const vm = /^versions\/([^/]+)(?:\/(promote|reject))?$/.exec(rest);
+    const vm = /^versions\/([^/]+)(?:\/(promote|reject|approve))?$/.exec(rest);
     if (vm !== null) {
       const versionId = decodeURIComponent(vm[1] ?? '');
       const v = s?.versions.find((x) => x.id === versionId);
@@ -720,6 +763,21 @@ export function createLearningMock() {
       if (method === 'POST' && vm[2] !== undefined) {
         if (s === undefined) return notEnabled();
         if (v === undefined) return refuse(404, 'not_found', `version '${versionId}' not found`);
+        if (vm[2] === 'approve') {
+          // Approval releases a held correction-derived version into the promotion state machine.
+          if (v.state === 'rejected')
+            return refuse(
+              409,
+              'conflict',
+              'version_rejected: a rejected version cannot be approved',
+            );
+          const changed = v.state === 'held_for_approval';
+          if (changed) {
+            v.state = 'candidate';
+            v.state_reason = 'approved';
+          }
+          return control(id, 'promote', changed, { version_id: v.id });
+        }
         if (vm[2] === 'promote') {
           if (v.state === 'active')
             return refuse(409, 'conflict', 'version_already_active: the version is already active');

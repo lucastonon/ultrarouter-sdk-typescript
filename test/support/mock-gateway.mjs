@@ -625,6 +625,7 @@ export async function startMockGateway(options = {}) {
       const id = url.searchParams.get('id') ?? 'req_unknown';
       return send(res, 200, {
         id,
+        client_request_id: null,
         call_type: null,
         model_requested: 'openai/gpt-5.2-mini',
         model_served: 'openai/gpt-5.2-mini',

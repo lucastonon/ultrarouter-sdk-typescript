@@ -12,8 +12,23 @@ import type { components } from './generated/types.js';
 
 type Schemas = components['schemas'];
 
+/**
+ * One uploaded record of `ImportParams.records`: a JSON object (any fields; a
+ * `workflow_execution_jsonl` record names its gateway requests in `calls` / `orphan_calls`), a
+ * string, a number, a boolean, an array or `null`. The specification's open-object branch is
+ * generated as a closed type, so the object case is kept open here.
+ */
+export type ImportRecord =
+  NonNullable<Schemas['ImportRequest']['records']>[number] | { [key: string]: unknown };
+
 /** `POST /v1/imports` request — create/resume a history import (consent-gated). */
-export type ImportParams = Schemas['ImportRequest'];
+export type ImportParams = Omit<Schemas['ImportRequest'], 'records'> & {
+  /**
+   * The uploaded records (array form, at most 5,000). Intact-trace records may carry request and
+   * response bodies, stored only under corrections consent and redacted on ingest.
+   */
+  records?: ImportRecord[];
+};
 
 /** An import job as rendered by the API (metadata + capability report; NEVER a body). */
 export type Import = Schemas['ImportSummary'];

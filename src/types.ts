@@ -171,6 +171,14 @@ export interface UrRequestOptions {
    * prompt for this call type. A missing required variable is a `prompt_variables_missing` error.
    */
   prompt_vars?: Record<string, string | number | boolean>;
+  /**
+   * The end user this request is for (1 to 1,024 characters). Under a call type scoped
+   * `partitioned`, a verified answer is shown only to later requests with the same key, and a
+   * request with no key is shown none. First match wins: this field, then the
+   * `X-UR-Memory-Partition` header, then the OpenAI `user` field. The gateway stores only a digest
+   * of it. Chat completions only; ignored on other routes.
+   */
+  memory_partition?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -362,6 +370,20 @@ export type UrBenchEcho = NonNullable<Schemas['UrResponseBlock']['bench']>;
 /** Present only when the request was answered from the workspace's verified memory (no provider call). */
 export type UrVerifiedMemoryBlock = NonNullable<Schemas['UrResponseBlock']['verified_memory']>;
 
+/**
+ * The learned serving stamp (the same as `ur.generation.get(id).lever.injection`): `served` says
+ * whether memory was used; `refusal` names a skip, including `fell_back` with `read_timed_out` and
+ * `budget_ms` when the read deadline passed. Ids and numbers only, never request or answer text.
+ */
+export type UrLearnedInjectionBlock = NonNullable<Schemas['UrResponseBlock']['learned_injection']>;
+
+/**
+ * How a learned request was served, present on eligible learned requests only: the arm it was
+ * assigned (`treatment` or a holdout, fixed for the request), whether memory served, the read time
+ * against its shared ceiling (`budget_ms`, never a delay) and how many lessons and precedents it used.
+ */
+export type UrLearningServingBlock = NonNullable<Schemas['UrResponseBlock']['learning_serving']>;
+
 /** The ultrarouter `ur` block attached to every chat and embeddings response. */
 export interface UrResponseBlock {
   /** The gateway request id (`req_…`). Use it with `ur.generation.get` and `ur.requests.feedback`. */
@@ -386,6 +408,10 @@ export interface UrResponseBlock {
   artifact_id?: string;
   /** Present only when the answer came from verified memory. */
   verified_memory?: UrVerifiedMemoryBlock;
+  /** The learned serving stamp, present when learned memory was considered for the request. */
+  learned_injection?: UrLearnedInjectionBlock;
+  /** How a learned request was served (its arm, reads and counts), on eligible learned requests only. */
+  learning_serving?: UrLearningServingBlock;
 }
 
 /** `POST /v1/chat/completions` (non-streaming) response. */
@@ -725,6 +751,11 @@ export interface GenerationOutcome {
 export interface GenerationStats {
   /** The request id. */
   id: string;
+  /**
+   * The alias the client sent as `X-UR-Request-Id` for this request, or `null`. An alias is never a
+   * request id: memory routes do not accept it.
+   */
+  client_request_id: string | null;
   /** The call type, or `null`. */
   call_type: string | null;
   /** The model the caller asked for. */
